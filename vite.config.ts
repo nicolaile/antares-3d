@@ -3,6 +3,15 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	ssr: {
+		// gsap's plugin entrypoints resolve to CommonJS under Node's ESM loader,
+		// so `import { ScrollTrigger } from 'gsap/ScrollTrigger'` throws
+		// "Named export not found" at runtime on the server. Vite's dev SSR
+		// papers over it with interop; a real Node server does not. Bundling
+		// gsap into the server output instead of leaving it external applies
+		// that same interop to the production build.
+		noExternal: ['gsap']
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {

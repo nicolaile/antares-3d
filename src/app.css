@@ -1,0 +1,162 @@
+/* ---------------------------------- Fonts ---------------------------------- */
+@font-face {
+	font-family: 'Neue Haas Unica Pro';
+	src: url('/fonts/NeueHaasUnicaPro-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Executive';
+	src: url('/fonts/Executive-Medium.woff2') format('woff2');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* ------------------------- Scaling System by Osmo [https://osmo.supply/] -------------------------  */
+
+/* Desktop */
+:root {
+  --size-unit: 16; /* body font-size in design - no px */
+  --size-container-ideal: 1440; /* screen-size in design - no px */
+  --size-container-min: 992px;
+  --size-container-max: 1920px;
+  --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
+  --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
+}
+
+/* Tablet */
+@media screen and (max-width: 991px) {
+  :root {
+    --size-container-ideal: 834; /* screen-size in design - no px */
+    --size-container-min: 768px;
+    --size-container-max: 991px;
+  }
+}
+
+/* Mobile Landscape */
+@media screen and (max-width: 767px) {
+  :root {
+    --size-container-ideal: 550; /* screen-size in design - no px */
+    --size-container-min: 480px;
+    --size-container-max: 767px;
+  }
+}
+
+/* Mobile Portrait */
+@media screen and (max-width: 479px) {
+  :root {
+    --size-container-ideal: 390; /* screen-size in design - no px */
+    --size-container-min: 320px;
+    --size-container-max: 479px;
+  }
+}
+
+/* ------------------------------- App tokens -------------------------------- */
+:root {
+	--grid-columns: 12;
+	/* 28px at the 1440 design width, scaling with the Osmo system from there. */
+	--grid-margin: calc(var(--size-font) * 1.75);
+	--grid-gutter: calc(var(--size-font) * 1.75);
+	--page-bg: #ffffff;
+	--stage-bg: #f1f1f1;
+	/*
+	 * The 3D container's painted background. Held as a whole value, not just a
+	 * colour, so a theme can swap a gradient for a flat fill.
+	 */
+	--stage-surface: radial-gradient(
+		120% 90% at 50% 38%,
+		color-mix(in oklab, var(--stage-bg), #fff 30%) 0%,
+		var(--stage-bg) 52%,
+		color-mix(in oklab, var(--stage-bg), #000 4%) 100%
+	);
+	/* UI chrome — mode bar, controls panel. Separate from the stage so the
+	   stage can go fully black without the buttons disappearing with it. */
+	--surface: #f1f1f1;
+	--surface-hover: #e9e9e9;
+	/* Slider tracks and input borders. */
+	--track: #c9c9c9;
+	--stage-radius: 2px;
+	/* 32px at the 1440 design width. */
+	/* 64px at the 1440 design width. Drives the mode buttons and, through
+	   --bar-block, how far down the stage starts. */
+	--bar-height: calc(var(--size-font) * 4);
+	/* The controls toggle is a square of its own, not tied to the bar. */
+	--toggle-size: calc(var(--size-font) * 2);
+	/* Gap between the stage and the mode bar, and between the buttons
+	   themselves — 6px at the 1440 design width. */
+	--bar-gap: calc(var(--size-font) * 0.375);
+	/* Vertical space the mode bar occupies; two rows once it wraps. */
+	--bar-block: var(--bar-height);
+	--ink: #111314;
+	/* Legible on top of --ink (inverted button fills). */
+	--on-ink: #ffffff;
+	--ink-mid: #6d7175;
+	--ink-soft: #9ba0a4;
+	/* Spec block fill: #262626 at 55%, per the design. */
+	--ink-spec: rgb(38 38 38 / 0.55);
+	--hairline: #e2e2e2;
+	/* Native form controls (range, checkbox, colour) follow this. */
+	color-scheme: light;
+}
+
+/*
+ * Set by the inline script in app.html before first paint, so there's no flash
+ * of the wrong theme, and toggled from the controls panel. Every value below
+ * is a straight swap — no component needs to know which theme is active.
+ */
+:root[data-theme='dark'] {
+	--page-bg: #000000;
+	--stage-bg: #000000;
+	/* Flat: any centre lift would read as a grey blob on black. */
+	--stage-surface: #000000;
+	--surface: #141517;
+	--surface-hover: #1e2023;
+	--track: #3a3d41;
+	--ink: #f0f1f2;
+	--on-ink: #0b0c0d;
+	--ink-mid: #9498a0;
+	--ink-soft: #6a6e75;
+	--ink-spec: rgb(236 238 240 / 0.55);
+	--hairline: #26282b;
+	color-scheme: dark;
+}
+
+html {
+	/* Lenis drives scrolling; native smooth scrolling fights it. */
+	scroll-behavior: auto;
+}
+
+body {
+	margin: 0;
+	background: var(--page-bg);
+	color: var(--ink);
+	font-family: 'Neue Haas Unica Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	/* Required by the Osmo scaling system. */
+	font-size: var(--size-font);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+html.lenis-stopped {
+	overflow: hidden;
+}
+
+/* Technical labels: Executive, uppercase, widely tracked. */
+.mono {
+	font-family: 'Executive', ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-weight: 500;
+	/* 12px at the 1440 design width. */
+	font-size: calc(var(--size-font) * 0.75);
+	line-height: 1;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+/* Mode bar wraps to two rows below the Osmo mobile-landscape breakpoint. */
+@media screen and (max-width: 767px) {
+	:root {
+		--bar-block: calc(var(--bar-height) * 2 + var(--bar-gap));
+	}
+}

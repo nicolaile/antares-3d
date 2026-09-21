@@ -4,11 +4,15 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
-import { SSRPass } from 'three/examples/jsm/postprocessing/SSRPass.js';
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+// Type-only: these three passes ship off and are imported on demand in
+// `addOptionalPasses`, so their shader source stays out of the bundle
+// unless a scene actually turns one on.
+import type { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import type { SSRPass } from 'three/examples/jsm/postprocessing/SSRPass.js';
+import type { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { ContactShadow } from './ContactShadow';
 import { createGrainPass } from './GrainPass';
 import {
@@ -101,6 +105,13 @@ export interface ModelViewerOptions {
 	ssr?: { opacity?: number } | false;
 	/** Depth of field, focused on the camera target. `false` disables. */
 	dof?: { maxblur?: number } | false;
+	/**
+	 * Join every non-instanced part into one mesh at load. They all share one
+	 * material, so the split into 110 draws was an accident of the export,
+	 * and each of the three scene renders per frame (shadow, occlusion
+	 * normals, beauty) paid for it. Default on.
+	 */
+	mergeMeshes?: boolean;
 }
 
 /**
@@ -207,6 +218,8 @@ export class ModelViewer {
 	private pmrem: THREE.PMREMGenerator;
 	private envRT: THREE.WebGLRenderTarget | null = null;
 	private composer: EffectComposer;
+	private renderPass: RenderPass;
+	private outputPass: OutputPass;
 	private bloom: UnrealBloomPass | null = null;
 	private gtao: GTAOPass | null = null;
 	private contact: ContactShadow | null = null;
@@ -330,7 +343,11 @@ export class ModelViewer {
 
 		// alpha:true so the page's own background shows through untouched —
 		// tone mapping would otherwise shift a solid scene.background colour.
-		this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+		// antialias:false is deliberate. Every frame reaches the canvas as a
+		// fullscreen quad from the composer, whose own 8× MSAA target does
+		// the antialiasing; multisampling the canvas as well only bought a
+		// second set of sample buffers and a resolve per frame.
+		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -343,6 +360,11 @@ export class ModelViewer {
 		// is a no-op on the soft variant. Slight light-bleed is the trade.
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.VSMShadowMap;
+		// Manual: three re-renders the shadow map on EVERY scene render, and
+		// the occlusion pass renders the scene a second time for its normals.
+		// That was two shadow passes (and two VSM blurs) per frame for one
+		// image. `render()` flags it once; the first pass consumes the flag.
+		this.renderer.shadowMap.autoUpdate = false;
 		// The composer runs several passes per frame; with autoReset the stats
 		// would only ever describe the last one (a fullscreen quad = 1 call).
 		this.renderer.info.autoReset = false;
@@ -393,24 +415,11 @@ export class ModelViewer {
 		// rotation at 4×.
 		const rt = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, samples: 8 });
 		this.composer = new EffectComposer(this.renderer, rt);
-		if (opts.ssr !== false) {
-			// SSRPass renders the beauty pass itself, so it stands in for
-			// RenderPass. Selective: reflections are computed only on the model
-			// (set after load), never on the shadow planes or empty backdrop.
-			this.ssr = new SSRPass({
-				renderer: this.renderer,
-				scene: this.scene,
-				camera: this.camera,
-				width: size.x,
-				height: size.y,
-				selects: [],
-				groundReflector: null
-			});
-			this.ssr.opacity = opts.ssr?.opacity ?? 0.35;
-			this.composer.addPass(this.ssr);
-		} else {
-			this.composer.addPass(new RenderPass(this.scene, this.camera));
-		}
+		// The optional passes (SSR, DoF, bloom) are added in load(), once their
+		// modules have been fetched — see addOptionalPasses. Only what is
+		// always on is built here.
+		this.renderPass = new RenderPass(this.scene, this.camera);
+		this.composer.addPass(this.renderPass);
 		if (opts.ao !== false) {
 			// Occlusion multiplies onto scene colour; its alpha is the scene's
 			// own, so the transparent backdrop survives the pass.
@@ -419,31 +428,8 @@ export class ModelViewer {
 			this.gtao.blendIntensity = 0.9;
 			this.composer.addPass(this.gtao);
 		}
-		if (opts.dof !== false) {
-			this.bokeh = new BokehPass(this.scene, this.camera, {
-				focus: 20,
-				aperture: 0.0007,
-				maxblur: opts.dof?.maxblur ?? 0.006
-			});
-			// Stock BokehShader forces alpha to 1, which would turn the
-			// transparent canvas into an opaque black rectangle. Dropping that
-			// line keeps the blurred alpha — and on a premultiplied canvas,
-			// averaging RGBA jointly is exactly the correct edge math.
-			this.bokeh.materialBokeh.fragmentShader = this.bokeh.materialBokeh.fragmentShader.replace(
-				'gl_FragColor.a = 1.0;',
-				''
-			);
-			this.bokeh.materialBokeh.needsUpdate = true;
-			this.composer.addPass(this.bokeh);
-		}
-		if (opts.bloom !== false) {
-			const b = opts.bloom ?? { strength: 0.55, threshold: 0.96 };
-			// Threshold sits just under white so only the hottest HDR
-			// highlights bloom — a halo on the specular, not a glow on the body.
-			this.bloom = new UnrealBloomPass(size.clone().multiplyScalar(0.5), b.strength, 0.4, b.threshold);
-			this.composer.addPass(this.bloom);
-		}
-		this.composer.addPass(new OutputPass());
+		this.outputPass = new OutputPass();
+		this.composer.addPass(this.outputPass);
 		if (opts.grain !== false) {
 			this.grain = createGrainPass(opts.grain ?? 0.03);
 			this.composer.addPass(this.grain);
@@ -508,8 +494,69 @@ export class ModelViewer {
 		if (total > 0) this.opts.onProgress?.((l1 + l2) / total);
 	}
 
+	/**
+	 * SSR, depth of field and bloom are dynamic imports so that a scene which
+	 * ships them off — this one — never downloads their shader source. They
+	 * slot into the chain where the constructor used to put them: SSR takes
+	 * over from the RenderPass at the front; DoF and bloom go just before
+	 * OutputPass, in that order.
+	 */
+	private async addOptionalPasses() {
+		const opts = this.opts;
+		const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+		const beforeOutput = () => this.composer.passes.indexOf(this.outputPass);
+
+		if (opts.ssr !== false) {
+			const { SSRPass } = await import('three/examples/jsm/postprocessing/SSRPass.js');
+			if (this.disposed) return;
+			// SSRPass renders the beauty pass itself, so it stands in for
+			// RenderPass. Selective: reflections are computed only on the model
+			// (set after load), never on the shadow planes or empty backdrop.
+			this.ssr = new SSRPass({
+				renderer: this.renderer,
+				scene: this.scene,
+				camera: this.camera,
+				width: size.x,
+				height: size.y,
+				selects: [],
+				groundReflector: null
+			});
+			this.ssr.opacity = opts.ssr?.opacity ?? 0.35;
+			this.composer.removePass(this.renderPass);
+			this.composer.insertPass(this.ssr, 0);
+		}
+		if (opts.dof !== false) {
+			const { BokehPass } = await import('three/examples/jsm/postprocessing/BokehPass.js');
+			if (this.disposed) return;
+			this.bokeh = new BokehPass(this.scene, this.camera, {
+				focus: 20,
+				aperture: 0.0007,
+				maxblur: opts.dof?.maxblur ?? 0.006
+			});
+			// Stock BokehShader forces alpha to 1, which would turn the
+			// transparent canvas into an opaque black rectangle. Dropping that
+			// line keeps the blurred alpha — and on a premultiplied canvas,
+			// averaging RGBA jointly is exactly the correct edge math.
+			this.bokeh.materialBokeh.fragmentShader = this.bokeh.materialBokeh.fragmentShader.replace(
+				'gl_FragColor.a = 1.0;',
+				''
+			);
+			this.bokeh.materialBokeh.needsUpdate = true;
+			this.composer.insertPass(this.bokeh, beforeOutput());
+		}
+		if (opts.bloom !== false) {
+			const { UnrealBloomPass } = await import('three/examples/jsm/postprocessing/UnrealBloomPass.js');
+			if (this.disposed) return;
+			const b = opts.bloom ?? { strength: 0.55, threshold: 0.96 };
+			// Threshold sits just under white so only the hottest HDR
+			// highlights bloom — a halo on the specular, not a glow on the body.
+			this.bloom = new UnrealBloomPass(size.clone().multiplyScalar(0.5), b.strength, 0.4, b.threshold);
+			this.composer.insertPass(this.bloom, beforeOutput());
+		}
+	}
+
 	async load(): Promise<THREE.Group> {
-		const [gltf] = await Promise.all([this.loadModel(), this.loadEnvironment()]);
+		const [gltf] = await Promise.all([this.loadModel(), this.loadEnvironment(), this.addOptionalPasses()]);
 		if (this.disposed) return gltf.scene;
 
 		const model = gltf.scene;
@@ -537,6 +584,7 @@ export class ModelViewer {
 			mesh.castShadow = true;
 			mesh.receiveShadow = true;
 		});
+		if (this.opts.mergeMeshes !== false) mergeStaticMeshes(model, this.material);
 
 		// Recentre on the origin so rotations spin about the vessel's own axis
 		// rather than the exporter's origin.
@@ -1112,6 +1160,9 @@ export class ModelViewer {
 		if (this.grain) this.grain.uniforms.uTime.value = this.clock.getElapsedTime();
 		if (this.sweep) this.sweep.time = this.clock.getElapsedTime();
 		this.contact?.update(this.scene);
+		// One shadow pass per frame, consumed by the first scene render in the
+		// chain; the occlusion pass's own scene render then reuses the map.
+		this.renderer.shadowMap.needsUpdate = true;
 		this.composer.render();
 	}
 
@@ -1147,6 +1198,68 @@ export class ModelViewer {
 		this.renderer.dispose();
 		this.renderer.domElement.remove();
 	}
+}
+
+/**
+ * Collapse the model's non-instanced parts into a single mesh.
+ *
+ * Every part shares one material, so nothing distinguishes 110 draws from
+ * one except the exporter's node structure — and each frame renders the
+ * scene three times (shadow depth, occlusion normals, beauty). Instanced
+ * parts are left alone: they are already one draw each.
+ *
+ * The quantised attributes (Int16 positions, Int8 normals from
+ * KHR_mesh_quantization) are widened to float first. Baking a node's world
+ * transform into a normalised Int16 attribute would clamp everything to
+ * [-1, 1]; widening is exact, so the vertices land where the vertex shader
+ * would have put them. UVs are dropped: the material samples no textures
+ * and the surface-variation noise is world-space, so they were dead weight
+ * and their mixed types (Uint16 / Float32) would have blocked the merge.
+ */
+function mergeStaticMeshes(model: THREE.Object3D, material: THREE.Material) {
+	model.updateMatrixWorld(true);
+	const toModel = model.matrixWorld.clone().invert();
+	const parts: THREE.Mesh[] = [];
+	model.traverse((o) => {
+		const m = o as THREE.Mesh;
+		if (m.isMesh && !(m as THREE.InstancedMesh).isInstancedMesh) parts.push(m);
+	});
+	if (parts.length < 2) return;
+
+	const widen = (attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute) => {
+		const k = attr.itemSize;
+		const out = new Float32Array(attr.count * k);
+		for (let i = 0; i < attr.count; i++) {
+			out[i * k] = attr.getX(i);
+			if (k > 1) out[i * k + 1] = attr.getY(i);
+			if (k > 2) out[i * k + 2] = attr.getZ(i);
+		}
+		return new THREE.BufferAttribute(out, k);
+	};
+	const rel = new THREE.Matrix4();
+	const geometries = parts.map((m) => {
+		const g = new THREE.BufferGeometry();
+		g.setAttribute('position', widen(m.geometry.attributes.position));
+		g.setAttribute('normal', widen(m.geometry.attributes.normal));
+		if (m.geometry.index) g.setIndex(m.geometry.index.clone());
+		rel.copy(toModel).multiply(m.matrixWorld);
+		g.applyMatrix4(rel);
+		return g;
+	});
+	const merged = mergeGeometries(geometries, false);
+	geometries.forEach((g) => g.dispose());
+	if (!merged) return; // incompatible attributes — leave the parts as they were
+	merged.computeBoundingSphere();
+
+	for (const m of parts) {
+		m.removeFromParent();
+		m.geometry.dispose();
+	}
+	const mesh = new THREE.Mesh(merged, material);
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
+	mesh.name = 'merged-static';
+	model.add(mesh);
 }
 
 /** Normalise a stop colour to a `#rrggbb` string for the colour inputs. */

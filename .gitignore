@@ -25,3 +25,4 @@ vite.config.ts.timestamp-*
 # Licensed desktop font originals. The build serves only the .woff2 files
 # in static/fonts, so these never need to leave the machine.
 src/fonts/
+.env*

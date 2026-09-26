@@ -1,7 +1,7 @@
 /* ---------------------------------- Fonts ---------------------------------- */
 @font-face {
-	font-family: 'Neue Haas Unica Pro';
-	src: url('/fonts/NeueHaasUnicaPro-Regular.woff2') format('woff2');
+	font-family: 'FT System';
+	src: url('/fonts/FTSystemTrial-BlankRegular.woff2') format('woff2');
 	font-weight: 400;
 	font-style: normal;
 	font-display: swap;
@@ -56,9 +56,10 @@
 /* ------------------------------- App tokens -------------------------------- */
 :root {
 	--grid-columns: 12;
-	/* 28px at the 1440 design width, scaling with the Osmo system from there. */
-	--grid-margin: calc(var(--size-font) * 1.75);
-	--grid-gutter: calc(var(--size-font) * 1.75);
+	/* 20px margin, 10px gutter at the 1440 design width, scaling with the
+	   Osmo system from there. */
+	--grid-margin: calc(var(--size-font) * 1.25);
+	--grid-gutter: calc(var(--size-font) * 0.625);
 	--page-bg: #ffffff;
 	--stage-bg: #f1f1f1;
 	/*
@@ -132,7 +133,7 @@ body {
 	margin: 0;
 	background: var(--page-bg);
 	color: var(--ink);
-	font-family: 'Neue Haas Unica Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	font-family: 'FT System', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	/* Required by the Osmo scaling system. */
 	font-size: var(--size-font);
 	-webkit-font-smoothing: antialiased;

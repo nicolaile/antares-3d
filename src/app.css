@@ -5,7 +5,7 @@
   --size-unit: 16; /* base unit in design (1em) - no px */
   --size-container-ideal: 1440; /* screen-size in design - no px */
   --size-container-min: 992px;
-  --size-container-max: 1920px;
+  --size-container-max: 2560px;
   --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
   --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 }
@@ -45,16 +45,8 @@
 	--grid-margin: calc(var(--size-font) * 1.25);
 	--grid-gutter: calc(var(--size-font) * 0.625);
 	--stage-radius: 2px;
-	/* 64px at the 1440 design width. Drives the mode buttons and, through
-	   --bar-block, how far down the stage starts. */
-	--bar-height: calc(var(--size-font) * 4);
-	/* The controls toggle is a square of its own, not tied to the bar. */
+	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);
-	/* Gap between the stage and the mode bar, and between the buttons
-	   themselves — 6px at the 1440 design width. */
-	--bar-gap: calc(var(--size-font) * 0.375);
-	/* Vertical space the mode bar occupies; two rows once it wraps. */
-	--bar-block: var(--bar-height);
 }
 
 html {
@@ -72,9 +64,3 @@ html.lenis-stopped {
 	overflow: hidden;
 }
 
-/* Mode bar wraps to two rows below the Osmo mobile-landscape breakpoint. */
-@media screen and (max-width: 767px) {
-	:root {
-		--bar-block: calc(var(--bar-height) * 2 + var(--bar-gap));
-	}
-}

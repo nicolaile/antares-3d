@@ -1,0 +1,32 @@
+/*
+ * Spacing system — vertical rhythm and insets.
+ *
+ * Horizontal placement comes from the grid (columns, --grid-gutter,
+ * --grid-margin); these tokens cover everything else: gaps between stacked
+ * blocks, padding inside cards and panels, space between sections.
+ *
+ * Each token is named after its px value at the 1440 design width and scales
+ * with the Osmo system like everything else. The /design-system page reads
+ * this file, so keep the doc-comment format:
+ *
+ *     /** When to use it. *\/
+ *     --space-n: calc(var(--size-font) * …);
+ */
+:root {
+	/** Hairline offsets, icon nudges. */
+	--space-4: calc(var(--size-font) * 0.25);
+	/** Between a heading and the line under it; stacked cards. */
+	--space-8: calc(var(--size-font) * 0.5);
+	/** Card padding (inline), caption under media. */
+	--space-12: calc(var(--size-font) * 0.75);
+	/** Card padding (block), panel insets, label to content. */
+	--space-20: calc(var(--size-font) * 1.25);
+	/** Between blocks inside a section. */
+	--space-40: calc(var(--size-font) * 2.5);
+	/** Between groups inside a section. */
+	--space-60: calc(var(--size-font) * 3.75);
+	/** Between loosely related sections. */
+	--space-120: calc(var(--size-font) * 7.5);
+	/** Between sections, and the end of the page. */
+	--space-160: calc(var(--size-font) * 10);
+}

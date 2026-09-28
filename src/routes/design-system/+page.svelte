@@ -3,6 +3,7 @@
 	import Grid from '$lib/components/Grid.svelte';
 	import { BREAKPOINTS, TYPEFACES, TYPE_MODIFIERS, TYPE_STYLES } from '$lib/typography';
 	import { SCALE } from '$lib/colors';
+	import { SPACING } from '$lib/spacing';
 
 	const WEIGHT_NAMES: Record<string, string> = { '400': 'Regular', '500': 'Medium' };
 
@@ -54,7 +55,7 @@
 		<p class="type-label eyebrow">Antares — Design System</p>
 		<h1 class="type-display-1">Design System</h1>
 		<p class="type-body-large lede">
-			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
+			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
 			Everything on the site is built from what's below. This page reads the system's own stylesheets, so it's
 			always current.
 		</p>
@@ -74,6 +75,23 @@
 					<p class="type-label type-tabular">{color.hex}</p>
 					<code class="type-body class">{color.token}</code>
 					<p class="type-body usage">{color.usage}</p>
+				</li>
+			{/each}
+		</ul>
+	</section>
+
+	<section>
+		<h2 class="type-label section-title">Spacing</h2>
+		<p class="type-body usage">
+			Horizontal placement is whole grid columns. These cover the rest: gaps between stacked blocks,
+			padding, and space between sections. Named by px at 1440.
+		</p>
+		<ul class="spacing">
+			{#each SPACING as s (s.token)}
+				<li class="space">
+					<code class="type-body class">{s.token}</code>
+					<span class="bar" style:width="var({s.token})"></span>
+					<p class="type-body usage">{s.usage}</p>
 				</li>
 			{/each}
 		</ul>
@@ -126,6 +144,10 @@
 								<dt>{bp.label}</dt>
 								<dd>{style.size[bp.key]}px</dd>
 							{/each}
+							{#if style.max}
+								<dt>Max</dt>
+								<dd>{style.max}px</dd>
+							{/if}
 							<dt>Leading</dt>
 							<dd>{style.leading}</dd>
 							<dt>Tracking</dt>
@@ -317,6 +339,33 @@
 		margin-bottom: calc(var(--size-font) * 0.5);
 		border: 1px solid var(--grey-200);
 		border-radius: var(--stage-radius);
+	}
+
+	.spacing {
+		display: grid;
+		gap: var(--space-12);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.space {
+		display: grid;
+		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+		column-gap: var(--grid-gutter);
+		align-items: center;
+	}
+	.space .class {
+		grid-column: 1 / span 2;
+		justify-self: start;
+	}
+	.space .bar {
+		grid-column: 3 / span 3;
+		height: var(--space-12);
+		background: var(--grey-950);
+	}
+	.space .usage {
+		grid-column: 6 / -1;
+		margin: 0;
 	}
 
 	.scale,

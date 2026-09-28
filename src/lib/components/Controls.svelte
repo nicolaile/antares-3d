@@ -286,7 +286,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: var(--bar-gap);
+		gap: var(--space-8);
 	}
 
 	.toggle {

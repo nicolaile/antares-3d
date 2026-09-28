@@ -194,6 +194,9 @@ const STUDIO_KEYS = Object.keys(STUDIO_PRESET) as (keyof RenderParams)[];
  * `render()` is called from the shared GSAP ticker so Lenis, ScrollTrigger and
  * the renderer all advance on one clock. See `$lib/scroll.ts`.
  */
+/** The lens the establishing shot is composed for, in degrees. */
+const DEFAULT_FOV = 38;
+
 export class ModelViewer {
 	readonly scene = new THREE.Scene();
 	readonly camera: THREE.PerspectiveCamera;
@@ -209,6 +212,8 @@ export class ModelViewer {
 	 */
 	readonly scrollRotation = { x: 0, y: 0 };
 	readonly userRotation = { x: 0, y: 0 };
+	/** Gates `autoRotate` without losing the angle it has reached — a pause. */
+	spinning = true;
 	/** The one material every part shares. Tweak live: viewer.material.roughness = … */
 	material!: THREE.MeshPhysicalMaterial;
 	/** Addressable for live tuning: viewer.lights.key.intensity = … */
@@ -269,7 +274,7 @@ export class ModelViewer {
 	radius = 10;
 
 	/** Vertical FOV the shot list is composed at; widened only when too narrow to fit. */
-	private baseFov = 38;
+	private baseFov = DEFAULT_FOV;
 	/** Bounding-sphere radius of the model; 0 until `load()` resolves. */
 	private fitRadius = 0;
 	/** Camera distance of the establishing shot — the framing `baseFov` is designed for. */
@@ -1085,12 +1090,21 @@ export class ModelViewer {
 		return this.renderer.info.render.calls;
 	}
 
-	resize() {
-		const { clientWidth: w, clientHeight: h } = this.container;
-		if (!w || !h) return;
-		const aspect = w / h;
-		this.camera.aspect = aspect;
+	/**
+	 * The lens: vertical field of view in degrees. Longer lenses (smaller
+	 * values) flatten perspective; pull the camera back to keep the framing.
+	 * Cheap to set every frame — only the projection updates.
+	 */
+	get fov() {
+		return this.baseFov;
+	}
+	set fov(deg: number) {
+		this.baseFov = deg;
+		this.updateFov();
+	}
 
+	private updateFov() {
+		const aspect = this.camera.aspect;
 		// Aspect-aware framing. three's `fov` is the VERTICAL angle, so visible
 		// height is the same at any aspect — but visible width is height ×
 		// aspect, which collapses on a tall, narrow stage and crops the model's
@@ -1098,12 +1112,23 @@ export class ModelViewer {
 		// axes. `max` with the base FOV means wide viewports keep the composed
 		// framing exactly; only narrow ones pull back.
 		if (this.fitRadius > 0) {
-			const theta = Math.asin(Math.min(1, (this.fitRadius * 1.08) / this.fitDistance));
+			// A longer lens is used from further back (see `fov`), so the guard
+			// measures from the distance that keeps the framing, not the default.
+			const half = (deg: number) => Math.tan(THREE.MathUtils.degToRad(deg) / 2);
+			const distance = (this.fitDistance * half(DEFAULT_FOV)) / half(this.baseFov);
+			const theta = Math.asin(Math.min(1, (this.fitRadius * 1.08) / distance));
 			const needed = 2 * Math.max(theta, Math.atan(Math.tan(theta) / aspect));
 			this.camera.fov = Math.max(this.baseFov, THREE.MathUtils.radToDeg(needed));
 		}
 
 		this.camera.updateProjectionMatrix();
+	}
+
+	resize() {
+		const { clientWidth: w, clientHeight: h } = this.container;
+		if (!w || !h) return;
+		this.camera.aspect = w / h;
+		this.updateFov();
 		this.canvasRect = this.container.getBoundingClientRect();
 		this.renderer.setSize(w, h, false);
 		this.composer.setSize(w, h);
@@ -1129,7 +1154,7 @@ export class ModelViewer {
 		const now = this.clock.getElapsedTime();
 		const dt = Math.min(0.1, now - this.lastTime);
 		this.lastTime = now;
-		if (this.opts.autoRotate && !this.drag.active) this.autoRotation += this.opts.autoRotate * dt;
+		if (this.opts.autoRotate && this.spinning && !this.drag.active) this.autoRotation += this.opts.autoRotate * dt;
 
 		if (this.gradient) {
 			// Averaging both axes gives 0 at top-left and 1 at bottom-right with

@@ -24,6 +24,8 @@ export type TypeStyle = {
 	usage: string;
 	/** Size in px at each breakpoint's design width. */
 	size: Record<Breakpoint, number>;
+	/** Hard ceiling in px, however far the scale runs. */
+	max?: number;
 	leading: number;
 	/** In em. */
 	tracking: number;
@@ -81,6 +83,7 @@ function parse() {
 			title,
 			usage,
 			size: { desktop: base * 16, tablet: tablet * 16, mobile: mobile * 16 },
+			max: Number(token(seg.desktop, `${name}-size`)?.match(/,\s*([\d.]+)px\s*\)$/)?.[1]) || undefined,
 			leading: Number(token(seg.desktop, `${name}-leading`)),
 			tracking: parseFloat(token(seg.desktop, `${name}-tracking`) ?? '0'),
 			family: body.match(/var\((--font-[\w-]+)\)/)?.[1] ?? '',

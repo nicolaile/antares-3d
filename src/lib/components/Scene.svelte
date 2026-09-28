@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { ModelViewer } from '$lib/three/ModelViewer';
-	import { initScroll, destroyScroll, onTick, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
+	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
 	import type { RenderParams } from '$lib/three/ModelViewer';
+	import type { Shot } from '$lib/three/shot';
 
 	let {
 		src = '/models/cylinder.glb',
-		trigger = null,
+		shot,
+		paused = false,
 		onready = undefined
 	}: {
 		src?: string;
-		trigger?: HTMLElement | null;
+		/** Where the camera is. Changing it glides the camera to the new shot. */
+		shot: Shot;
+		/** Stops the slow turn. The model holds the angle it reached. */
+		paused?: boolean;
 		/** Fires once the model is in the scene, for the render controls. */
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
@@ -19,19 +24,38 @@
 	const STAGE_RENDER: Partial<RenderParams> = { environment: 1.15, exposure: 1.13 };
 
 	let host: HTMLDivElement;
+	let viewer: ModelViewer | null = $state(null);
 	let loaded = $state(false);
-	/**
-	 * The studio look paints its own backdrop across the whole frame, so the
-	 * inset rounded stage would crop it into a window onto a lit room. Full
-	 * bleed while it is on.
-	 */
-	let bleed = $state(false);
 	let progress = $state(0);
+
+	$effect(() => {
+		if (viewer) viewer.spinning = !paused;
+	});
+
+	/** Puts the camera on a shot, gliding there unless `instant`. */
+	function frame(v: ModelViewer, next: Shot, instant = false) {
+		const r = v.radius;
+		const [x, y, z] = next.pos;
+		const [tx, ty, tz] = next.target;
+		const duration = instant || prefersReducedMotion() ? 0 : 1.6;
+		const ease = 'power2.inOut';
+		gsap.to(v.camera.position, { x: x * r, y: y * r, z: z * r, duration, ease, overwrite: true });
+		gsap.to(v.target, { x: tx * r, y: ty * r, z: tz * r, duration, ease, overwrite: true });
+		gsap.to(v.scrollRotation, { y: next.spin, duration, ease, overwrite: true });
+		gsap.to(v, { fov: next.fov ?? 38, duration, ease, overwrite: true });
+	}
+
+	// Re-frame whenever the shot changes after load. The first framing is
+	// instant, in the load handler below.
+	$effect(() => {
+		const next = shot;
+		if (viewer && loaded) frame(viewer, next);
+	});
 
 	onMount(() => {
 		// onMount never runs during SSR, so WebGL is safely client-only.
 		const reduce = prefersReducedMotion();
-		const viewer = new ModelViewer(host, {
+		const v = new ModelViewer(host, {
 			url: src,
 			hdr: '/hdr/studio_small_09_1k.hdr',
 			// Off. The CAD model has coincident surfaces (parts that touch exactly);
@@ -97,7 +121,6 @@
 		});
 		initScroll();
 		let offTick = () => {};
-		let ctx: ReturnType<typeof gsap.context> | null = null;
 		let resetTween: gsap.core.Tween | null = null;
 		let reveal: gsap.core.Timeline | null = null;
 
@@ -111,10 +134,10 @@
 		// the model was re-grabbed within 1.6s of a release. Killing any
 		// in-flight tween outright is both simpler and correct.
 		const releaseDrag = () => {
-			if (viewer.isDragging || viewer.userRotationSettled) return;
+			if (v.isDragging || v.userRotationSettled) return;
 			resetTween?.kill();
-			viewer.settleUserRotation();
-			resetTween = gsap.to(viewer.userRotation, {
+			v.settleUserRotation();
+			resetTween = gsap.to(v.userRotation, {
 				x: 0,
 				y: 0,
 				duration: 1.6,
@@ -131,27 +154,34 @@
 		// Dev-only handle for tuning feel from the console, e.g.
 		// __viewer.userRotation.x = 0.5 to watch the reset run.
 		if (import.meta.env.DEV) {
-			(window as unknown as Record<string, unknown>).__viewer = viewer;
+			(window as unknown as Record<string, unknown>).__viewer = v;
 		}
 
 		// Driven by the viewer's own drag-end event, which fires wherever the
 		// pointer was released — a canvas `pointerup` misses off-canvas releases.
-		const canvas = viewer.renderer.domElement;
+		const canvas = v.renderer.domElement;
 		canvas.addEventListener('pointerdown', cancelReset);
-		const offDragEnd = viewer.onDragEnd(releaseDrag);
+		const offDragEnd = v.onDragEnd(releaseDrag);
 
-		let offStudio = () => {};
+		// Off-screen, the page is still scrolling on the same ticker; skip the
+		// frame entirely rather than rendering a canvas nobody can see.
+		let visible = true;
+		const io = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
+		io.observe(host);
 
-		viewer.load().then(() => {
-			loaded = true;
+		v.load().then(() => {
 			// Before `onready`, so the controls panel reads these as its baseline.
-			for (const [k, v] of Object.entries(STAGE_RENDER)) {
-				viewer.setParam(k as keyof RenderParams, v as number);
+			for (const [k, value] of Object.entries(STAGE_RENDER)) {
+				v.setParam(k as keyof RenderParams, value as number);
 			}
-			bleed = viewer.isStudio;
-			offStudio = viewer.onStudioChange((on) => (bleed = on));
-			onready?.(viewer);
-			offTick = onTick(() => viewer.render());
+			frame(v, shot, true);
+			v.spinning = !paused;
+			viewer = v;
+			loaded = true;
+			onready?.(v);
+			offTick = onTick(() => {
+				if (visible) v.render();
+			});
 
 			// Reveal: fade up while the model settles from a slight scale and
 			// quarter-turn. userRotation ends at 0, so it hands off cleanly to
@@ -160,117 +190,45 @@
 			reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.6 : 1.4, ease: 'power2.out' }, 0);
 			if (!reduce) {
 				reveal
-					.from(viewer.root.scale, { x: 0.94, y: 0.94, z: 0.94, duration: 1.8, ease: 'power3.out' }, 0)
-					.from(viewer.userRotation, { y: -0.35, duration: 2.0, ease: 'power3.out' }, 0);
+					.from(v.root.scale, { x: 0.94, y: 0.94, z: 0.94, duration: 1.8, ease: 'power3.out' }, 0)
+					.from(v.userRotation, { y: -0.35, duration: 2.0, ease: 'power3.out' }, 0);
 			}
-
-			const r = viewer.radius;
-
-			// One shot per mode, keyed at the scroll positions the mode bar jumps
-			// to (0, ¼, ½, ¾), so clicking a mode lands exactly on its shot and
-			// scrolling glides between them. Positions are in units of `r`.
-			// Segments are linear on purpose — a constant-rate glide. An ease with
-			// a fast middle (power1.inOut) reads as a quicker, snappier move.
-			//
-			// Core's z offset is 10° off vertical, and that angle is load-bearing.
-			// `lookAt` derives yaw from the HORIZONTAL part of the view
-			// direction; looking straight down that part collapses to nothing and
-			// the roll swings wildly — measured 21°/step leaving Core at 1.1°
-			// tilt. Without easing to help, the tilt has to do all the work:
-			// 3.7°/step at 10°. Still reads as a top-down.
-			const shots = [
-				{ pos: [0.8, 0.45, 0.95], target: [0, 0, 0], spin: 0 }, // Integrated Shielding
-				{ pos: [0.15, 0.1, 0.55], target: [0, 0.05, 0], spin: Math.PI * 0.75 }, // Reactivity Controls
-				// Core — top-down. Camera and target share the x offset: a pure pan
-				// that shifts the deck right, clear of the copy in the left column.
-				{ pos: [-0.1, 0.86, 0.15], target: [-0.1, 0, 0], spin: Math.PI * 1.1 },
-				{ pos: [-0.5, 0.85, 0.5], target: [0, 0.12, 0], spin: Math.PI * 1.6 } // Sodium Heat Pipes
-			];
-
-			ctx = gsap.context(() => {
-				const tl = gsap.timeline({
-					scrollTrigger: {
-						trigger: trigger ?? document.body,
-						start: 'top top',
-						end: 'bottom bottom',
-						scrub: 1
-					}
-				});
-
-				const seg = 1 / shots.length;
-				shots.slice(1).forEach((shot, i) => {
-					const at = i * seg;
-					const [x, y, z] = shot.pos;
-					const [tx, ty, tz] = shot.target;
-					tl.to(viewer.camera.position, { x: x * r, y: y * r, z: z * r, duration: seg, ease: 'none' }, at)
-						.to(viewer.target, { x: tx * r, y: ty * r, z: tz * r, duration: seg, ease: 'none' }, at)
-						.to(viewer.scrollRotation, { y: shot.spin, duration: seg, ease: 'none' }, at);
-				});
-				// Last quarter holds the final shot so the track length stays 4 slices.
-				tl.to({}, { duration: seg });
-			});
-
-			ScrollTrigger.refresh();
 		});
 
 		return () => {
-			ctx?.revert();
-			offStudio();
+			io.disconnect();
 			reveal?.kill();
 			resetTween?.kill();
+			gsap.killTweensOf([v, v.camera.position, v.target, v.scrollRotation]);
 			canvas.removeEventListener('pointerdown', cancelReset);
 			offDragEnd();
 			offTick();
-			viewer.dispose();
+			v.dispose();
+			viewer = null;
 			destroyScroll();
 		};
 	});
 </script>
 
-<div class="stage" class:bleed bind:this={host} aria-hidden="true">
+<div class="scene" bind:this={host} aria-hidden="true">
 	{#if !loaded}
 		<div class="progress" style:transform="scaleX({progress})"></div>
 	{/if}
 </div>
 
 <style>
-	/* Spans column 1 through 12: the full grid width, inset by the margin.
-	   Fixed so it holds still while the scroll track runs behind it. */
-	.stage {
-		position: fixed;
-		top: calc(var(--grid-margin) + var(--bar-block) + var(--bar-gap));
-		right: var(--grid-margin);
-		bottom: var(--grid-margin);
-		left: var(--grid-margin);
-		z-index: 0;
-		/* A soft falloff, lit from just above centre. Palette stops only. */
-		background: radial-gradient(
-			120% 90% at 50% 38%,
-			var(--grey-0) 0%,
-			var(--grey-100) 52%,
-			var(--grey-200) 100%
-		);
-		border-radius: var(--stage-radius);
-		/* Clips the canvas to the rounded corners. */
-		overflow: hidden;
+	/* Fills whatever holds it; the parent decides size and placement. */
+	.scene {
+		position: absolute;
+		inset: 0;
 	}
-	.stage :global(canvas) {
+	.scene :global(canvas) {
 		display: block;
 		width: 100%;
 		height: 100%;
 	}
-	/* Studio: the backdrop is the page. Snaps rather than animates — every
-	   intermediate size would reallocate the composer's multisampled targets
-	   through the ResizeObserver, which is far more than a 250ms slide is worth. */
-	.stage.bleed {
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		border-radius: 0;
-	}
 
-	/* Loading: a hairline that fills across the stage floor, nothing else. */
+	/* Loading: a hairline that fills across the floor, nothing else. */
 	.progress {
 		position: absolute;
 		left: 0;
@@ -278,7 +236,6 @@
 		bottom: 0;
 		height: 1px;
 		background: var(--grey-400);
-		transform-origin: left center;
-		transition: transform 0.25s ease-out;
+		transform-origin: left;
 	}
 </style>

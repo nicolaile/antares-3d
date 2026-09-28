@@ -37,47 +37,58 @@
 	/** How far the page dims: the darkest grey at 70%. Matches the CSS. */
 	const DIM = 0.7;
 
+	/**
+	 * The panel's mask, as separate edges rather than one clip-path string:
+	 * insets from the right, bottom and left, and the corner radius, in px.
+	 * Widening (left) and dropping (bottom) are separate properties, so the
+	 * two steps can overlap without one tween taking over the other's edge
+	 * mid-way — which is what made the widening stall and restart.
+	 */
+	const mask = { left: 0, bottom: 0, radius: 0 };
+	const paint = () => {
+		panel.style.clipPath = `inset(0px 0px ${mask.bottom}px ${mask.left}px round ${mask.radius}px)`;
+	};
+
 	/** Panel geometry, measured fresh each time so a resize is picked up. */
 	function geometry() {
-		const w = panel.offsetWidth;
-		const h = panel.offsetHeight;
-		const b = toggle.offsetWidth;
-		const r = parseFloat(getComputedStyle(panel).getPropertyValue('--panel-radius')) || 4;
-		const clip = (right: number, bottom: number, left: number, radius: number) =>
-			`inset(0px ${right}px ${bottom}px ${left}px round ${radius}px)`;
 		return {
-			b,
-			items: panel.querySelectorAll('[data-nav-item]'),
-			/** A button-sized circle tucked into the panel's top-right corner. */
-			closed: clip(0, h - b, w - b, b / 2),
-			strip: clip(0, h - b, 0, r),
-			full: clip(0, 0, 0, r),
-			/** Nothing: a 0×0px point at the panel's top-right corner, under the button. */
-			gone: clip(0, h, w, 0)
+			w: panel.offsetWidth,
+			h: panel.offsetHeight,
+			b: toggle.offsetWidth,
+			r: parseFloat(getComputedStyle(panel).getPropertyValue('--panel-radius')) || 4,
+			/** Menu links: each slides up out of its own masked line. */
+			links: panel.querySelectorAll('[data-nav-link]'),
+			/** Everything else (the latest update): a soft fade. */
+			items: panel.querySelectorAll('[data-nav-item]')
 		};
 	}
 
 	/**
-	 * Open, in two steps: the circle widens into a full-width strip, then
-	 * drops to full height; the links rise in once the panel is mostly
-	 * there. Tweens run from wherever things are, so reopening mid-close
-	 * carries on from there instead of snapping back to the circle.
+	 * Open, in two steps: a button-sized circle in the panel's top-right
+	 * corner widens into a full-width strip, then drops to full height; the
+	 * links rise in once the panel is mostly there. Tweens run from wherever
+	 * the mask is, so reopening mid-close carries on from there.
 	 */
 	function openTimeline() {
 		const g = geometry();
-		// Hidden = fully closed (no close still fading it away).
+		// Hidden = fully closed (no close still folding it away).
 		const fresh = panel.style.visibility !== 'visible';
 		if (fresh) {
-			gsap.set(panel, { clipPath: g.closed, autoAlpha: 1 });
+			Object.assign(mask, { left: g.w - g.b, bottom: g.h - g.b, radius: g.b / 2 });
+			paint();
+			gsap.set(panel, { autoAlpha: 1 });
+			gsap.set(g.links, { yPercent: 110 });
 			gsap.set(g.items, { autoAlpha: 0, y: g.b * 0.6 });
 		}
 		return gsap
-			.timeline({ defaults: { ease: 'menu' } })
+			.timeline({ defaults: { ease: 'menu' }, onUpdate: paint })
 			.to(panel, { autoAlpha: 1, duration: 0.2, ease: 'power1.out' }, 0)
 			.to(overlay, { autoAlpha: DIM, duration: 0.5, ease: 'power2.out' }, 0)
-			.to(panel, { clipPath: g.strip, duration: 0.5 }, 0)
-			.to(panel, { clipPath: g.full, duration: 0.6 }, 0.3)
-			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.045, ease: 'power3.out' }, 0.45)
+			.to(mask, { left: 0, radius: g.r, duration: 0.5 }, 0)
+			.to(mask, { bottom: 0, duration: 0.6 }, 0.3)
+			// No fade: each link rises into view from behind its line.
+			.to(g.links, { yPercent: 0, duration: 0.7, stagger: 0.05, ease: 'power3.out' }, 0.4)
+			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 0.6)
 			// Hidden elements can't take focus, so move it in once the links show.
 			.call(focusFirst, undefined, 0.5);
 	}
@@ -93,14 +104,23 @@
 		return gsap
 			.timeline({
 				defaults: { ease: 'menu' },
+				onUpdate: paint,
 				onComplete: () => gsap.set(panel, { visibility: 'hidden' })
 			})
+			// Links stay put and solid; the folding mask covers them.
 			.to(g.items, { autoAlpha: 0, duration: 0.2, ease: 'power1.out' }, 0)
-			.to(panel, { clipPath: g.gone, duration: 0.5 }, 0)
+			.to(mask, { left: g.w, bottom: g.h, radius: 0, duration: 0.5 }, 0)
 			.to(overlay, { autoAlpha: 0, duration: 0.45, ease: 'power2.inOut' }, 0);
 	}
 
-	const focusFirst = () => (panel.querySelector('a') as HTMLElement | null)?.focus({ preventScroll: true });
+	/** Set when the menu was opened from the keyboard, so focus shows a ring. */
+	let viaKeyboard = false;
+	const focusFirst = () =>
+		(panel.querySelector('a') as HTMLElement | null)?.focus({
+			preventScroll: true,
+			// A mouse opening shouldn't leave a focus ring on the first link.
+			focusVisible: viaKeyboard
+		} as FocusOptions);
 
 	async function setOpen(next: boolean) {
 		if (next === open) return;
@@ -158,8 +178,9 @@
 				<div class="panel" id="site-menu" bind:this={panel} inert={!open}>
 					<ul class="links">
 						{#each links as link (link.label)}
-							<li data-nav-item>
+							<li class="line">
 								<a
+									data-nav-link
 									class="link type-heading-2"
 									class:current={link.href === current}
 									aria-current={link.href === current ? 'page' : undefined}
@@ -181,7 +202,15 @@
 	</div>
 
 	<div class="toggle" data-nav-toggle="toggle" bind:this={toggle}>
-		<MenuButton {open} controls="site-menu" onclick={() => setOpen(!open)} />
+		<MenuButton
+			{open}
+			controls="site-menu"
+			onclick={(e?: MouseEvent) => {
+				// detail is 0 for Enter/Space presses, 1+ for real clicks.
+				viaKeyboard = !e || e.detail === 0;
+				setOpen(!open);
+			}}
+		/>
 	</div>
 </nav>
 
@@ -233,6 +262,14 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+	/* Each link's mask. The bottom is padded out and pulled back so the clip
+	   clears the descenders (the y in Company, the g in Progress) without
+	   changing the line spacing. */
+	.line {
+		overflow: hidden;
+		padding-bottom: calc(var(--type-heading-2-size) * 0.15);
+		margin-bottom: calc(var(--type-heading-2-size) * -0.15);
 	}
 	.link {
 		display: inline-block;

@@ -4,6 +4,7 @@
 	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
 	import type { RenderParams } from '$lib/three/ModelViewer';
 	import type { Shot } from '$lib/three/shot';
+	import { LOOK } from '$lib/three/look';
 
 	let {
 		src = '/models/cylinder.glb',
@@ -20,8 +21,6 @@
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
 
-	/** The rig's defaults are tuned darker; the light stage wants these two up. */
-	const STAGE_RENDER: Partial<RenderParams> = { environment: 1.15, exposure: 1.13 };
 
 	let host: HTMLDivElement;
 	let viewer: ModelViewer | null = $state(null);
@@ -170,9 +169,10 @@
 		io.observe(host);
 
 		v.load().then(() => {
-			// Before `onready`, so the controls panel reads these as its baseline.
-			for (const [k, value] of Object.entries(STAGE_RENDER)) {
-				v.setParam(k as keyof RenderParams, value as number);
+			// The final look, after the studio preset has had its say. Before
+			// `onready`, so the controls panel reads these as its baseline.
+			for (const [k, value] of Object.entries(LOOK)) {
+				v.setParam(k as keyof RenderParams, value as number | string);
 			}
 			frame(v, shot, true);
 			v.spinning = !paused;

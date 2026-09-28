@@ -132,8 +132,8 @@
 
 <li class="card" class:open={expanded} bind:this={card}>
 	<button type="button" class="face type-body" aria-expanded={open} onclick={onselect}>
-		<span class="number">{number}</span>
-		<span class="title" bind:this={titleEl}>{title}</span>
+		<span class="number type-body-large">{number}</span>
+		<span class="title type-body-large" bind:this={titleEl}>{title}</span>
 		{#if thumb}
 			<span class="thumb" class:wide={thumb.img.w / thumb.img.h > 0.8} bind:this={extras[0]}>
 				<Picture src={thumb} ratio="{thumb.img.w} / {thumb.img.h}" fit="contain" sizes="140px" />

@@ -52,6 +52,9 @@
 html {
 	/* Lenis drives scrolling; native smooth scrolling fights it. */
 	scroll-behavior: auto;
+	/* Keep the scrollbar's space even while scrolling is locked (the open
+	   menu), so the page doesn't widen and shift behind it. */
+	scrollbar-gutter: stable;
 }
 
 body {

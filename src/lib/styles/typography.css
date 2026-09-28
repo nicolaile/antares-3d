@@ -62,8 +62,8 @@
 	--type-heading-3-leading: 1;
 	--type-heading-3-tracking: -0.02em;
 
-	/* 18px */
-	--type-body-large-size: calc(var(--size-font) * 1.125);
+	/* 18px, never above 24px. */
+	--type-body-large-size: min(calc(var(--size-font) * 1.125), 24px);
 	--type-body-large-leading: 1.15;
 	--type-body-large-tracking: -0.02em;
 

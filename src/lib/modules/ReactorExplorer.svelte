@@ -43,9 +43,10 @@
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
 		// Scroll reveal, scrubbed to scroll so it plays backwards too:
-		// - the model fades and scales up into place;
+		// - the model scales up and settles into place (no fade — it's always
+		//   fully there);
 		// - the card list drifts slower than the page, a light parallax.
-		// Only opacity and transforms move — the canvas never resizes, so the
+		// Only transforms move — the canvas never resizes, so the
 		// model doesn't re-render at a new size each frame.
 		const ctx = gsap.context(() => {
 			if (prefersReducedMotion()) return;
@@ -54,9 +55,8 @@
 			// into place rather than snapping to the scroll.
 			gsap.fromTo(
 				viewport,
-				{ autoAlpha: 0, scale: 0.96, y: () => unit() * 3 },
+				{ scale: 0.96, y: () => unit() * 3 },
 				{
-					autoAlpha: 1,
 					scale: 1,
 					y: 0,
 					ease: 'sine.out',

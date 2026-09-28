@@ -13,7 +13,7 @@
 		open?: boolean;
 		/** id of the panel this button shows and hides. */
 		controls: string;
-		onclick: () => void;
+		onclick: (e: MouseEvent) => void;
 	} = $props();
 
 	/**

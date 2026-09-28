@@ -83,14 +83,14 @@
 		return gsap
 			.timeline({ defaults: { ease: 'menu' }, onUpdate: paint })
 			.to(panel, { autoAlpha: 1, duration: 0.2, ease: 'power1.out' }, 0)
-			.to(overlay, { autoAlpha: DIM, duration: 0.5, ease: 'power2.out' }, 0)
-			.to(mask, { left: 0, radius: g.r, duration: 0.5 }, 0)
-			.to(mask, { bottom: 0, duration: 0.6 }, 0.3)
+			.to(overlay, { autoAlpha: DIM, duration: 0.4, ease: 'power2.out' }, 0)
+			.to(mask, { left: 0, radius: g.r, duration: 0.38 }, 0)
+			.to(mask, { bottom: 0, duration: 0.45 }, 0.22)
 			// No fade: each link rises into view from behind its line.
-			.to(g.links, { yPercent: 0, duration: 0.7, stagger: 0.05, ease: 'power3.out' }, 0.4)
-			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 0.6)
+			.to(g.links, { yPercent: 0, duration: 0.55, stagger: 0.04, ease: 'power3.out' }, 0.3)
+			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power3.out' }, 0.45)
 			// Hidden elements can't take focus, so move it in once the links show.
-			.call(focusFirst, undefined, 0.5);
+			.call(focusFirst, undefined, 0.4);
 	}
 
 	/**

@@ -40,10 +40,10 @@
 /* ------------------------------- App tokens -------------------------------- */
 :root {
 	--grid-columns: 12;
-	/* 20px margin, 10px gutter at the 1440 design width, scaling with the
+	/* 20px margin, 12px gutter at the 1440 design width, scaling with the
 	   Osmo system from there. */
 	--grid-margin: calc(var(--size-font) * 1.25);
-	--grid-gutter: calc(var(--size-font) * 0.625);
+	--grid-gutter: calc(var(--size-font) * 0.75);
 	--stage-radius: 2px;
 	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);

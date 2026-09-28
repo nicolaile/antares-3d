@@ -70,12 +70,15 @@
 				}
 			);
 
-			// 80px below its place on the way in, 80px above on the way out.
+			// Up to 80px below its place on the way in, 80px above on the way
+			// out — less when the panel is capped short, so the cards never
+			// drift past its edges.
+			const drift = () => Math.min(unit() * 5, Math.max(0, (panel.offsetHeight - list.offsetHeight) / 2 - unit()));
 			gsap.fromTo(
 				list,
-				{ y: () => unit() * 5 },
+				{ y: () => drift() },
 				{
-					y: () => unit() * -5,
+					y: () => -drift(),
 					ease: 'none',
 					scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
 				}
@@ -132,14 +135,17 @@
 {/if}
 
 <style>
-	/* 832px tall at 1440. */
+	/* 832px tall at 1440, capped to the screen. */
 	.explorer {
 		position: relative;
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-columns: subgrid;
 		align-items: center;
-		height: calc(var(--size-font) * 52);
+		/* Never taller than the screen (less the page margin top and bottom):
+		   the height scales with width, so on wide monitors 52 units would
+		   outgrow the window and the model, framed to the panel, with it. */
+		height: min(calc(var(--size-font) * 52), calc(100svh - var(--grid-margin) * 2));
 		background: var(--grey-100);
 	}
 

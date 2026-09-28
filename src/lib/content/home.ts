@@ -50,7 +50,9 @@ const features: Feature[] = [
 		title: 'Sodium Heat Pipes',
 		text: 'Sodium-filled pipes move heat to the power conversion system by capillary action, with no pumps and no primary coolant loop.',
 		thumb: lineDiagram,
-		shot: { pos: [-0.5, 0.85, 0.5], target: [0, 0.12, 0], spin: Math.PI * 0.6 }
+		// Camera and target lowered together: the same angle, with the model
+		// sitting higher in the frame so the vessel's base clears the panel.
+		shot: { pos: [-0.5, 0.73, 0.5], target: [0, 0, 0], spin: Math.PI * 0.6 }
 	},
 	{
 		title: 'Primary Heat Exchanger',

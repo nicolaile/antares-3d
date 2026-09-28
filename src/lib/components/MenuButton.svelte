@@ -5,6 +5,8 @@
 	Osmo system; the dots are vector so they stay crisp at any size.
 -->
 <script lang="ts">
+	import { gsap, prefersReducedMotion } from '$lib/scroll';
+
 	let {
 		open = false,
 		controls,
@@ -15,6 +17,21 @@
 		controls: string;
 		onclick: (e: MouseEvent) => void;
 	} = $props();
+
+	let button: HTMLButtonElement;
+
+	/**
+	 * A tiny bounce on every press: a quick dip to 95%, then a spring back
+	 * with a slight overshoot. GSAP rather than :active, because a quick
+	 * click holds :active for only a few milliseconds.
+	 */
+	function bounce() {
+		if (prefersReducedMotion()) return;
+		gsap
+			.timeline({ overwrite: true })
+			.to(button, { scale: 0.95, duration: 0.08, ease: 'power2.out' })
+			.to(button, { scale: 1, duration: 0.45, ease: 'back.out(3)' });
+	}
 
 	/**
 	 * Each dot's resting place (a square, 5px out on each axis) and its hover
@@ -36,7 +53,11 @@
 	aria-expanded={open}
 	aria-controls={controls}
 	aria-label={open ? 'Close menu' : 'Open menu'}
-	{onclick}
+	bind:this={button}
+	onclick={(e) => {
+		bounce();
+		onclick(e);
+	}}
 >
 	<!-- 37-unit box centred on 0,0, so a dot's resting place is its offset. -->
 	<svg viewBox="-18.5 -18.5 37 37" aria-hidden="true">

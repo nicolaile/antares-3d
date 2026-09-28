@@ -2,7 +2,9 @@
 	import Grid from '$lib/components/Grid.svelte';
 	import MissionIntro from '$lib/sections/MissionIntro.svelte';
 	import R1Microreactor from '$lib/sections/R1Microreactor.svelte';
+	import Footer from '$lib/modules/Footer.svelte';
 	import { mission, r1 } from '$lib/content/home';
+	import { footer } from '$lib/content/site';
 </script>
 
 <svelte:head>
@@ -19,6 +21,8 @@
 	<MissionIntro {...mission} />
 	<R1Microreactor {...r1} />
 </main>
+
+<Footer {...footer} />
 
 <style>
 	.page {

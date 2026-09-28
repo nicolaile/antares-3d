@@ -1,8 +1,16 @@
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CustomEase } from 'gsap/CustomEase';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, CustomEase);
+
+/**
+ * The menu's curve: a slow start, a long confident middle, a soft landing.
+ * Also written as `cubic-bezier(0.48, 0.02, 0.03, 0.98)` wherever CSS
+ * transitions use it (MenuButton). Keep the two in step.
+ */
+CustomEase.create('menu', '0.48, 0.02, 0.03, 0.98');
 
 let lenis: Lenis | null = null;
 let refs = 0;

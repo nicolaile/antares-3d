@@ -51,4 +51,14 @@
 		margin: 0;
 		color: var(--grey-700);
 	}
+
+	/* One phone column is too narrow for a figure. */
+	@media screen and (max-width: 767px) {
+		dt {
+			grid-column: 1 / span 4;
+		}
+		dd {
+			grid-column: 5 / -1;
+		}
+	}
 </style>

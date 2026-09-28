@@ -1,0 +1,136 @@
+<!--
+	@component
+	The round menu toggle: four 3px dots in a square that glide to the centre
+	and merge into one when the menu is open. 37px at 1440, scaling with the
+	Osmo system; the dots are vector so they stay crisp at any size.
+-->
+<script lang="ts">
+	let {
+		open = false,
+		controls,
+		onclick
+	}: {
+		open?: boolean;
+		/** id of the panel this button shows and hides. */
+		controls: string;
+		onclick: () => void;
+	} = $props();
+
+	/**
+	 * Each dot's resting place (a square, 5px out on each axis) and its hover
+	 * place (a diamond, 7px out on one axis) — the square turned 45°, each
+	 * dot moving a quarter-turn to its neighbour's side.
+	 */
+	const DOTS = [
+		{ x: -5, y: -5, hx: 0, hy: -7 },
+		{ x: 5, y: -5, hx: 7, hy: 0 },
+		{ x: -5, y: 5, hx: -7, hy: 0 },
+		{ x: 5, y: 5, hx: 0, hy: 7 }
+	] as const;
+</script>
+
+<button
+	type="button"
+	class="menu-button"
+	class:open
+	aria-expanded={open}
+	aria-controls={controls}
+	aria-label={open ? 'Close menu' : 'Open menu'}
+	{onclick}
+>
+	<!-- 37-unit box centred on 0,0, so a dot's resting place is its offset. -->
+	<svg viewBox="-18.5 -18.5 37 37" aria-hidden="true">
+		{#each DOTS as dot, i (i)}
+			<rect
+				class="dot"
+				x="-1.5"
+				y="-1.5"
+				width="3"
+				height="3"
+				style:--x="{dot.x}px"
+				style:--y="{dot.y}px"
+				style:--hx="{dot.hx}px"
+				style:--hy="{dot.hy}px"
+			/>
+		{/each}
+	</svg>
+</button>
+
+<style>
+	.menu-button {
+		/* Keep in step with CustomEase 'menu' in $lib/scroll. */
+		--ease: cubic-bezier(0.48, 0.02, 0.03, 0.98);
+		position: relative;
+		display: block;
+		width: calc(var(--size-font) * 2.3125);
+		height: calc(var(--size-font) * 2.3125);
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		color: var(--grey-950);
+		cursor: pointer;
+		/* Frosted glass behind the translucent fill. Only a 37px circle, so
+		   the blur costs next to nothing. */
+		-webkit-backdrop-filter: blur(4px);
+		backdrop-filter: blur(4px);
+	}
+	/* Grey 300 at 40%, on its own layer: the colour system allows no
+	   translucent colour values, so opacity does it — and the layer
+	   cross-fades to solid white when open. */
+	.menu-button::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: var(--grey-300);
+		opacity: 0.4;
+		transition:
+			opacity 300ms var(--ease),
+			background 300ms var(--ease);
+	}
+	/* Open: solid white, matching the panel it opened. */
+	.open::before,
+	.open:hover::before {
+		background: var(--grey-0);
+		opacity: 1;
+	}
+	.menu-button:focus-visible {
+		outline: 1px solid var(--grey-950);
+		outline-offset: 2px;
+	}
+	svg {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	/* Rest: a square of dots. Hover: turned into a diamond. Open: all four
+	   pulled to the centre, where they overlap into one. All on the menu
+	   curve. */
+	.dot {
+		fill: currentColor;
+		transform: translate(var(--x), var(--y));
+		transition: transform 300ms var(--ease);
+	}
+	/* Real pointers only: on touch, a tap would leave the diamond stuck. */
+	@media (hover: hover) {
+		.menu-button:not(.open):hover .dot {
+			transform: translate(var(--hx), var(--hy));
+		}
+	}
+	/* Merging into one on open takes a little longer: 400ms. A transition
+	   follows the state it's going to, so hover and closing keep 300ms. */
+	.open .dot {
+		transform: translate(0, 0);
+		transition-duration: 400ms;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dot {
+			transition: none;
+		}
+	}
+</style>

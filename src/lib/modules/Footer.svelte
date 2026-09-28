@@ -1,0 +1,138 @@
+<!--
+	@component
+	The site footer: a statement and aside at the top, then a rule, two link
+	columns and the legal line pinned to the bottom. Full-bleed and at least
+	one screen tall. Content comes from `$lib/content/site`, so every page
+	gets the same footer with a single `<Footer {...footer} />`.
+-->
+<script lang="ts">
+	import Row from '$lib/layout/Row.svelte';
+	import Cell from '$lib/layout/Cell.svelte';
+	import Logo from '$lib/components/Logo.svelte';
+	import type { Link } from '$lib/content/site';
+
+	let {
+		statement,
+		aside,
+		nav,
+		social,
+		legal
+	}: {
+		statement: string[];
+		aside?: string;
+		nav: Link[];
+		social: Link[];
+		legal: { owner: string; links: Link[] };
+	} = $props();
+
+	const year = new Date().getFullYear();
+</script>
+
+<footer class="footer">
+	<Row gap={40}>
+		<Cell span={6} tablet={{ span: 8 }}>
+			<p class="statement type-heading-3">
+				{#each statement as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
+			</p>
+		</Cell>
+		{#if aside}
+			<Cell start={9} span={4} tablet={{ start: 7, span: 6 }}>
+				<p class="aside type-body-large">{aside}</p>
+			</Cell>
+		{/if}
+	</Row>
+
+	<div class="bottom">
+		<Row gap={40}>
+			<Cell span={1} tablet={{ span: 2 }} mobile={{ span: 2 }}>
+				<a class="home" href="/" aria-label="Antares home"><Logo /></a>
+			</Cell>
+			<Cell start={3} span={2} tablet={{ start: 3, span: 4 }} mobile={{ start: 1, span: 6 }}>
+				<nav aria-label="Site">
+					<ul class="links type-body">
+						{#each nav as link (link.label)}
+							<li><a href={link.href}>{link.label}</a></li>
+						{/each}
+					</ul>
+				</nav>
+			</Cell>
+			<Cell start={5} span={2} tablet={{ start: 7, span: 4 }} mobile={{ start: 7, span: 6 }}>
+				<ul class="links type-body" aria-label="Social">
+					{#each social as link (link.label)}
+						<li><a href={link.href} rel="noopener">{link.label}</a></li>
+					{/each}
+				</ul>
+			</Cell>
+		</Row>
+		<p class="legal type-body">
+			© {year}. {legal.owner}
+			{#each legal.links as link, i (link.label)}<a href={link.href}>{link.label}</a>{i < legal.links.length - 1 ? ', ' : '.'}{/each}
+		</p>
+	</div>
+</footer>
+
+<style>
+	/* Full-bleed: sits outside the page's padded container and carries its
+	   own margin, so its grid lines match the page's. */
+	.footer {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: var(--space-120);
+		/* A screen tall, but never taller than 660px at 1440 — on a tall
+		   monitor the footer would otherwise be mostly empty. */
+		min-height: min(100svh, calc(var(--size-font) * 41.25));
+		box-sizing: border-box;
+		padding: var(--space-40) var(--grid-margin) var(--space-20);
+		background: var(--grey-950);
+		color: var(--grey-400);
+	}
+
+	.statement,
+	.aside,
+	.legal {
+		margin: 0;
+	}
+	.statement {
+		color: var(--grey-0);
+	}
+
+	.bottom {
+		display: grid;
+		gap: var(--space-120);
+		padding-top: var(--space-20);
+		border-top: 1px solid var(--grey-700);
+	}
+
+	.links {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	a {
+		color: inherit;
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+	a:hover,
+	a:focus-visible {
+		color: var(--grey-0);
+	}
+	a:focus-visible {
+		outline: 1px solid var(--grey-0);
+		outline-offset: 2px;
+	}
+	/* 40px at 1440, top-aligned with the first link. */
+	.home {
+		display: block;
+		width: var(--space-40);
+		color: var(--grey-0);
+	}
+
+	.legal a {
+		margin-left: 0.25em;
+	}
+	.legal a + a {
+		margin-left: 0;
+	}
+</style>

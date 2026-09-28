@@ -1,9 +1,9 @@
 <!--
 	@component
 	The live 3D model on a panel, with a numbered feature list beside it.
-	Selecting a feature moves the camera to that feature's shot; the list
-	also steps through on its own until paused. Place in a full-width
-	`subgrid` cell.
+	Selecting a feature moves the camera to that feature's shot. Nothing
+	changes on its own: the reader picks. The button pauses the model's slow
+	turn. Place in a full-width `subgrid` cell.
 -->
 <script lang="ts" module>
 	import type { Picture as PictureSource } from 'vite-imagetools';
@@ -26,18 +26,15 @@
 	import Scene from '$lib/components/Scene.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import type { ModelViewer } from '$lib/three/ModelViewer';
-	import { prefersReducedMotion } from '$lib/scroll';
+	import { gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
 
-	let {
-		features,
-		/** Seconds each feature stays open while playing. */
-		interval = 6
-	}: { features: Feature[]; interval?: number } = $props();
+	let { features }: { features: Feature[] } = $props();
 
 	let active = $state(0);
 	let paused = $state(false);
-	let inView = $state(false);
 	let panel: HTMLElement;
+	let viewport: HTMLElement;
+	let list: HTMLElement;
 	let viewer: ModelViewer | null = $state(null);
 	// The render tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
@@ -45,26 +42,58 @@
 	onMount(() => {
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
-		const io = new IntersectionObserver(([entry]) => (inView = entry.isIntersecting), {
-			threshold: 0.3
-		});
-		io.observe(panel);
-		return () => io.disconnect();
+		// Scroll reveal, scrubbed to scroll so it plays backwards too:
+		// - the model fades and scales up into place;
+		// - the card list drifts slower than the page, a light parallax.
+		// Only opacity and transforms move — the canvas never resizes, so the
+		// model doesn't re-render at a new size each frame.
+		const ctx = gsap.context(() => {
+			if (prefersReducedMotion()) return;
+			const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
+			// Long range, small moves and a heavy scrub lag: the model drifts
+			// into place rather than snapping to the scroll.
+			gsap.fromTo(
+				viewport,
+				{ autoAlpha: 0, scale: 0.96, y: () => unit() * 3 },
+				{
+					autoAlpha: 1,
+					scale: 1,
+					y: 0,
+					ease: 'sine.out',
+					scrollTrigger: {
+						trigger: panel,
+						start: 'top bottom',
+						end: 'top 20%',
+						scrub: 1.2,
+						invalidateOnRefresh: true
+					}
+				}
+			);
+
+			// 80px below its place on the way in, 80px above on the way out.
+			gsap.fromTo(
+				list,
+				{ y: () => unit() * 5 },
+				{
+					y: () => unit() * -5,
+					ease: 'none',
+					scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
+				}
+			);
+		}, panel);
+		// Webfonts shift everything above the panel once they land.
+		document.fonts.ready.then(() => ScrollTrigger.refresh());
+
+		return () => {
+			ctx.revert();
+		};
 	});
 
-	// Step to the next feature. Re-arms on every change, so picking one by
-	// hand gives it the full interval before playback moves on.
-	$effect(() => {
-		const current = active;
-		if (paused || !inView || features.length < 2) return;
-		const id = setTimeout(() => (active = (current + 1) % features.length), interval * 1000);
-		return () => clearTimeout(id);
-	});
 </script>
 
 <div class="explorer" bind:this={panel}>
 	<Cell span={3} tablet={{ span: 5 }}>
-		<ol class="list">
+		<ol class="list" bind:this={list}>
 			{#each features as feature, i (feature.title)}
 				<FeatureCard
 					index={i}
@@ -79,13 +108,13 @@
 	</Cell>
 
 	<Cell start={4} span={9} tablet={{ start: 6, span: 7 }} self="stretch">
-		<div class="viewport">
+		<div class="viewport" bind:this={viewport}>
 			<Scene shot={features[active].shot} {paused} onready={(v) => (viewer = v)} />
 		</div>
 	</Cell>
 
 	<div class="pause">
-		<IconButton label={paused ? 'Play' : 'Pause'} pressed={paused} onclick={() => (paused = !paused)}>
+		<IconButton label={paused ? 'Resume rotation' : 'Pause rotation'} pressed={paused} onclick={() => (paused = !paused)}>
 			<svg viewBox="0 0 12 12" aria-hidden="true">
 				{#if paused}
 					<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
@@ -114,10 +143,11 @@
 		background: var(--grey-100);
 	}
 
-	/* Inset from the panel edge; the right edge stays on the column line. */
+	/* Inset from the panel edge; 301px wide at 1440. */
 	.list {
 		display: grid;
-		gap: var(--space-8);
+		width: calc(var(--size-font) * 18.8125);
+		gap: var(--space-4);
 		margin: 0 0 0 var(--space-20);
 		padding: 0;
 		list-style: none;
@@ -145,6 +175,7 @@
 			grid-row: 2;
 		}
 		.list {
+			width: auto;
 			margin: 0 var(--space-20);
 		}
 		.viewport {

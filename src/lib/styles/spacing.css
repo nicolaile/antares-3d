@@ -17,9 +17,11 @@
 	--space-4: calc(var(--size-font) * 0.25);
 	/** Between a heading and the line under it; stacked cards. */
 	--space-8: calc(var(--size-font) * 0.5);
-	/** Card padding (inline), caption under media. */
+	/** Caption under media. */
 	--space-12: calc(var(--size-font) * 0.75);
-	/** Card padding (block), panel insets, label to content. */
+	/** Feature card padding. */
+	--space-15: calc(var(--size-font) * 0.9375);
+	/** Panel insets, label to content. */
 	--space-20: calc(var(--size-font) * 1.25);
 	/** Between blocks inside a section. */
 	--space-40: calc(var(--size-font) * 2.5);

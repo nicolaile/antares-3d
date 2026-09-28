@@ -1,7 +1,7 @@
 /*
  * Colour system — the only place colour is defined.
  *
- * One grey scale, six steps, numbered by darkness: 0 is white, 950 is the
+ * One grey scale, seven steps, numbered by darkness: 0 is white, 950 is the
  * darkest. Components use these tokens directly; no hex, rgb(), hsl() or
  * color-mix() anywhere else. `npm run check` fails on them
  * (scripts/check-system.mjs).
@@ -19,6 +19,8 @@
 	--grey-100: #eeeeee;
 	/** Hover fills and hairlines. */
 	--grey-200: #dedede;
+	/** Controls floating over content: the menu button. */
+	--grey-300: #d1d1d1;
 	/** Tertiary text, slider tracks, borders. */
 	--grey-400: #acabad;
 	/** Secondary text, spec labels. */

@@ -112,6 +112,10 @@ export interface ModelViewerOptions {
 	 * normals, beauty) paid for it. Default on.
 	 */
 	mergeMeshes?: boolean;
+	/** Cap on the device pixel ratio. Phones pass less: their GPUs pay per pixel. Default 2. */
+	maxPixelRatio?: number;
+	/** Resolution of the occlusion pass relative to the frame; 0.5 is a quarter of the pixels. Default 1. */
+	aoScale?: number;
 }
 
 /**
@@ -196,6 +200,8 @@ const STUDIO_KEYS = Object.keys(STUDIO_PRESET) as (keyof RenderParams)[];
  */
 /** The lens the establishing shot is composed for, in degrees. */
 const DEFAULT_FOV = 38;
+/** Draw rate for a turn that is only the slow auto-rotation. */
+const SPIN_FPS = 30;
 
 export class ModelViewer {
 	readonly scene = new THREE.Scene();
@@ -270,6 +276,22 @@ export class ModelViewer {
 	private observer: ResizeObserver;
 	private disposed = false;
 
+	/*
+	 * Render on demand. Every tick still advances the rotation, but the frame
+	 * is only drawn when something visible changed since the last one — a
+	 * paused model costs nothing. A turn that is only the slow auto-rotation
+	 * is drawn at SPIN_FPS: under a pixel of travel per frame, so 60 buys
+	 * nothing but GPU time.
+	 */
+	private dirty = true;
+	private lastView: number[] = [];
+	private lastSpin = NaN;
+	private lastDrawn = -Infinity;
+	/** Frames actually drawn — for measuring. */
+	framesDrawn = 0;
+	private contextLost = false;
+	private lostHandlers = new Set<() => void>();
+
 	/** Distance that frames the whole model — useful defaults for GSAP tweens. */
 	radius = 10;
 
@@ -283,6 +305,27 @@ export class ModelViewer {
 	private drag = { active: false, x: 0, y: 0 };
 	private dragEndHandlers = new Set<() => void>();
 	private studioHandlers = new Set<(on: boolean) => void>();
+
+	/**
+	 * Fires if the GPU drops the WebGL context — mobile Safari does this to
+	 * backgrounded tabs and under memory pressure. Nothing drawn afterwards
+	 * would show, so the host should dispose this viewer and build another.
+	 */
+	onContextLost(fn: () => void) {
+		this.lostHandlers.add(fn);
+		return () => this.lostHandlers.delete(fn);
+	}
+
+	private handleContextLost = (e: Event) => {
+		e.preventDefault();
+		this.contextLost = true;
+		for (const fn of this.lostHandlers) fn();
+	};
+
+	/** Forces the next tick to draw — for changes made behind the viewer's back, e.g. from the console. */
+	invalidate() {
+		this.dirty = true;
+	}
 
 	/**
 	 * Fires whenever the studio look toggles, however it was toggled — the
@@ -353,7 +396,7 @@ export class ModelViewer {
 		// the antialiasing; multisampling the canvas as well only bought a
 		// second set of sample buffers and a resolve per frame.
 		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2));
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 		this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -466,6 +509,7 @@ export class ModelViewer {
 		this.resize();
 
 		const el = this.renderer.domElement;
+		el.addEventListener('webglcontextlost', this.handleContextLost);
 		el.style.cursor = 'grab';
 		// pan-y keeps vertical touch scrolling alive on mobile; drag is a cursor affordance.
 		el.style.touchAction = 'pan-y';
@@ -747,6 +791,7 @@ export class ModelViewer {
 			disposeScene(envScene);
 		}
 		this.scene.environment = this.envRT.texture;
+		this.invalidate();
 	}
 
 	get isDragging() {
@@ -842,6 +887,7 @@ export class ModelViewer {
 	 * need not keep them ordered.
 	 */
 	setGradientStops(stops: GradientStop[]) {
+		this.invalidate();
 		this.gradientStops = stops.map((s) => ({ position: s.position, color: s.color, alpha: s.alpha }));
 		this.gradient?.setStops(this.gradientStops);
 	}
@@ -902,6 +948,7 @@ export class ModelViewer {
 
 	/** Apply one parameter. `value` is a hex string for `color`, a number otherwise. */
 	setParam(key: keyof RenderParams, value: number | string) {
+		this.invalidate();
 		const m = this.material;
 		const n = typeof value === 'number' ? value : 0;
 		switch (key) {
@@ -1132,6 +1179,13 @@ export class ModelViewer {
 		this.canvasRect = this.container.getBoundingClientRect();
 		this.renderer.setSize(w, h, false);
 		this.composer.setSize(w, h);
+		// composer.setSize just sized occlusion to the full frame; scale it back.
+		const aoScale = this.opts.aoScale ?? 1;
+		if (this.gtao && aoScale < 1) {
+			const pr = this.renderer.getPixelRatio();
+			this.gtao.setSize(Math.round(w * pr * aoScale), Math.round(h * pr * aoScale));
+		}
+		this.invalidate();
 		// composer.setSize just pushed bloom to full resolution — put it back to
 		// half. Full-res bloom is where its blocky mip artifacts come from.
 		if (this.bloom) {
@@ -1141,7 +1195,7 @@ export class ModelViewer {
 	}
 
 	render() {
-		if (this.disposed) return;
+		if (this.disposed || this.contextLost) return;
 		if (this.opts.breathe !== false) {
 			// ~1% of the model's height over a 7s period. The contact shadow
 			// lightens as it rises, which is what sells the motion.
@@ -1184,17 +1238,46 @@ export class ModelViewer {
 		this.renderer.info.reset();
 		if (this.grain) this.grain.uniforms.uTime.value = this.clock.getElapsedTime();
 		if (this.sweep) this.sweep.time = this.clock.getElapsedTime();
+		if (!this.shouldDraw(now)) return;
 		this.contact?.update(this.scene);
 		// One shadow pass per frame, consumed by the first scene render in the
 		// chain; the occlusion pass's own scene render then reuses the map.
 		this.renderer.shadowMap.needsUpdate = true;
 		this.composer.render();
+		this.framesDrawn++;
+	}
+
+	/** Whether anything visible moved since the last drawn frame. */
+	private shouldDraw(now: number) {
+		const c = this.camera.position;
+		const t = this.target;
+		const r = this.root;
+		// Everything a frame depends on apart from the auto-rotation.
+		const view = [
+			c.x, c.y, c.z, t.x, t.y, t.z, this.camera.fov, this.camera.aspect,
+			r.rotation.x, this.scrollRotation.y + this.userRotation.y, r.scale.x, r.position.y,
+			this.gradient?.offset ?? 0
+		];
+		// Effects that change with time alone have to draw every frame.
+		const timed =
+			this.opts.breathe !== false ||
+			!!this.grain?.enabled ||
+			!!(this.sweep?.enabled && this.sweep.grainSpeed > 0);
+		const moved = this.dirty || timed || view.some((v, i) => v !== this.lastView[i]);
+		const spun = this.autoRotation !== this.lastSpin;
+		if (!moved && !(spun && now - this.lastDrawn >= 1 / SPIN_FPS - 0.004)) return false;
+		this.dirty = false;
+		this.lastView = view;
+		this.lastSpin = this.autoRotation;
+		this.lastDrawn = now;
+		return true;
 	}
 
 	dispose() {
 		this.disposed = true;
 		this.observer.disconnect();
 		const el = this.renderer.domElement;
+		el.removeEventListener('webglcontextlost', this.handleContextLost);
 		el.removeEventListener('pointerdown', this.onPointerDown);
 		window.removeEventListener('pointermove', this.onPointerMove);
 		window.removeEventListener('pointerup', this.endDrag);

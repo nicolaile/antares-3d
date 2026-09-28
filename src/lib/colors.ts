@@ -6,8 +6,14 @@
  */
 import source from '$lib/styles/colors.css?raw';
 
-export type ScaleStep = { token: string; step: string; usage: string; hex: string };
+export type ScaleStep = { token: string; family: 'grey' | 'accent'; step: string; usage: string; hex: string };
 
 export const SCALE: ScaleStep[] = [
-	...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--grey-(\d+)):\s*(#[0-9a-fA-F]{3,8})/g)
-].map(([, usage, token, step, hex]) => ({ token, step, usage, hex: hex.toUpperCase() }));
+	...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--(grey|accent)-(\d+)):\s*(#[0-9a-fA-F]{3,8})/g)
+].map(([, usage, token, family, step, hex]) => ({
+	token,
+	family: family as ScaleStep['family'],
+	step,
+	usage,
+	hex: hex.toUpperCase()
+}));

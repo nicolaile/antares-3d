@@ -2,7 +2,8 @@
  * Colour system — the only place colour is defined.
  *
  * One grey scale, seven steps, numbered by darkness: 0 is white, 950 is the
- * darkest. Components use these tokens directly; no hex, rgb(), hsl() or
+ * darkest. One accent, for energy and the markers that carry it — never for
+ * UI chrome. Components use these tokens directly; no hex, rgb(), hsl() or
  * color-mix() anywhere else. `npm run check` fails on them
  * (scripts/check-system.mjs).
  *
@@ -16,7 +17,7 @@
 	/** Page background, text on dark fills. */
 	--grey-0: #ffffff;
 	/** Surfaces: the stage, mode bar, controls panel. */
-	--grey-100: #eeeeee;
+	--grey-100: #f5f5f5;
 	/** Hover fills and hairlines. */
 	--grey-200: #dedede;
 	/** Controls floating over content: the menu button. */
@@ -27,6 +28,8 @@
 	--grey-700: #59585b;
 	/** Primary text and active fills. Warm, never pure black. */
 	--grey-950: #080604;
+	/** Energy: the diagram's markers and the heat moving through it. */
+	--accent-500: #fb5024;
 
 	/* Native form controls (range, checkbox, colour) follow this. */
 	color-scheme: light;

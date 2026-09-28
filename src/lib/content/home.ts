@@ -11,7 +11,6 @@ import facility from '$lib/assets/images/intro1.jpg?w=1600;1200;800&enhanced';
 import lineDiagram from '$lib/assets/images/render-line-diagram.png?w=540;270&enhanced';
 import sideDiagram from '$lib/assets/images/render-line-diagram-02.png?w=380;190&enhanced';
 import component01 from '$lib/assets/images/component-01.jpg?w=932;466&enhanced';
-import xray from '$lib/assets/images/x-ray-diagram.jpg?w=2400;1800;1200;800&enhanced';
 
 import type { Feature } from '$lib/modules/ReactorExplorer.svelte';
 
@@ -80,8 +79,8 @@ export const r1 = {
 		text: 'Engineered to bypass civil grid reliance, the R1 delivers megawatt-class continuous baseload power inside a standardized ISO transport envelope.'
 	},
 	tiles: [
-		{ src: component01, alt: 'R1 control electronics board', caption: 'R1 Microreactor' },
-		{ src: undefined, alt: '', caption: 'R1 Microreactor' }
+		{ src: component01, alt: 'R1 control electronics board' },
+		{ src: undefined, alt: '' }
 	],
-	diagram: { src: xray, alt: 'Diagram of the R1 power conversion system' }
+	diagram: { alt: 'Diagram of the R1 power conversion system' }
 };

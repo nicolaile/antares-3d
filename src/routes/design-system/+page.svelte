@@ -71,7 +71,7 @@
 			{#each SCALE as color (color.token)}
 				<li class="color">
 					<div class="chip" style:background="var({color.token})"></div>
-					<h3 class="type-heading-3 type-tabular">{color.step}</h3>
+					<h3 class="type-heading-3 type-tabular">{color.family === 'accent' ? 'Accent' : color.step}</h3>
 					<p class="type-label type-tabular">{color.hex}</p>
 					<code class="type-body class">{color.token}</code>
 					<p class="type-body usage">{color.usage}</p>

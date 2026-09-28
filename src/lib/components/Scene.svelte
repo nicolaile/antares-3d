@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ModelViewer } from '$lib/three/ModelViewer';
 	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
-	import type { RenderParams } from '$lib/three/ModelViewer';
+	// Types only: three.js itself loads on demand, as its own chunk (see start()).
+	import type { ModelViewer, RenderParams } from '$lib/three/ModelViewer';
+	import poster from '$lib/assets/images/model-poster.webp?w=2560;1600;900&enhanced';
 	import type { Shot } from '$lib/three/shot';
 	import { LOOK } from '$lib/three/look';
 
@@ -22,10 +23,25 @@
 	} = $props();
 
 
+	/*
+	 * The poster is a render of the opening shot, shown until the live model
+	 * is ready, and again if WebGL fails or the context is lost. It scales the
+	 * way the camera does: the model fills a fixed share of the frame height,
+	 * until the frame is too narrow and the lens widens to fit the width.
+	 * POSTER_FIT is that share — the bounding sphere's height over the frame
+	 * height, measured from the viewer when the poster was captured. Recapture
+	 * both together if the opening shot, lens or look change.
+	 */
+	const POSTER_FIT = 0.9357;
+
 	let host: HTMLDivElement;
 	let viewer: ModelViewer | null = $state(null);
 	let loaded = $state(false);
 	let progress = $state(0);
+	/** False once the live canvas has faded in over the poster. */
+	let posterShown = $state(true);
+	/** WebGL couldn't start: the poster stays, the loading line goes. */
+	let failed = $state(false);
 
 	$effect(() => {
 		if (viewer) viewer.spinning = !paused;
@@ -54,113 +70,8 @@
 	onMount(() => {
 		// onMount never runs during SSR, so WebGL is safely client-only.
 		const reduce = prefersReducedMotion();
-		const v = new ModelViewer(host, {
-			url: src,
-			hdr: '/hdr/studio_small_09_1k.hdr',
-			// Off. The CAD model has coincident surfaces (parts that touch exactly);
-			// they resolve deterministically while nothing moves, but the idle
-			// drift re-rolled the depth test every frame and made those seams
-			// flicker continuously. Measured: frozen = 0 differing pixels,
-			// breathing = ~25k.
-			breathe: false,
-			// ~80s per revolution. Slow enough to read as presentation rather
-			// than animation; raise for a faster turn.
-			autoRotate: 0.08,
-			onProgress: (f) => (progress = f),
-			material: 'satin',
-			color: 0x949494,
-			// Both were sitting at zero and contributing nothing: bloom changed 0
-			// of 19.5M framebuffer bytes, grain only the last bit (max channel
-			// difference 1). Omitting the passes entirely rather than running
-			// them at zero. Their sliders hide themselves via availableParams().
-			bloom: false,
-			grain: false,
-			// The look, as dialled in through the controls panel.
-			params: {
-				roughness: 0.43,
-				metalness: 0.96,
-				clearcoat: 0.55,
-				coatRoughness: 1,
-				materialEnv: 3,
-				key: 14,
-				rim: 5,
-				ambient: 0,
-				environment: 1.15,
-				exposure: 1.13,
-				ao: 1.15,
-				// Parks the whole ramp at its first stop, so the model reads as a
-				// flat silhouette rather than a shaded gradient.
-				gradientOffset: 1
-			},
-			// SSR is built and wired but off: measured ~20 fps for no visible gain
-			// on this matte coating — the environment map already carries its
-			// reflections. Flip to `{ opacity: 0.35 }` to try it on a glossier preset.
-			ssr: false,
-			// Both ground shadows off. The contact shadow sat at opacity 0 —
-			// contributing zero pixels (verified by framebuffer diff) while still
-			// rendering all 153 meshes to a depth target plus four blur passes
-			// every frame: 63 draw calls and 160k triangles for nothing.
-			groundShadow: false,
-			contactShadow: false,
-			// Off: even fine world-space noise reads as mottling on a shell this
-			// large and smooth. Raise above 0 only for close-up hero shots.
-			surfaceVariation: 0,
-			// Built but off — toggled from the controls panel.
-			// Pointer tracking off: the ramp is parked at a fixed offset (below),
-			// and letting the cursor sweep it would undo that on first move.
-			gradientMap: { on: false, space: 'oklab', repeat: 'none', followPointer: false },
-			// Studio look (backdrop sweep + softbox shadow), separate from the
-			// gradient map. Also built but off; the toggle applies its own
-			// lighting preset over the values above and undoes it on the way out.
-			studio: { on: false },
-			// DoF off: stock BokehPass has no in-focus range, so the whole model
-			// goes soft, and its blurred alpha fringes the silhouette against a
-			// light stage. Kept wired for a darker backdrop or a hero still.
-			dof: false
-		});
+		const light = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
 		initScroll();
-		let offTick = () => {};
-		let resetTween: gsap.core.Tween | null = null;
-		let reveal: gsap.core.Timeline | null = null;
-
-		// Letting go hands the model back to the timeline: ease the drag offset
-		// out to zero.
-		//
-		// Do NOT gate this on `resetTween.isActive()`. GSAP's `isActive()` tests
-		// whether "now" falls inside the tween's time window, not whether it is
-		// still alive — a killed tween keeps reporting true until its original
-		// duration elapses. Gating on it silently swallowed the reset whenever
-		// the model was re-grabbed within 1.6s of a release. Killing any
-		// in-flight tween outright is both simpler and correct.
-		const releaseDrag = () => {
-			if (v.isDragging || v.userRotationSettled) return;
-			resetTween?.kill();
-			v.settleUserRotation();
-			resetTween = gsap.to(v.userRotation, {
-				x: 0,
-				y: 0,
-				duration: 1.6,
-				ease: 'power2.out'
-			});
-		};
-		// Grabbing again cancels an in-flight reset so the two don't fight.
-		const cancelReset = () => {
-			resetTween?.kill();
-			// Grabbing during the reveal takes over cleanly instead of fighting it.
-			reveal?.kill();
-		};
-
-		// Dev-only handle for tuning feel from the console, e.g.
-		// __viewer.userRotation.x = 0.5 to watch the reset run.
-		if (import.meta.env.DEV) {
-			(window as unknown as Record<string, unknown>).__viewer = v;
-		}
-
-		// Driven by the viewer's own drag-end event, which fires wherever the
-		// pointer was released — a canvas `pointerup` misses off-canvas releases.
-		const canvas = v.renderer.domElement;
-		canvas.addEventListener('pointerdown', cancelReset);
-		const offDragEnd = v.onDragEnd(releaseDrag);
 
 		// Off-screen, the page is still scrolling on the same ticker; skip the
 		// frame entirely rather than rendering a canvas nobody can see.
@@ -168,50 +79,204 @@
 		const io = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
 		io.observe(host);
 
-		v.load().then(() => {
-			// The final look, after the studio preset has had its say. Before
-			// `onready`, so the controls panel reads these as its baseline.
-			for (const [k, value] of Object.entries(LOOK)) {
-				v.setParam(k as keyof RenderParams, value as number | string);
+		let unmounted = false;
+		let stop: (() => void) | null = null;
+		let rebuilds = 0;
+
+		/** Builds a viewer and wires it up; `stop` tears exactly this one down. */
+		async function start() {
+			const { ModelViewer } = await import('$lib/three/ModelViewer');
+			if (unmounted) return;
+			let v: ModelViewer;
+			try {
+				v = new ModelViewer(host, {
+					url: src,
+					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
+					hdr: '/hdr/studio_small_09_512.hdr',
+					// Phones: GPUs pay per pixel, so fewer of them, and occlusion at half size.
+					maxPixelRatio: light ? 1.5 : 2,
+					aoScale: light ? 0.5 : 1,
+					// Off. The CAD model has coincident surfaces (parts that touch exactly);
+					// they resolve deterministically while nothing moves, but the idle
+					// drift re-rolled the depth test every frame and made those seams
+					// flicker continuously. Measured: frozen = 0 differing pixels,
+					// breathing = ~25k.
+					breathe: false,
+					// ~80s per revolution. Slow enough to read as presentation rather
+					// than animation; raise for a faster turn.
+					autoRotate: 0.08,
+					onProgress: (f) => (progress = f),
+					material: 'satin',
+					color: 0x949494,
+					// Both were sitting at zero and contributing nothing: bloom changed 0
+					// of 19.5M framebuffer bytes, grain only the last bit (max channel
+					// difference 1). Omitting the passes entirely rather than running
+					// them at zero. Their sliders hide themselves via availableParams().
+					bloom: false,
+					grain: false,
+					// The look, as dialled in through the controls panel.
+					params: {
+						roughness: 0.43,
+						metalness: 0.96,
+						clearcoat: 0.55,
+						coatRoughness: 1,
+						materialEnv: 3,
+						key: 14,
+						rim: 5,
+						ambient: 0,
+						environment: 1.15,
+						exposure: 1.13,
+						ao: 1.15,
+						// Parks the whole ramp at its first stop, so the model reads as a
+						// flat silhouette rather than a shaded gradient.
+						gradientOffset: 1
+					},
+					// SSR is built and wired but off: measured ~20 fps for no visible gain
+					// on this matte coating — the environment map already carries its
+					// reflections. Flip to `{ opacity: 0.35 }` to try it on a glossier preset.
+					ssr: false,
+					// Both ground shadows off. The contact shadow sat at opacity 0 —
+					// contributing zero pixels (verified by framebuffer diff) while still
+					// rendering all 153 meshes to a depth target plus four blur passes
+					// every frame: 63 draw calls and 160k triangles for nothing.
+					groundShadow: false,
+					contactShadow: false,
+					// Off: even fine world-space noise reads as mottling on a shell this
+					// large and smooth. Raise above 0 only for close-up hero shots.
+					surfaceVariation: 0,
+					// Built but off — toggled from the controls panel.
+					// Pointer tracking off: the ramp is parked at a fixed offset (below),
+					// and letting the cursor sweep it would undo that on first move.
+					gradientMap: { on: false, space: 'oklab', repeat: 'none', followPointer: false },
+					// Studio look (backdrop sweep + softbox shadow), separate from the
+					// gradient map. Also built but off; the toggle applies its own
+					// lighting preset over the values above and undoes it on the way out.
+					studio: { on: false },
+					// DoF off: stock BokehPass has no in-focus range, so the whole model
+					// goes soft, and its blurred alpha fringes the silhouette against a
+					// light stage. Kept wired for a darker backdrop or a hero still.
+					dof: false
+				});
+			} catch {
+				failed = true;
+				return;
 			}
-			frame(v, shot, true);
-			v.spinning = !paused;
-			viewer = v;
-			loaded = true;
-			onready?.(v);
-			offTick = onTick(() => {
-				if (visible) v.render();
+			let offTick = () => {};
+			let resetTween: gsap.core.Tween | null = null;
+			let reveal: gsap.core.Timeline | null = null;
+
+			// Letting go hands the model back to the timeline: ease the drag offset
+			// out to zero.
+			//
+			// Do NOT gate this on `resetTween.isActive()`. GSAP's `isActive()` tests
+			// whether "now" falls inside the tween's time window, not whether it is
+			// still alive — a killed tween keeps reporting true until its original
+			// duration elapses. Gating on it silently swallowed the reset whenever
+			// the model was re-grabbed within 1.6s of a release. Killing any
+			// in-flight tween outright is both simpler and correct.
+			const releaseDrag = () => {
+				if (v.isDragging || v.userRotationSettled) return;
+				resetTween?.kill();
+				v.settleUserRotation();
+				resetTween = gsap.to(v.userRotation, {
+					x: 0,
+					y: 0,
+					duration: 1.6,
+					ease: 'power2.out'
+				});
+			};
+			// Grabbing again cancels an in-flight reset so the two don't fight.
+			// The reveal is only a crossfade, so it can finish under the drag.
+			const cancelReset = () => resetTween?.kill();
+
+			// Dev-only handle for tuning feel from the console, e.g.
+			// __viewer.userRotation.x = 0.5 to watch the reset run.
+			if (import.meta.env.DEV) {
+				(window as unknown as Record<string, unknown>).__viewer = v;
+			}
+
+			// Driven by the viewer's own drag-end event, which fires wherever the
+			// pointer was released — a canvas `pointerup` misses off-canvas releases.
+			const canvas = v.renderer.domElement;
+			canvas.addEventListener('pointerdown', cancelReset);
+			const offDragEnd = v.onDragEnd(releaseDrag);
+
+			v.load().then(() => {
+				// The final look, after the studio preset has had its say. Before
+				// `onready`, so the controls panel reads these as its baseline.
+				for (const [k, value] of Object.entries(LOOK)) {
+					v.setParam(k as keyof RenderParams, value as number | string);
+				}
+				frame(v, shot, true);
+				v.spinning = !paused;
+				viewer = v;
+				loaded = true;
+				onready?.(v);
+				offTick = onTick(() => {
+					if (visible) v.render();
+				});
+
+				// Reveal: the poster already shows this exact frame, so the live
+				// canvas simply crossfades in over it — any motion here would
+				// double the image. The poster drops once the canvas is opaque.
+				reveal = gsap.timeline({ onComplete: () => (posterShown = false) });
+				reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.3 : 0.6, ease: 'power1.out' }, 0);
+			}).catch(() => {
+				// The model or lighting didn't arrive: the poster is the model.
+				failed = true;
 			});
 
-			// Reveal: fade up while the model settles from a slight scale and
-			// quarter-turn. userRotation ends at 0, so it hands off cleanly to
-			// the drag/reset logic. Under reduced motion it is a plain fade.
-			reveal = gsap.timeline();
-			reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.6 : 1.4, ease: 'power2.out' }, 0);
-			if (!reduce) {
-				reveal
-					.from(v.root.scale, { x: 0.94, y: 0.94, z: 0.94, duration: 1.8, ease: 'power3.out' }, 0)
-					.from(v.userRotation, { y: -0.35, duration: 2.0, ease: 'power3.out' }, 0);
-			}
-		});
+			// The GPU dropped the context: show the poster, then try a fresh
+			// viewer with a fresh canvas. Twice at most — a device that keeps
+			// losing it is better off with the still.
+			const offLost = v.onContextLost(() => {
+				stop?.();
+				stop = null;
+				posterShown = true;
+				loaded = false;
+				if (rebuilds++ < 2) setTimeout(() => !unmounted && start(), 800);
+			});
+
+			stop = () => {
+				offLost();
+				reveal?.kill();
+				resetTween?.kill();
+				gsap.killTweensOf([v, v.camera.position, v.target, v.scrollRotation]);
+				canvas.removeEventListener('pointerdown', cancelReset);
+				offDragEnd();
+				offTick();
+				v.dispose();
+				viewer = null;
+			};
+		}
+
+		// Fetch three.js, the model and the lighting only as the stage comes
+		// within a screen of view, so they never hold up the rest of the page.
+		const near = new IntersectionObserver(
+			([entry]) => {
+				if (!entry.isIntersecting) return;
+				near.disconnect();
+				start();
+			},
+			{ rootMargin: '100% 0px' }
+		);
+		near.observe(host);
 
 		return () => {
+			unmounted = true;
+			near.disconnect();
 			io.disconnect();
-			reveal?.kill();
-			resetTween?.kill();
-			gsap.killTweensOf([v, v.camera.position, v.target, v.scrollRotation]);
-			canvas.removeEventListener('pointerdown', cancelReset);
-			offDragEnd();
-			offTick();
-			v.dispose();
-			viewer = null;
+			stop?.();
 			destroyScroll();
 		};
 	});
 </script>
 
-<div class="scene" bind:this={host} aria-hidden="true">
-	{#if !loaded}
+<div class="scene" bind:this={host} aria-hidden="true" style:--poster-fit={POSTER_FIT}>
+	{#if posterShown}
+		<enhanced:img class="poster" src={poster} alt="" sizes="(max-width: 767px) 100vw, 70vw" />
+	{/if}
+	{#if !loaded && !failed}
 		<div class="progress" style:transform="scaleX({progress})"></div>
 	{/if}
 </div>
@@ -221,6 +286,23 @@
 	.scene {
 		position: absolute;
 		inset: 0;
+		/* The poster sizes itself against this box, like the camera does, and
+		   is wider than it on most screens. */
+		container-type: size;
+		overflow: hidden;
+	}
+
+	/* Full height while the frame is wide; once it narrows past the fit, the
+	   width takes over — the same switch the viewer's lens makes. */
+	.scene :global(.poster) {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: auto;
+		height: min(100cqh, calc(100cqw / var(--poster-fit)));
+		max-width: none;
+		translate: -50% -50%;
+		pointer-events: none;
 	}
 	.scene :global(canvas) {
 		display: block;

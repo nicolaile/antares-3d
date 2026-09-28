@@ -41,8 +41,8 @@ export const LOOK: Partial<RenderParams> = {
 
 	// Studio: on. The backdrop matches the panel's Fog (grey-100), so the
 	// sweep reads as the panel itself rather than a box inside it.
-	sweepLight: '#eeeeee',
-	sweepDark: '#eeeeee',
+	sweepLight: '#f5f5f5',
+	sweepDark: '#f5f5f5',
 	sweepAngle: 0,
 	sweepMid: 0.49,
 	sweepSpread: 1,

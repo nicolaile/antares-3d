@@ -1,0 +1,31 @@
+/*
+ * Colour system — the only place colour is defined.
+ *
+ * One grey scale, six steps, numbered by darkness: 0 is white, 950 is the
+ * darkest. Components use these tokens directly; no hex, rgb(), hsl() or
+ * color-mix() anywhere else. `npm run check` fails on them
+ * (scripts/check-system.mjs).
+ *
+ * The /design-system page reads this file directly. A step's doc comment is
+ * its description there, so keep the format:
+ *
+ *     /** What it's used for. *\/
+ *     --grey-n: #hex;
+ */
+:root {
+	/** Page background, text on dark fills. */
+	--grey-0: #ffffff;
+	/** Surfaces: the stage, mode bar, controls panel. */
+	--grey-100: #eeeeee;
+	/** Hover fills and hairlines. */
+	--grey-200: #dedede;
+	/** Tertiary text, slider tracks, borders. */
+	--grey-400: #acabad;
+	/** Secondary text, spec labels. */
+	--grey-700: #59585b;
+	/** Primary text and active fills. Warm, never pure black. */
+	--grey-950: #080604;
+
+	/* Native form controls (range, checkbox, colour) follow this. */
+	color-scheme: light;
+}

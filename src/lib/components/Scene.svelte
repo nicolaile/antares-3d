@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { ModelViewer } from '$lib/three/ModelViewer';
 	import { initScroll, destroyScroll, onTick, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
-	import { currentTheme, onThemeChange, type Theme } from '$lib/theme';
 	import type { RenderParams } from '$lib/three/ModelViewer';
 
 	let {
@@ -16,16 +15,8 @@
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
 
-	/**
-	 * The rig is lit for a bright surround. On the dark theme the same values
-	 * leave the metal reading brighter than its ground, so the environment and
-	 * exposure come down to seat it. Only these two — everything else is
-	 * theme-independent.
-	 */
-	const THEME_RENDER: Record<Theme, Partial<RenderParams>> = {
-		light: { environment: 1.15, exposure: 1.13 },
-		dark: { environment: 0.7, exposure: 1.0 }
-	};
+	/** The rig's defaults are tuned darker; the light stage wants these two up. */
+	const STAGE_RENDER: Partial<RenderParams> = { environment: 1.15, exposure: 1.13 };
 
 	let host: HTMLDivElement;
 	let loaded = $state(false);
@@ -149,19 +140,14 @@
 		canvas.addEventListener('pointerdown', cancelReset);
 		const offDragEnd = viewer.onDragEnd(releaseDrag);
 
-		let offTheme = () => {};
 		let offStudio = () => {};
-		const applyTheme = (theme: Theme) => {
-			for (const [k, v] of Object.entries(THEME_RENDER[theme])) {
-				viewer.setParam(k as keyof RenderParams, v as number);
-			}
-		};
 
 		viewer.load().then(() => {
 			loaded = true;
-			// Before `onready`, so the controls panel reads post-theme values.
-			applyTheme(currentTheme());
-			offTheme = onThemeChange(applyTheme);
+			// Before `onready`, so the controls panel reads these as its baseline.
+			for (const [k, v] of Object.entries(STAGE_RENDER)) {
+				viewer.setParam(k as keyof RenderParams, v as number);
+			}
 			bleed = viewer.isStudio;
 			offStudio = viewer.onStudioChange((on) => (bleed = on));
 			onready?.(viewer);
@@ -229,7 +215,6 @@
 
 		return () => {
 			ctx?.revert();
-			offTheme();
 			offStudio();
 			reveal?.kill();
 			resetTween?.kill();
@@ -258,8 +243,13 @@
 		bottom: var(--grid-margin);
 		left: var(--grid-margin);
 		z-index: 0;
-		/* Per-theme: a soft falloff on light, flat black on dark. */
-		background: var(--stage-surface);
+		/* A soft falloff, lit from just above centre. Palette stops only. */
+		background: radial-gradient(
+			120% 90% at 50% 38%,
+			var(--grey-0) 0%,
+			var(--grey-100) 52%,
+			var(--grey-200) 100%
+		);
 		border-radius: var(--stage-radius);
 		/* Clips the canvas to the rounded corners. */
 		overflow: hidden;
@@ -287,7 +277,7 @@
 		right: 0;
 		bottom: 0;
 		height: 1px;
-		background: color-mix(in oklab, var(--ink) 45%, transparent);
+		background: var(--grey-400);
 		transform-origin: left center;
 		transition: transform 0.25s ease-out;
 	}

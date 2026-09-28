@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ModelViewer, RenderParams } from '$lib/three/ModelViewer';
 	import type { GradientStop } from '$lib/three/GradientMapPass';
-	import { onThemeChange } from '$lib/theme';
 
 	let { viewer = null }: { viewer?: ModelViewer | null } = $props();
 
@@ -86,42 +85,7 @@
 	];
 
 	let isOpen = $state(false);
-	/**
-	 * Theme is a display preference, not a render parameter, so it lives here
-	 * rather than in RenderParams — and Reset deliberately leaves it alone.
-	 * The inline script in app.html has already resolved it before first paint.
-	 */
-	let dark = $state(false);
 
-	$effect(() => {
-		dark = document.documentElement.dataset.theme === 'dark';
-	});
-
-	// The theme also moves environment and exposure (see Scene.svelte), so the
-	// sliders and the Reset baseline have to follow. rAF, not the observer
-	// callback directly: it guarantees this runs after Scene's handler has
-	// applied the new values, whichever subscribed first.
-	$effect(() => {
-		if (!viewer) return;
-		return onThemeChange(() => {
-			requestAnimationFrame(() => {
-				if (!viewer) return;
-				initial = viewer.readParams();
-				params = { ...initial };
-			});
-		});
-	});
-
-	function setTheme(next: boolean) {
-		dark = next;
-		const theme = next ? 'dark' : 'light';
-		document.documentElement.dataset.theme = theme;
-		try {
-			localStorage.setItem('theme', theme);
-		} catch {
-			/* private mode — the toggle still works for this session */
-		}
-	}
 	let params = $state<RenderParams | null>(null);
 	let available = $state<Set<keyof RenderParams> | null>(null);
 	let stops = $state<GradientStop[] | null>(null);
@@ -220,23 +184,11 @@
 	<div class="controls" class:open={isOpen}>
 		{#if isOpen}
 			<div class="panel">
-				<p class="group mono">Display</p>
-				<label class="row">
-					<span class="mono">Dark mode</span>
-					<input
-						class="check"
-						type="checkbox"
-						checked={dark}
-						onchange={(e) => setTheme(e.currentTarget.checked)}
-					/>
-					<span class="val mono">{dark ? 'On' : 'Off'}</span>
-				</label>
-
 				{#each GROUPS as group (group.title)}
 					{@const rows = group.rows.filter((r) => available?.has(r.key) ?? true)}
-					<p class="group mono">{group.title}</p>
+					<p class="group type-label">{group.title}</p>
 					{#if group.title === 'Gradient map' && stops}
-						<p class="sub mono">Stops</p>
+						<p class="sub type-label">Stops</p>
 						{#each stops as stop, i (i)}
 							<div class="stop">
 								<input
@@ -262,20 +214,20 @@
 									}}
 								/>
 								<button
-									class="rm mono"
+									class="rm type-label"
 									disabled={stops.length <= MIN_STOPS}
 									aria-label="Remove stop {i + 1}"
 									onclick={() => removeStop(i)}>&times;</button
 								>
 							</div>
 						{/each}
-						<button class="add mono" disabled={stops.length >= MAX_STOPS} onclick={addStop}>
+						<button class="add type-label" disabled={stops.length >= MAX_STOPS} onclick={addStop}>
 							Add stop ({stops.length}/{MAX_STOPS})
 						</button>
 					{/if}
 					{#each rows as row (row.key)}
 						<label class="row">
-							<span class="mono">{row.label}</span>
+							<span class="type-label">{row.label}</span>
 							{#if row.kind === 'color'}
 								<input
 									class="swatch"
@@ -283,7 +235,7 @@
 									value={params[row.key] as string}
 									oninput={(e) => set(row.key, e.currentTarget.value)}
 								/>
-								<span class="val mono">{params[row.key]}</span>
+								<span class="val type-label type-tabular">{params[row.key]}</span>
 							{:else if row.kind === 'toggle'}
 								<input
 									class="check"
@@ -291,7 +243,7 @@
 									checked={(params[row.key] as number) > 0.5}
 									onchange={(e) => set(row.key, e.currentTarget.checked ? 1 : 0)}
 								/>
-								<span class="val mono">{(params[row.key] as number) > 0.5 ? 'On' : 'Off'}</span>
+								<span class="val type-label type-tabular">{(params[row.key] as number) > 0.5 ? 'On' : 'Off'}</span>
 							{:else}
 								<input
 									type="range"
@@ -301,12 +253,12 @@
 									value={params[row.key]}
 									oninput={(e) => set(row.key, +e.currentTarget.value)}
 								/>
-								<span class="val mono">{fmt(params[row.key] as number, row.step ?? 0.01)}</span>
+								<span class="val type-label type-tabular">{fmt(params[row.key] as number, row.step ?? 0.01)}</span>
 							{/if}
 						</label>
 					{/each}
 				{/each}
-				<button class="reset mono" onclick={reset}>Reset</button>
+				<button class="reset type-label" onclick={reset}>Reset</button>
 			</div>
 		{/if}
 
@@ -345,20 +297,20 @@
 		padding: 0;
 		border: 0;
 		border-radius: var(--stage-radius);
-		background: var(--surface);
-		color: var(--ink);
+		background: var(--grey-100);
+		color: var(--grey-950);
 		cursor: pointer;
 		transition: background 0.25s ease;
 	}
 	.toggle:hover {
-		background: var(--surface-hover);
+		background: var(--grey-200);
 	}
 	.controls.open .toggle {
-		background: var(--ink);
-		color: var(--on-ink);
+		background: var(--grey-950);
+		color: var(--grey-0);
 	}
 	.toggle:focus-visible {
-		outline: 2px solid var(--ink);
+		outline: 2px solid var(--grey-950);
 		outline-offset: 2px;
 	}
 	.toggle svg {
@@ -376,12 +328,12 @@
 		overflow-y: auto;
 		padding: calc(var(--size-font) * 0.9);
 		border-radius: var(--stage-radius);
-		background: var(--surface);
+		background: var(--grey-100);
 	}
 
 	.group {
 		margin: calc(var(--size-font) * 1.1) 0 calc(var(--size-font) * 0.5);
-		color: var(--ink);
+		color: var(--grey-950);
 	}
 	.group:first-child {
 		margin-top: 0;
@@ -393,11 +345,10 @@
 		align-items: center;
 		gap: calc(var(--size-font) * 0.4);
 		padding: calc(var(--size-font) * 0.12) 0;
-		color: var(--ink-spec);
+		color: var(--grey-700);
 	}
 	.val {
 		text-align: right;
-		font-variant-numeric: tabular-nums;
 	}
 
 	/* Hairline track with a small square handle, to match the UI's geometry. */
@@ -411,11 +362,11 @@
 	}
 	.row input[type='range']::-webkit-slider-runnable-track {
 		height: 1px;
-		background: var(--track);
+		background: var(--grey-400);
 	}
 	.row input[type='range']::-moz-range-track {
 		height: 1px;
-		background: var(--track);
+		background: var(--grey-400);
 	}
 	.row input[type='range']::-webkit-slider-thumb {
 		appearance: none;
@@ -424,19 +375,19 @@
 		margin-top: calc(var(--size-font) * -0.37);
 		border: 0;
 		border-radius: 1px;
-		background: var(--ink);
+		background: var(--grey-950);
 	}
 	.row input[type='range']::-moz-range-thumb {
 		width: calc(var(--size-font) * 0.45);
 		height: calc(var(--size-font) * 0.75);
 		border: 0;
 		border-radius: 1px;
-		background: var(--ink);
+		background: var(--grey-950);
 	}
 
 	.sub {
 		margin: calc(var(--size-font) * 0.7) 0 calc(var(--size-font) * 0.35);
-		color: var(--ink-spec);
+		color: var(--grey-700);
 	}
 	/* Same three-column rhythm as .row, with a remove button on the end. */
 	.stop {
@@ -451,17 +402,15 @@
 		border: 0;
 		border-radius: 1px;
 		background: none;
-		color: var(--ink-spec);
+		color: var(--grey-700);
 		cursor: pointer;
 	}
 	.rm {
 		padding: 0;
-		line-height: 1;
-		font-size: calc(var(--size-font) * 0.9);
 	}
 	.rm:hover:not(:disabled),
 	.add:hover:not(:disabled) {
-		color: var(--ink);
+		color: var(--grey-950);
 	}
 	.rm:disabled,
 	.add:disabled {
@@ -472,7 +421,7 @@
 		width: 100%;
 		margin-top: calc(var(--size-font) * 0.35);
 		padding: calc(var(--size-font) * 0.35) 0;
-		background: var(--surface-hover);
+		background: var(--grey-200);
 	}
 
 	/* Square checkbox, same geometry as the slider handle. */
@@ -481,7 +430,7 @@
 		height: calc(var(--size-font) * 0.75);
 		margin: 0;
 		justify-self: start;
-		accent-color: var(--ink);
+		accent-color: var(--grey-950);
 		cursor: pointer;
 	}
 
@@ -489,7 +438,7 @@
 		width: 100%;
 		height: calc(var(--size-font) * 0.9);
 		padding: 0;
-		border: 1px solid var(--track);
+		border: 1px solid var(--grey-400);
 		border-radius: 1px;
 		background: none;
 		cursor: pointer;
@@ -507,8 +456,8 @@
 		padding: calc(var(--size-font) * 0.45) 0;
 		border: 0;
 		border-radius: 1px;
-		background: var(--ink);
-		color: var(--on-ink);
+		background: var(--grey-950);
+		color: var(--grey-0);
 		cursor: pointer;
 	}
 </style>

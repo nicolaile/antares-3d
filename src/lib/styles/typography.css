@@ -1,0 +1,215 @@
+/*
+ * Typography system — the only place type is defined.
+ *
+ * Every font-size, line-height, letter-spacing, font-family, font-weight and
+ * text-transform in the project lives in this file. Components pick a style by
+ * class (`.type-body`, `.type-label`, …) and never set type properties of
+ * their own; `npm run check` fails if they do (scripts/check-system.mjs).
+ *
+ * Sizes are multiples of --size-font, so they scale with the Osmo system:
+ * the px values in comments are at the 1440 desktop design width. The large
+ * styles step down at the tablet and mobile breakpoints below.
+ *
+ * The /design-system page reads this file directly. A style's doc comment
+ * becomes its description there, so keep the format:
+ *
+ *     /** Name — when to use it. *\/
+ *     .type-name { … }
+ */
+
+/* ---------------------------------- Faces ---------------------------------- */
+@font-face {
+	font-family: 'FT System';
+	src: url('/fonts/FTSystemTrial-BlankRegular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'FT System';
+	src: url('/fonts/FTSystemTrial-BlankMedium.woff2') format('woff2');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* --------------------------------- Tokens ---------------------------------- */
+:root {
+	--font-sans: 'FT System', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+	/* 155px */
+	--type-display-1-size: calc(var(--size-font) * 9.6875);
+	--type-display-1-leading: 0.95;
+	--type-display-1-tracking: -0.05em;
+
+	/* 78px */
+	--type-display-2-size: calc(var(--size-font) * 4.875);
+	--type-display-2-leading: 0.95;
+	--type-display-2-tracking: -0.04em;
+
+	/* 56px */
+	--type-heading-1-size: calc(var(--size-font) * 3.5);
+	--type-heading-1-leading: 1;
+	--type-heading-1-tracking: -0.035em;
+
+	/* 38px */
+	--type-heading-2-size: calc(var(--size-font) * 2.375);
+	--type-heading-2-leading: 1;
+	--type-heading-2-tracking: -0.04em;
+
+	/* 28px */
+	--type-heading-3-size: calc(var(--size-font) * 1.75);
+	--type-heading-3-leading: 1;
+	--type-heading-3-tracking: -0.02em;
+
+	/* 18px */
+	--type-body-large-size: calc(var(--size-font) * 1.125);
+	--type-body-large-leading: 1.15;
+	--type-body-large-tracking: -0.02em;
+
+	/* 15px */
+	--type-body-size: calc(var(--size-font) * 0.9375);
+	--type-body-leading: 1.3;
+	--type-body-tracking: -0.01em;
+
+	/* 12px */
+	--type-label-size: calc(var(--size-font) * 0.75);
+	--type-label-leading: 1;
+	--type-label-tracking: 0.02em;
+}
+
+/* Tablet: 112 / 64 / 48 / 34 / 24. */
+@media screen and (max-width: 991px) {
+	:root {
+		--type-display-1-size: calc(var(--size-font) * 7);
+		--type-display-2-size: calc(var(--size-font) * 4);
+		--type-heading-1-size: calc(var(--size-font) * 3);
+		--type-heading-2-size: calc(var(--size-font) * 2.125);
+		--type-heading-3-size: calc(var(--size-font) * 1.5);
+	}
+}
+
+/* Mobile: 72 / 48 / 36 / 28 / 22. */
+@media screen and (max-width: 767px) {
+	:root {
+		--type-display-1-size: calc(var(--size-font) * 4.5);
+		--type-display-2-size: calc(var(--size-font) * 3);
+		--type-heading-1-size: calc(var(--size-font) * 2.25);
+		--type-heading-2-size: calc(var(--size-font) * 1.75);
+		--type-heading-3-size: calc(var(--size-font) * 1.375);
+	}
+}
+
+/* ---------------------------------- Base ----------------------------------- */
+body {
+	font-family: var(--font-sans);
+	font-weight: 400;
+	/* Required by the Osmo scaling system: 1em is always --size-font. */
+	font-size: var(--size-font);
+	line-height: var(--type-body-leading);
+	letter-spacing: var(--type-body-tracking);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings and form controls carry browser type defaults; clear them so an
+   element only ever looks like the class it's given. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-size: inherit;
+	font-weight: inherit;
+}
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	letter-spacing: inherit;
+}
+code,
+kbd,
+samp,
+pre {
+	font-family: inherit;
+	font-size: inherit;
+}
+
+/* --------------------------------- Styles ---------------------------------- */
+
+/** Display 1 — the hero statement. At most one per page. */
+.type-display-1 {
+	font-family: var(--font-sans);
+	font-size: var(--type-display-1-size);
+	line-height: var(--type-display-1-leading);
+	letter-spacing: var(--type-display-1-tracking);
+}
+
+/** Display 2 — secondary statements and large section openers. */
+.type-display-2 {
+	font-family: var(--font-sans);
+	font-size: var(--type-display-2-size);
+	line-height: var(--type-display-2-leading);
+	letter-spacing: var(--type-display-2-tracking);
+}
+
+/** Heading 1 — section titles. */
+.type-heading-1 {
+	font-family: var(--font-sans);
+	font-size: var(--type-heading-1-size);
+	line-height: var(--type-heading-1-leading);
+	letter-spacing: var(--type-heading-1-tracking);
+}
+
+/** Heading 2 — subsection titles and large callouts. */
+.type-heading-2 {
+	font-family: var(--font-sans);
+	font-size: var(--type-heading-2-size);
+	line-height: var(--type-heading-2-leading);
+	letter-spacing: var(--type-heading-2-tracking);
+}
+
+/** Heading 3 — card titles and small headings. */
+.type-heading-3 {
+	font-family: var(--font-sans);
+	font-size: var(--type-heading-3-size);
+	line-height: var(--type-heading-3-leading);
+	letter-spacing: var(--type-heading-3-tracking);
+}
+
+/** Body Large — ledes and feature copy. */
+.type-body-large {
+	font-family: var(--font-sans);
+	font-size: var(--type-body-large-size);
+	line-height: var(--type-body-large-leading);
+	letter-spacing: var(--type-body-large-tracking);
+}
+
+/** Body — default running text. */
+.type-body {
+	font-family: var(--font-sans);
+	font-size: var(--type-body-size);
+	line-height: var(--type-body-leading);
+	letter-spacing: var(--type-body-tracking);
+}
+
+/** Label — technical labels, specs, buttons and controls. Always uppercase. */
+.type-label {
+	font-family: var(--font-sans);
+	font-weight: 500;
+	font-size: var(--type-label-size);
+	line-height: var(--type-label-leading);
+	letter-spacing: var(--type-label-tracking);
+	text-transform: uppercase;
+}
+
+/* -------------------------------- Modifiers -------------------------------- */
+/* Combine with any style above. They change glyph features, never size. */
+
+/** Tabular — equal-width figures, for numbers that update in place. */
+.type-tabular {
+	font-variant-numeric: tabular-nums;
+}

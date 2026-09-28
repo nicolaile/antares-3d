@@ -96,8 +96,8 @@
 
 <div class="ui">
 	<div class="meta">
-		<p class="wordmark mono">R1 Microreactor</p>
-		<dl class="specs mono">
+		<p class="wordmark type-label">R1 Microreactor</p>
+		<dl class="specs type-label">
 			{#each specs as [term, value] (term)}
 				<dt>{term}</dt>
 				<dd>{value}</dd>
@@ -110,8 +110,8 @@
 		     `in:` only — an `out:` would overlap and shift the paragraph. -->
 		{#key shown}
 			<div in:fade={{ duration: 400 }}>
-				<h1>{modes[shown].label}</h1>
-				<p class="lede">{modes[shown].blurb}</p>
+				<h1 class="type-body-large">{modes[shown].label}</h1>
+				<p class="lede type-body-large">{modes[shown].blurb}</p>
 			</div>
 		{/key}
 	</div>
@@ -123,7 +123,7 @@
 			<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
 				{#if i === 0}
 					<rect width="24" height="24" rx="2.5" fill="currentColor" />
-					<circle cx="12" cy="12" r="6" fill="none" stroke="#fff" stroke-width="2.6" />
+					<circle class="knockout" cx="12" cy="12" r="6" fill="none" stroke-width="2.6" />
 				{:else if i === 1}
 					<circle cx="8" cy="8" r="2.1" fill="currentColor" />
 					<circle cx="8" cy="16" r="2.1" fill="currentColor" />
@@ -134,7 +134,7 @@
 					<circle cx="12" cy="12" r="3.4" fill="currentColor" />
 				{/if}
 			</svg>
-			<span class="mono">{mode.label}</span>
+			<span class="label type-label">{mode.label}</span>
 		</button>
 	{/each}
 </nav>
@@ -170,14 +170,14 @@
 
 	.wordmark {
 		margin: 0;
-		color: var(--ink);
+		color: var(--grey-950);
 	}
 	.specs {
 		display: grid;
 		grid-template-columns: auto auto;
 		gap: calc(var(--size-font) * 0.2) calc(var(--size-font) * 2);
 		margin: calc(var(--size-font) * 2.5) 0 0;
-		color: var(--ink-spec);
+		color: var(--grey-700);
 	}
 	.specs dt {
 		grid-column: 1;
@@ -189,20 +189,11 @@
 
 	h1 {
 		margin: 0;
-		/* 18px at the 1440 design width — same size as the paragraph below. */
-		font-size: calc(var(--size-font) * 1.125);
-		font-weight: 400;
-		line-height: 1;
-		letter-spacing: -0.025em;
 	}
 	.lede {
 		margin: calc(var(--size-font) * 1.5) 0 0;
 		max-width: 20em;
-		/* 18px at the 1440 design width. */
-		font-size: calc(var(--size-font) * 1.125);
-		line-height: 1.18;
-		letter-spacing: -0.01em;
-		color: var(--ink-mid);
+		color: var(--grey-700);
 	}
 
 	/* Four cells, each spanning three of the twelve columns. The gap matches
@@ -227,9 +218,8 @@
 		padding: calc(var(--size-font) * 0.5) calc(var(--size-font) * 0.75);
 		border: 0;
 		border-radius: var(--stage-radius);
-		background: var(--surface);
-		color: var(--ink);
-		font: inherit;
+		background: var(--grey-100);
+		color: var(--grey-950);
 		text-align: left;
 		cursor: pointer;
 		transition:
@@ -237,14 +227,14 @@
 			color 0.25s ease;
 	}
 	.mode:hover {
-		background: var(--surface-hover);
+		background: var(--grey-200);
 	}
 	.mode.active {
-		background: var(--ink);
-		color: var(--on-ink);
+		background: var(--grey-950);
+		color: var(--grey-0);
 	}
 	.mode:focus-visible {
-		outline: 2px solid var(--ink);
+		outline: 2px solid var(--grey-950);
 		outline-offset: 2px;
 	}
 	.icon {
@@ -254,16 +244,25 @@
 	}
 	/* Label box matches the icon box exactly, so flex-start leaves the two
 	   optically aligned with each other instead of the text riding high. */
-	.mode .mono {
-		line-height: calc(var(--size-font) * 1);
+	.label {
+		display: flex;
+		align-items: center;
+		min-height: calc(var(--size-font) * 1);
 	}
-	/* The first icon's inner circle is knocked out in white; on the active
-	   (dark) cell that would vanish, so it flips to the cell background. */
-	.mode.active .icon :global(circle[stroke]) {
-		stroke: var(--ink);
+	/* The first icon's inner circle is knocked out: it always takes the
+	   cell's own background, through hover and the inverted active state. */
+	.knockout {
+		stroke: var(--grey-100);
+		transition: stroke 0.25s ease;
+	}
+	.mode:hover .knockout {
+		stroke: var(--grey-200);
+	}
+	.mode.active .knockout {
+		stroke: var(--grey-950);
 	}
 	.mode.active .icon :global(rect) {
-		fill: var(--on-ink);
+		fill: var(--grey-0);
 	}
 
 	@media screen and (max-width: 767px) {

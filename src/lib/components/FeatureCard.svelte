@@ -16,6 +16,7 @@
 		title,
 		text,
 		thumb,
+		thumbScale = 1,
 		open = false,
 		onselect
 	}: {
@@ -24,6 +25,8 @@
 		title: string;
 		text: string;
 		thumb?: PictureSource;
+		/** Size of the thumbnail against the default for its shape. */
+		thumbScale?: number;
 		open?: boolean;
 		onselect: () => void;
 	} = $props();
@@ -135,8 +138,13 @@
 		<span class="number type-body">{number}</span>
 		<span class="title type-body" bind:this={titleEl}>{title}</span>
 		{#if thumb}
-			<span class="thumb" class:wide={thumb.img.w / thumb.img.h > 0.8} bind:this={extras[0]}>
-				<Picture src={thumb} ratio="{thumb.img.w} / {thumb.img.h}" fit="contain" sizes="140px" />
+			<span
+				class="thumb"
+				class:wide={thumb.img.w / thumb.img.h > 0.8}
+				style:--thumb-scale={thumbScale}
+				bind:this={extras[0]}
+			>
+				<Picture src={thumb} ratio="{thumb.img.w} / {thumb.img.h}" fit="contain" sizes="{Math.round(140 * thumbScale)}px" />
 			</span>
 		{/if}
 		<span class="text" bind:this={extras[1]}>{text}</span>
@@ -195,11 +203,11 @@
 	.open .thumb {
 		display: block;
 		grid-area: 1 / 3 / 3 / 4;
-		width: calc(var(--size-font) * 6.25);
+		width: calc(var(--size-font) * 6.25 * var(--thumb-scale));
 	}
 	/* Square-ish drawings read small at a tall one's width: 140px at 1440. */
 	.open .thumb.wide {
-		width: calc(var(--size-font) * 8.75);
+		width: calc(var(--size-font) * 8.75 * var(--thumb-scale));
 	}
 	/* Spans the thumbnail's column too — the thumbnail stops above it. */
 	.open .title {

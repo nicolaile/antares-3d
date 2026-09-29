@@ -10,6 +10,7 @@ import rail from '$lib/assets/images/intro2.jpg?w=1000;500&enhanced';
 import facility from '$lib/assets/images/intro1.jpg?w=1600;1200;800&enhanced';
 import lineDiagram from '$lib/assets/images/render-line-diagram.png?w=540;270&enhanced';
 import sideDiagram from '$lib/assets/images/render-line-diagram-02.png?w=380;190&enhanced';
+import heatPipesDiagram from '$lib/assets/images/render-line-diagram-03.png?w=540;270&enhanced';
 import component01 from '$lib/assets/images/component-01.jpg?w=932;466&enhanced';
 
 import type { Feature } from '$lib/modules/ReactorExplorer.svelte';
@@ -42,13 +43,15 @@ const features: Feature[] = [
 	{
 		title: 'Reactivity Controls',
 		text: 'Graphite and boron carbide control drums with independent actuator motors, inspired by historical space reactor designs.',
-		thumb: sideDiagram,
+		thumb: lineDiagram,
 		shot: { pos: [0, 1.58, 0.17], target: [0, 0, 0], spin: 0, fov: 20 }
 	},
 	{
 		title: 'Sodium Heat Pipes',
 		text: 'Sodium-filled pipes move heat to the power conversion system by capillary action, with no pumps and no primary coolant loop.',
-		thumb: lineDiagram,
+		thumb: heatPipesDiagram,
+		// A wide, detailed drawing: it needs more room than the others to read.
+		thumbScale: 1.25,
 		// Camera and target lowered together: the same angle, with the model
 		// sitting higher in the frame so the vessel's base clears the panel.
 		shot: { pos: [-0.5, 0.73, 0.5], target: [0, 0, 0], spin: Math.PI * 0.6 }
@@ -56,7 +59,7 @@ const features: Feature[] = [
 	{
 		title: 'Primary Heat Exchanger',
 		text: 'Transfers heat from the sodium heat pipes into the power conversion loop, sealed inside the vessel wall.',
-		thumb: lineDiagram,
+		thumb: sideDiagram,
 		shot: { pos: [0.8, 0.45, 0.95], target: [0, 0, 0], spin: Math.PI * 1.1 }
 	},
 	{

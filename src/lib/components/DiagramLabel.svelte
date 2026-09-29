@@ -10,7 +10,9 @@
 		label,
 		x,
 		y,
-		order = 0
+		order = 0,
+		lit = false,
+		onactive
 	}: {
 		label: string;
 		/** Position as fractions of the diagram, 0..1. */
@@ -18,6 +20,10 @@
 		y: number;
 		/** Place in the reveal sequence. */
 		order?: number;
+		/** This marker's part is the one highlighted. */
+		lit?: boolean;
+		/** Hover, focus or tap starts (true) or ends (false). */
+		onactive?: (on: boolean) => void;
 	} = $props();
 
 	// Labels near an edge open inwards so they never clip.
@@ -26,7 +32,12 @@
 
 <button
 	class="marker {align}"
+	class:lit
 	type="button"
+	onpointerenter={() => onactive?.(true)}
+	onpointerleave={() => onactive?.(false)}
+	onfocus={() => onactive?.(true)}
+	onblur={() => onactive?.(false)}
 	style:left="{x * 100}%"
 	style:top="{y * 100}%"
 	style:--order={order}

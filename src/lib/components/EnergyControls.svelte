@@ -5,16 +5,31 @@
 	places it in its own corner.
 -->
 <script lang="ts">
-	import { DEFAULT_LINE_WEIGHT, DEFAULT_PARAMS, type EnergyParams } from '$lib/energy/energy';
+	import {
+		DEFAULT_LINE_WEIGHT,
+		DEFAULT_PARAMS,
+		DEFAULT_TONES,
+		TIERS,
+		cloneTones,
+		type EnergyParams,
+		type LineTone,
+		type Tier
+	} from '$lib/energy/energy';
 
 	let {
 		params = $bindable(),
 		lineWeight = $bindable(),
+		tones = $bindable(),
+		ink = '',
 		dark = $bindable(false)
 	}: {
 		params: EnergyParams;
 		/** Multiplier on every line tier's weight. */
 		lineWeight: number;
+		/** Colour and opacity per line tier. */
+		tones: Record<Tier, LineTone>;
+		/** The ink the tiers follow when they have no colour of their own. */
+		ink?: string;
 		/** Dark stage for the diagram. */
 		dark?: boolean;
 	} = $props();
@@ -27,16 +42,20 @@
 				{ key: 'speed', label: 'Speed', min: 0, max: 1600, step: 10 },
 				{ key: 'pulses', label: 'Pulses', min: 1, max: 8, step: 1 },
 				{ key: 'tail', label: 'Tail', min: 80, max: 2000, step: 10 },
-				{ key: 'flicker', label: 'Flicker', min: 0, max: 1, step: 0.01 }
+				{ key: 'flicker', label: 'Turbulence', min: 0, max: 1, step: 0.01 },
+				{ key: 'sparks', label: 'Sparks', min: 0, max: 1, step: 0.01 },
+				{ key: 'temperature', label: 'Temperature', min: 0, max: 1, step: 0.01 }
 			]
 		},
 		{
 			title: 'Glow',
 			rows: [
 				{ key: 'core', label: 'Core width', min: 2, max: 24, step: 0.5 },
-				{ key: 'glow', label: 'Radius', min: 4, max: 66, step: 1 },
-				{ key: 'glowAmount', label: 'Amount', min: 0, max: 1, step: 0.01 },
-				{ key: 'ambient', label: 'Ambient', min: 0, max: 0.4, step: 0.01 }
+				{ key: 'fill', label: 'Pipe fill', min: 0, max: 1, step: 0.01 },
+				{ key: 'wallLight', label: 'Wall light', min: 0, max: 1, step: 0.01 },
+				{ key: 'glow', label: 'Halo radius', min: 4, max: 66, step: 1 },
+				{ key: 'glowAmount', label: 'Halo amount', min: 0, max: 1, step: 0.01 },
+				{ key: 'ambient', label: 'Idle warmth', min: 0, max: 0.6, step: 0.01 }
 			]
 		}
 	];
@@ -47,11 +66,12 @@
 	function reset() {
 		params = { ...DEFAULT_PARAMS };
 		lineWeight = DEFAULT_LINE_WEIGHT;
+		tones = cloneTones(DEFAULT_TONES);
 	}
 
 	/** The current look as code, ready to paste in as the new defaults. */
 	async function copy() {
-		const look = { ...$state.snapshot(params), lineWeight, dark };
+		const look = { ...$state.snapshot(params), lineWeight, tones: $state.snapshot(tones), dark };
 		await navigator.clipboard.writeText(JSON.stringify(look, null, '\t'));
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
@@ -63,7 +83,8 @@
 
 <div class="controls" class:open={isOpen}>
 	{#if isOpen}
-		<div class="panel">
+		<!-- data-lenis-prevent: the page's smooth scroll would otherwise take the wheel. -->
+		<div class="panel" data-lenis-prevent>
 			{#each GROUPS as group (group.title)}
 				<p class="group type-label">{group.title}</p>
 				{#each group.rows as row (row.key)}
@@ -85,6 +106,31 @@
 				<input type="range" min="0.4" max="2.5" step="0.05" bind:value={lineWeight} />
 				<span class="val type-label type-tabular">{fmt(lineWeight, 0.05)}</span>
 			</label>
+			<p class="group type-label">Lines</p>
+			{#each TIERS as tier (tier.key)}
+				{@const tone = tones[tier.key]}
+				<div class="row">
+					<span class="type-label">{tier.label}</span>
+					<input
+						type="range"
+						min="0"
+						max="1"
+						step="0.01"
+						aria-label="{tier.label} opacity"
+						bind:value={tone.opacity}
+					/>
+					<input
+						class="swatch"
+						type="color"
+						aria-label="{tier.label} colour"
+						value={tone.color ?? ink}
+						oninput={(e) => (tone.color = e.currentTarget.value)}
+					/>
+				</div>
+			{/each}
+			<button class="action type-label ink" onclick={() => TIERS.forEach((t) => (tones[t.key].color = null))}>
+				Follow ink
+			</button>
 			<div class="actions">
 				<button class="action type-label" onclick={copy}>{copied ? 'Copied' : 'Copy values'}</button>
 				<button class="action type-label" onclick={reset}>Reset</button>
@@ -149,8 +195,12 @@
 
 	.panel {
 		width: calc(var(--size-font) * 15);
-		max-height: 62svh;
+		/* Never taller than the diagram it sits in (less the toggle and insets),
+		   which clips it. */
+		max-height: min(62svh, calc(100cqh - var(--toggle-size) - var(--space-20) * 2 - var(--space-8)));
+		box-sizing: border-box;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: calc(var(--size-font) * 0.9);
 		border-radius: var(--stage-radius);
 		background: var(--grey-0);
@@ -174,6 +224,27 @@
 	}
 	.val {
 		text-align: right;
+	}
+
+	.swatch {
+		justify-self: end;
+		width: 100%;
+		height: calc(var(--size-font) * 0.9);
+		padding: 0;
+		border: 1px solid var(--grey-200);
+		border-radius: 1px;
+		background: none;
+		cursor: pointer;
+	}
+	.swatch::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+	.swatch::-webkit-color-swatch {
+		border: 0;
+	}
+	.ink {
+		width: 100%;
+		margin-top: calc(var(--size-font) * 0.4);
 	}
 
 	.check {

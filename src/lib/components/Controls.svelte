@@ -183,7 +183,8 @@
 {#if params}
 	<div class="controls" class:open={isOpen}>
 		{#if isOpen}
-			<div class="panel">
+			<!-- data-lenis-prevent: the page's smooth scroll would otherwise take the wheel. -->
+			<div class="panel" data-lenis-prevent>
 				{#each GROUPS as group (group.title)}
 					{@const rows = group.rows.filter((r) => available?.has(r.key) ?? true)}
 					<p class="group type-label">{group.title}</p>
@@ -326,6 +327,7 @@
 		width: calc(var(--size-font) * 15);
 		max-height: 62svh;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: calc(var(--size-font) * 0.9);
 		border-radius: var(--stage-radius);
 		background: var(--grey-100);

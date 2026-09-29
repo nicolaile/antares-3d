@@ -30,7 +30,9 @@ export function initScroll() {
 
 	// Smoothing is the vestibular trigger; with reduced motion the wheel maps 1:1.
 	const reduce = prefersReducedMotion();
-	lenis = new Lenis({ lerp: reduce ? 1 : 0.1, smoothWheel: !reduce });
+	// 0.14: catches up a little faster than Lenis's 0.1 default, so the page
+	// still glides but no longer trails the wheel.
+	lenis = new Lenis({ lerp: reduce ? 1 : 0.14, smoothWheel: !reduce });
 	lenis.on('scroll', ScrollTrigger.update);
 	if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__lenis = lenis;
 

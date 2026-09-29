@@ -13,6 +13,8 @@
 		title: string;
 		text: string;
 		thumb?: PictureSource;
+		/** Thumbnail size against the default for its shape; 1 when omitted. */
+		thumbScale?: number;
 		/** Where the camera goes while this feature is open. */
 		shot: Shot;
 	};
@@ -73,7 +75,12 @@
 			// Up to 80px below its place on the way in, 80px above on the way
 			// out — less when the panel is capped short, so the cards never
 			// drift past its edges.
-			const drift = () => Math.min(unit() * 5, Math.max(0, (panel.offsetHeight - list.offsetHeight) / 2 - unit()));
+			// Held locally: on unmount Svelte clears the bindings before the
+			// revert below re-evaluates this, which would throw and leave the
+			// scroll triggers running.
+			const box = panel;
+			const cards = list;
+			const drift = () => Math.min(unit() * 5, Math.max(0, (box.offsetHeight - cards.offsetHeight) / 2 - unit()));
 			gsap.fromTo(
 				list,
 				{ y: () => drift() },
@@ -103,6 +110,7 @@
 					title={feature.title}
 					text={feature.text}
 					thumb={feature.thumb}
+					thumbScale={feature.thumbScale}
 					open={i === active}
 					onselect={() => (active = i)}
 				/>

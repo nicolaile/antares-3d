@@ -5,7 +5,7 @@
 
 	On scroll the image's mask rises with the page while the photo inside
 	moves slower, a parallax. The wordmark rides up with it, shrinking to
-	18px tall, until it reaches the top-left corner — level with the menu
+	16px tall, until it reaches the top-left corner — level with the menu
 	button — and stays there for the rest of the page.
 
 	The updates turn like a wheel inside their dark card: every few seconds
@@ -276,8 +276,8 @@
 	onMount(() => {
 		initScroll();
 		const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
-		/** The wordmark's height once it's in the corner: 18px at 1440. */
-		const REST = 1.125;
+		/** The wordmark's height once it's in the corner: 16px at 1440. */
+		const REST = 1;
 		// Where the wordmark comes to rest: centred on the 34px menu button,
 		// which sits one page margin (--page-margin, 1 unit) in from the top.
 		const restTop = () => unit() * (1 + (2.125 - REST) / 2);
@@ -440,7 +440,7 @@
 	:global(.pin-spacer:has(> .brand)) {
 		mix-blend-mode: difference;
 	}
-	/* 54px tall at 1440 (18px once it has shrunk into the corner). */
+	/* 54px tall at 1440 (16px once it has shrunk into the corner). */
 	.home {
 		display: block;
 		width: fit-content;

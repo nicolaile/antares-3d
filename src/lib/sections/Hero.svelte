@@ -58,8 +58,11 @@
 		const travel = () => reel!.offsetHeight * dir;
 		// The outgoing update stays drawn until it has turned away.
 		gsap.set(out, { visibility: 'inherit' });
+		// lazy: false — GSAP otherwise defers a tween's first write to the end
+		// of the frame, which can land after settle() and leave a slide
+		// stranded half-turned.
 		const tl = gsap
-			.timeline({ paused: true, defaults: { duration: 1.2, ease } })
+			.timeline({ paused: true, defaults: { duration: 1.2, ease, lazy: false } })
 			.to(out, { y: () => -travel(), scale: 0.85, rotationX: 50 * dir, autoAlpha: 0 }, 0)
 			.fromTo(
 				inn,
@@ -67,17 +70,36 @@
 				{ y: 0, scale: 1, rotationX: 0, autoAlpha: 1 },
 				0
 			);
-		const clear = () => gsap.set([out, inn], { clearProps: 'all' });
-		return { tl, clear };
+		return { tl };
+	}
+
+	/**
+	 * Back to rest: every tween on every slide stopped and every inline style
+	 * wiped, so only the `shown` class decides what's drawn. Run before any
+	 * turn or drag starts and after each ends — an interrupted animation can
+	 * never leave a slide half-turned or two slides showing at once.
+	 */
+	function settle() {
+		if (!reel) return;
+		const slides = [...reel.children];
+		gsap.killTweensOf(slides);
+		gsap.set(slides, { clearProps: 'all' });
+	}
+
+	/** Stops whatever is moving the reel: a timed turn or a drag's glide. */
+	function halt() {
+		swap?.progress(1).kill();
+		swap = null;
+		gliding = false;
+		settle();
 	}
 
 	/** A timed turn. One that starts mid-turn finishes the running one first. */
 	function turn(from: number, to: number, dir: 1 | -1 = 1) {
-		swap?.progress(1).kill();
-		swap = null;
+		halt();
 		if (!reel || prefersReducedMotion()) return;
-		const { tl, clear } = build(from, to, dir);
-		swap = tl.eventCallback('onComplete', clear).play();
+		const { tl } = build(from, to, dir);
+		swap = tl.eventCallback('onComplete', settle).play();
 	}
 
 	/** Queues the next turn; held while the pointer or focus is on the card. */
@@ -85,7 +107,8 @@
 		timer?.kill();
 		if (updates.length < 2) return;
 		timer = gsap.delayedCall(DWELL, () => {
-			if (held) schedule();
+			// Never turn under a hand: wait out a drag and its glide to rest.
+			if (held || drag || gliding) schedule();
 			else shown = (shown + 1) % updates.length;
 		});
 	}
@@ -116,12 +139,13 @@
 	} | null = null;
 	/** Set when a drag already turned the wheel, so the effect doesn't again. */
 	let turned = false;
+	/** A released drag is still easing to rest. */
+	let gliding = false;
 	let swallowClick = false;
 
 	function grab(e: PointerEvent) {
 		if (updates.length < 2 || e.button !== 0) return;
-		swap?.progress(1).kill();
-		swap = null;
+		halt();
 		timer?.kill();
 		drag = {
 			y0: e.clientY,
@@ -134,6 +158,9 @@
 			t: e.timeStamp,
 			v: 0
 		};
+		window.addEventListener('pointerup', onWindowUp);
+		window.addEventListener('pointercancel', onWindowUp);
+		window.addEventListener('blur', onWindowBlur);
 		// Keeps the drag going when the pointer leaves the card.
 		try {
 			(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -142,8 +169,18 @@
 		}
 	}
 
+	const onWindowUp = (e: PointerEvent) => release(e.clientY);
+	const onWindowBlur = () => drag && release(drag.y);
+	function stopListening() {
+		window.removeEventListener('pointerup', onWindowUp);
+		window.removeEventListener('pointercancel', onWindowUp);
+		window.removeEventListener('blur', onWindowBlur);
+	}
+
 	function pull(e: PointerEvent) {
 		if (!drag || !reel) return;
+		// Moving with nothing pressed: the release happened unheard.
+		if (e.pointerType === 'mouse' && e.buttons === 0) return release(e.clientY);
 		const dy = e.clientY - drag.y0;
 		if (!drag.moved && Math.abs(dy) < 4) return;
 		drag.moved = true;
@@ -155,27 +192,34 @@
 		if (dir !== drag.dir) {
 			if (drag.turn) {
 				gsap.killTweensOf(drag.turn.tl);
-				drag.turn.tl.progress(0).kill();
-				drag.turn.clear();
+				drag.turn.tl.kill();
+				settle();
 			}
 			drag.dir = dir;
 			drag.to = (shown + dir + updates.length) % updates.length;
 			drag.turn = prefersReducedMotion() ? null : build(shown, drag.to, dir, 'none');
 			drag.follow = drag.turn
-				? gsap.quickTo(drag.turn.tl, 'progress', { duration: 0.5, ease: 'power3.out' })
+				? gsap.quickTo(drag.turn.tl, 'progress', { duration: 0.5, ease: 'power3.out', lazy: false })
 				: null;
 		}
 		drag.follow?.(resist(Math.min(1, Math.abs(dy) / (reel.offsetHeight * REACH))));
 	}
 
-	function release(e: PointerEvent) {
+	/**
+	 * The drag's end, however it's heard: the card's own pointerup, one
+	 * anywhere on the page, a cancel, the window losing focus, or a move with
+	 * no button held (a release the browser swallowed, e.g. over another
+	 * window). Whichever arrives first ends it; the rest find no drag.
+	 */
+	function release(y: number) {
 		if (!drag || !reel) return;
 		const d = drag;
 		drag = null;
+		stopListening();
 		swallowClick = d.moved;
 		if (!d.dir) return schedule();
 		// Judged on where the pointer got to, not where the trailing turn is.
-		const done = resist(Math.min(1, Math.abs(e.clientY - d.y0) / (reel.offsetHeight * REACH)));
+		const done = resist(Math.min(1, Math.abs(y - d.y0) / (reel.offsetHeight * REACH)));
 		// A flick is a quick move (px per ms) the way the drag was heading.
 		const flick = Math.abs(d.v) > 0.4 && Math.sign(-d.v) === d.dir;
 		const commit = done > 0.4 || flick;
@@ -183,23 +227,26 @@
 			if (commit) shown = d.to;
 			return schedule();
 		}
-		const { tl, clear } = d.turn;
+		const { tl } = d.turn;
 		// Hand over from the pointer-follow to one long glide to rest.
 		gsap.killTweensOf(tl);
 		const at = tl.progress();
+		gliding = true;
 		swap = gsap
 			.timeline()
 			.to(tl, {
 				progress: commit ? 1 : 0,
 				duration: 0.5 + 0.7 * (commit ? 1 - at : at),
-				ease: 'expo.out'
+				ease: 'expo.out',
+				lazy: false
 			})
 			.call(() => {
+				gliding = false;
 				if (commit) {
 					turned = true;
 					shown = d.to;
 				} else schedule();
-				clear();
+				settle();
 			});
 	}
 
@@ -285,6 +332,8 @@
 		return () => {
 			ctx.revert();
 			destroyScroll();
+			stopListening();
+			halt();
 		};
 	});
 </script>
@@ -328,15 +377,15 @@
 							onfocusout={hold(false)}
 							onpointerdown={grab}
 							onpointermove={pull}
-							onpointerup={release}
-							onpointercancel={release}
+							onpointerup={(e) => release(e.clientY)}
+							onpointercancel={(e) => release(e.clientY)}
 							{onclickcapture}
 							ondragstart={(e) => e.preventDefault()}
 						>
 							<!-- Stacked in one cell: the card is as tall as the longest. -->
 							<div class="reel" bind:this={reel}>
 								{#each updates as update, i (i)}
-									<a class="slide" class:shown={i === shown} inert={i !== shown} href={update.href}>
+									<a class="slide" class:shown={i === shown} inert={i !== shown} href={update.href} draggable="false">
 										<span class="thumb">
 											<Picture
 												src={update.image.src}
@@ -495,6 +544,12 @@
 	.update:active,
 	.update:active .slide {
 		cursor: grabbing;
+	}
+	/* Never a native drag of the link or its image: it would swallow the
+	   pointer events and strand the card mid-drag. */
+	.slide,
+	.slide :global(img) {
+		-webkit-user-drag: none;
 	}
 	.slide:focus-visible {
 		outline: 1px solid currentColor;

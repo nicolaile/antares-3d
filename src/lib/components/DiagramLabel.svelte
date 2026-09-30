@@ -45,7 +45,7 @@
 	style:--order={order}
 >
 	<span class="dot" aria-hidden="true"></span>
-	<span class="tag type-caption">{label}</span>
+	<span class="tag type-caption"><span class="pill">{label}</span></span>
 </button>
 
 <style>
@@ -89,37 +89,48 @@
 	}
 
 	/* Centred on the dot vertically; one end sits the square's inset past
-	   the dot, so the dot lands inside it like the square in a tag. Hidden
-	   as a sliver around the dot, it opens out along its length. */
+	   the dot, so the dot lands inside it like the square in a tag.
+	   Two layers: the tag is the full-size, unclipped hit area, so the
+	   pointer can move onto the pill while it's still opening without
+	   falling through; the pill inside carries the colour and does the
+	   reveal, hidden as a sliver around the dot and opening along its
+	   length. */
 	.tag {
 		position: absolute;
 		top: 50%;
 		z-index: 1;
 		display: flex;
-		align-items: center;
 		height: var(--pill);
+		translate: 0 -50%;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+		pointer-events: none;
+	}
+	.pill {
+		display: flex;
+		align-items: center;
 		box-sizing: border-box;
 		border-radius: 4px;
 		background: var(--accent-500);
 		color: var(--grey-950);
 		white-space: nowrap;
-		translate: 0 -50%;
-		opacity: 0;
-		transition:
-			opacity 0.15s ease,
-			clip-path 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-		pointer-events: none;
+		transition: clip-path 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 	}
 	/* Opens to the right, square at the left end. */
 	.start .tag,
 	.center .tag {
 		left: calc(50% - var(--dot) / 2 - var(--inset));
+	}
+	.start .pill,
+	.center .pill {
 		padding: 0 var(--space-12) 0 calc(var(--inset) + var(--dot) + var(--space-8));
 		clip-path: inset(0 calc(100% - var(--pill)) 0 0 round 4px);
 	}
 	/* Near the right edge it opens to the left instead, square at the right. */
 	.end .tag {
 		right: calc(50% - var(--dot) / 2 - var(--inset));
+	}
+	.end .pill {
 		padding: 0 calc(var(--inset) + var(--dot) + var(--space-8)) 0 var(--space-12);
 		clip-path: inset(0 0 0 calc(100% - var(--pill)) round 4px);
 	}
@@ -137,8 +148,11 @@
 	.marker:hover .tag,
 	.marker:focus-visible .tag {
 		opacity: 1;
-		clip-path: inset(0 round 4px);
 		pointer-events: auto;
+	}
+	.marker:hover .pill,
+	.marker:focus-visible .pill {
+		clip-path: inset(0 round 4px);
 	}
 	/* Touch has no hover: a tap focuses the marker, so show it on plain focus. */
 	@media (hover: none) {
@@ -150,6 +164,8 @@
 		}
 		.marker:focus .tag {
 			opacity: 1;
+		}
+		.marker:focus .pill {
 			clip-path: inset(0 round 4px);
 		}
 	}

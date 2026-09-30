@@ -34,16 +34,16 @@ export interface EnergyParams {
 /** Tuned for the R1 diagram, whose pipes are 27 units across. */
 export const DEFAULT_PARAMS: EnergyParams = {
 	speed: 230,
-	tail: 610,
-	pulses: 2,
-	core: 3,
+	tail: 720,
+	pulses: 3,
+	core: 2,
 	glow: 6,
 	glowAmount: 1,
 	ambient: 0,
 	flicker: 1,
-	fill: 0.35,
-	wallLight: 0.19,
-	sparks: 0.31,
+	fill: 0.14,
+	wallLight: 0.16,
+	sparks: 0.2,
 	temperature: 1
 };
 

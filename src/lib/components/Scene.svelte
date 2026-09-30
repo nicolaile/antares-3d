@@ -43,8 +43,13 @@
 	/** WebGL couldn't start: the poster stays, the loading line goes. */
 	let failed = $state(false);
 
+	// Pausing and resuming both force a fresh frame: the viewer draws on
+	// demand, so without one a model coming back into view could show a
+	// stale or empty canvas until the next change.
 	$effect(() => {
-		if (viewer) viewer.spinning = !paused;
+		if (!viewer) return;
+		viewer.spinning = !paused;
+		viewer.invalidate();
 	});
 
 	/** Puts the camera on a shot, gliding there unless `instant`. */

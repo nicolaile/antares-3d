@@ -73,6 +73,10 @@
 		const next = features[active].shot;
 		if (next) shot = next;
 	});
+
+	function select(i: number) {
+		if (i !== active) active = i;
+	}
 	let viewer: ModelViewer | null = $state(null);
 	// The render tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
@@ -93,7 +97,7 @@
 					title={feature.title}
 					text={feature.text}
 					open={i === active}
-					onselect={() => (active = i)}
+					onselect={() => select(i)}
 				/>
 			{/each}
 		</ol>
@@ -102,7 +106,7 @@
 	<Cell start={5} span={8} tablet={{ start: 6, span: 7 }} self="stretch">
 		<div class="viewport">
 			<!-- The model stays mounted under a panel, so it never reloads. -->
-			<div class="layer" class:hidden={!modelShown}>
+			<div class="layer model" class:faded={!modelShown}>
 				<Scene {shot} paused={paused || !modelShown} onready={(v) => (viewer = v)} />
 			</div>
 			{#each features as feature, i (feature.title)}
@@ -185,20 +189,29 @@
 		border-radius: var(--stage-radius);
 		background: var(--grey-800);
 	}
-	/* The model and each panel fill the stage, stacked, and crossfade. */
+	/* The model and each panel fill the stage, stacked. They never overlap
+	   on a switch: the outgoing one fades out (0.3s), then the incoming one
+	   fades in (0.3s) — showing waits out the hiding. */
 	.layer {
 		position: absolute;
 		inset: 0;
 		transition:
-			opacity 0.6s ease,
+			opacity 0.3s ease 0.3s,
 			visibility 0s linear 0s;
 	}
 	.hidden {
 		opacity: 0;
 		visibility: hidden;
 		transition:
-			opacity 0.6s ease,
-			visibility 0s linear 0.6s;
+			opacity 0.3s ease 0s,
+			visibility 0s linear 0.3s;
+	}
+	/* The model fades by opacity alone, never visibility: a hidden WebGL
+	   canvas can lose its last frame and flash empty on the way back. */
+	.model.faded {
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.3s ease 0s;
 	}
 
 	/* The cut-away bleeds off the right and bottom edges: 155% of the stage's
@@ -263,13 +276,19 @@
 		--tick: var(--space-12);
 		--mid: calc(var(--type-annotation-size) * var(--type-annotation-leading) / 2);
 		position: absolute;
-		transition: opacity 0.6s ease;
+		/* In step with the model: after the outgoing view has faded. */
+		transition: opacity 0.3s ease 0.3s;
 		top: 12%;
 		bottom: 11%;
 		left: 74%;
 		width: 0;
 		color: var(--grey-0);
 		pointer-events: none;
+	}
+	.ruler.hidden {
+		transition:
+			opacity 0.3s ease 0s,
+			visibility 0s linear 0.3s;
 	}
 	.ruler-label,
 	.ruler-value {

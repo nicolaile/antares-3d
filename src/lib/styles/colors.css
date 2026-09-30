@@ -26,10 +26,10 @@
 	--grey-400: #acabad;
 	/** Secondary text, spec labels. */
 	--grey-700: #59585b;
-	/** Raised surfaces on dark: hover fills and dividers inside dark cards. */
-	--grey-800: #363636;
-	/** Dark surfaces: cards laid over imagery, like the hero's updates. */
-	--grey-900: #2b2b2b;
+	/** Raised surfaces on dark: the cards and stage inside a dark band. */
+	--grey-800: #242424;
+	/** Dark bands: the R1 section and the diagram's stage. */
+	--grey-900: #1b1b1b;
 	/** Primary text and active fills. Warm, never pure black. */
 	--grey-950: #080604;
 	/** Cool pale surface: a blue-grey that sits with the orbit imagery. */

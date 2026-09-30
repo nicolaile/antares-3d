@@ -3,7 +3,9 @@
  * Links marked `'#'` are placeholders until the pages and profiles exist.
  */
 import type { Picture } from 'vite-imagetools';
-import news01 from '$lib/assets/images/news-01.jpg?w=300;150&enhanced';
+import news01 from '$lib/assets/images/news-01.jpg?w=276;150&enhanced';
+import news02 from '$lib/assets/images/news-02.jpg?w=276;150&enhanced';
+import news03 from '$lib/assets/images/news-03.jpg?w=276;150&enhanced';
 
 export type Link = { label: string; href: string };
 
@@ -64,19 +66,19 @@ export const menu = {
 			date: '24 Feb',
 			title: 'Purpose-designed modular power for defense-critical assets',
 			href: '#',
-			image: { src: news01, alt: 'Silhouette of a face against a window onto Earth from orbit' }
+			image: { src: news01, alt: 'Aerial view of a reactor test site on open plains' }
 		},
 		{
 			date: '12 Feb',
 			title: 'Placeholder: a second update headline, two lines long',
 			href: '#',
-			image: { src: news01, alt: '' }
+			image: { src: news02, alt: 'Silhouette of a face against a window onto Earth from orbit' }
 		},
 		{
 			date: '30 Jan',
 			title: 'Placeholder: a third update headline, two lines long',
 			href: '#',
-			image: { src: news01, alt: '' }
+			image: { src: news03, alt: 'Black-and-white portrait of a man in a cap, mid-conversation' }
 		}
 	] satisfies Update[]
 };

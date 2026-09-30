@@ -1,8 +1,8 @@
 <!--
 	@component
-	A short label and a large statement, the statement's first line indented
-	to clear the label by whole columns. Place in a full-width (12-column)
-	cell: the indent is measured against the full row.
+	A large statement, optionally with a short label: when there is one, the
+	statement's first line is indented to clear it by whole columns. Place in
+	a full-width (12-column) cell: the indent is measured against the full row.
 -->
 <script lang="ts">
 	import type { Column } from '$lib/layout/types';
@@ -12,15 +12,15 @@
 		text,
 		indent = 2
 	}: {
-		label: string;
+		label?: string;
 		text: string;
 		/** Columns the first line clears for the label. */
 		indent?: Column;
 	} = $props();
 </script>
 
-<div class="statement" style:--indent={indent}>
-	<p class="label type-body">{label}</p>
+<div class="statement" style:--indent={label ? indent : 0}>
+	{#if label}<p class="label type-body">{label}</p>{/if}
 	<p class="text type-heading-2">{text}</p>
 </div>
 

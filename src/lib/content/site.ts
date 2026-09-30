@@ -2,6 +2,9 @@
  * Content shared by every page: the menu and the footer.
  * Links marked `'#'` are placeholders until the pages and profiles exist.
  */
+import type { Picture } from 'vite-imagetools';
+import news01 from '$lib/assets/images/news-01.jpg?w=300;150&enhanced';
+
 export type Link = { label: string; href: string };
 
 export const footer = {
@@ -31,6 +34,14 @@ export const footer = {
 	}
 };
 
+/** A news item, as teased in the open menu. */
+export type Update = {
+	date: string;
+	title: string;
+	href: string;
+	image: { src: Picture; alt: string };
+};
+
 export const menu = {
 	links: [
 		{ label: 'Home', href: '/' },
@@ -39,10 +50,33 @@ export const menu = {
 		{ label: 'Progress', href: '#' },
 		{ label: 'Updates', href: '#' }
 	] satisfies Link[],
-	/** The latest update, teased at the foot of the open menu. */
-	latest: {
-		date: '24 Feb',
-		title: 'Purpose-designed modular power for defense-critical assets',
-		href: '#'
-	}
+	/** Smaller links under the main ones. */
+	secondary: [
+		{ label: 'Contact', href: '#' },
+		{ label: 'Careers', href: '#' }
+	] satisfies Link[],
+	/**
+	 * The latest updates, cycled at the foot of the open menu. Only the first
+	 * is real; the other two are placeholders until the updates feed exists.
+	 */
+	updates: [
+		{
+			date: '24 Feb',
+			title: 'Purpose-designed modular power for defense-critical assets',
+			href: '#',
+			image: { src: news01, alt: 'Silhouette of a face against a window onto Earth from orbit' }
+		},
+		{
+			date: '12 Feb',
+			title: 'Placeholder: a second update headline, two lines long',
+			href: '#',
+			image: { src: news01, alt: '' }
+		},
+		{
+			date: '30 Jan',
+			title: 'Placeholder: a third update headline, two lines long',
+			href: '#',
+			image: { src: news01, alt: '' }
+		}
+	] satisfies Update[]
 };

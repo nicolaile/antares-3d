@@ -12,7 +12,7 @@
 	motion it is a still frame; without WebGL it is the drawing and markers.
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import DiagramLabel from '$lib/components/DiagramLabel.svelte';
 	import EnergyControls from '$lib/components/EnergyControls.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
@@ -41,7 +41,15 @@
 	} from '$lib/energy/r1';
 	import { prefersReducedMotion } from '$lib/scroll';
 
-	let { label }: { /** Accessible description of the diagram. */ label: string } = $props();
+	let {
+		label,
+		dark: startDark = false
+	}: {
+		/** Accessible description of the diagram. */
+		label: string;
+		/** Starts on the dark stage, for dark sections. The controls can still flip it. */
+		dark?: boolean;
+	} = $props();
 
 	/** Where the still frame sits: one pulse rising out of the core. */
 	const STILL_HEAD = 700;
@@ -73,7 +81,7 @@
 	/** The ink token as it resolves right now, so the colour pickers start from it. */
 	let ink = $state('');
 	let paused = $state(false);
-	let dark = $state(false);
+	let dark = $state(untrack(() => startDark));
 	// The tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
 	/** Motion allowed: false means a still frame and no pause button. */
@@ -83,8 +91,15 @@
 	let revealed = $state(false);
 	/** Draw-on finished: the dash tricks come off. */
 	let settled = $state(false);
-	/** The marker being hovered or focused: its part stays lit, the rest dims. */
+	/** The marker being hovered or focused. */
 	let active = $state<number | null>(null);
+	/**
+	 * Hovering a marker spotlights its part: the rest of the drawing and the
+	 * other markers dim. Off for now — the marker's own label still opens.
+	 * Flip to true to bring the spotlight back.
+	 */
+	const SPOTLIGHT = false;
+	const spot = $derived(SPOTLIGHT ? active : null);
 	const focusPipes = MARKERS.map((m) => m.focus.pipes.map((k) => centreline(PIPES[k])));
 	/** Holes are padded so a part's own outline never sits at the veil's edge. */
 	const PAD = 18;
@@ -295,7 +310,7 @@
 		{#each MARKERS as m, i (m.label)}
 			<rect
 				class="veil"
-				class:on={active === i}
+				class:on={spot === i}
 				x={FRAME.x}
 				y={FRAME.y}
 				width={FRAME.width}
@@ -305,7 +320,7 @@
 		{/each}
 	</svg>
 
-	<div class="markers" class:focused={active !== null}>
+	<div class="markers" class:focused={spot !== null}>
 		{#each MARKERS as m, i (m.label)}
 			<DiagramLabel
 				label={m.label}
@@ -321,7 +336,7 @@
 		{/each}
 	</div>
 
-	<div class="tools">
+	<div class="tools" data-tool>
 		{#if showControls}
 			<EnergyControls bind:params bind:lineWeight bind:tones bind:dark {ink} />
 		{/if}
@@ -373,8 +388,9 @@
 			--density: 1.3;
 		}
 	}
+	/* The dark sections' own grey, so the diagram sits in them seamlessly. */
 	.diagram.dark {
-		--stage: var(--grey-950);
+		--stage: var(--grey-900);
 		--ink: var(--grey-0);
 		--label-ink: var(--grey-0);
 		--label-fill: var(--grey-950);

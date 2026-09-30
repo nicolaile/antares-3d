@@ -1,8 +1,8 @@
 /*
  * Colour system — the only place colour is defined.
  *
- * One grey scale, seven steps, numbered by darkness: 0 is white, 950 is the
- * darkest. One accent, for energy and the markers that carry it — never for
+ * One grey scale, nine steps, numbered by darkness: 0 is white, 950 is the
+ * darkest. A cool slate beside it, numbered the same way. One accent, for energy and the markers that carry it — never for
  * UI chrome. Components use these tokens directly; no hex, rgb(), hsl() or
  * color-mix() anywhere else. `npm run check` fails on them
  * (scripts/check-system.mjs).
@@ -26,10 +26,16 @@
 	--grey-400: #acabad;
 	/** Secondary text, spec labels. */
 	--grey-700: #59585b;
+	/** Raised surfaces on dark: hover fills and dividers inside dark cards. */
+	--grey-800: #363636;
+	/** Dark surfaces: cards laid over imagery, like the hero's updates. */
+	--grey-900: #2b2b2b;
 	/** Primary text and active fills. Warm, never pure black. */
 	--grey-950: #080604;
+	/** Cool pale surface: a blue-grey that sits with the orbit imagery. */
+	--slate-300: #d0d6d9;
 	/** Energy: the diagram's markers and the heat moving through it. */
-	--accent-500: #fb5024;
+	--accent-500: #ff751f;
 
 	/* Native form controls (range, checkbox, colour) follow this. */
 	color-scheme: light;

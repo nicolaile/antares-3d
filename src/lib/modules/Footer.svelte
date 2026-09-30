@@ -37,7 +37,7 @@
 		</Cell>
 		{#if aside}
 			<Cell start={9} span={4} tablet={{ start: 7, span: 6 }}>
-				<p class="aside type-body-large">{aside}</p>
+				<p class="aside type-small">{aside}</p>
 			</Cell>
 		{/if}
 	</Row>
@@ -49,7 +49,7 @@
 			</Cell>
 			<Cell start={3} span={2} tablet={{ start: 3, span: 4 }} mobile={{ start: 1, span: 6 }}>
 				<nav aria-label="Site">
-					<ul class="links type-body">
+					<ul class="links type-small">
 						{#each nav as link (link.label)}
 							<li><a href={link.href}>{link.label}</a></li>
 						{/each}
@@ -57,14 +57,14 @@
 				</nav>
 			</Cell>
 			<Cell start={5} span={2} tablet={{ start: 7, span: 4 }} mobile={{ start: 7, span: 6 }}>
-				<ul class="links type-body" aria-label="Social">
+				<ul class="links type-small" aria-label="Social">
 					{#each social as link (link.label)}
 						<li><a href={link.href} rel="noopener">{link.label}</a></li>
 					{/each}
 				</ul>
 			</Cell>
 		</Row>
-		<p class="legal type-body">
+		<p class="legal type-caption">
 			© {year}. {legal.owner}
 			{#each legal.links as link, i (link.label)}<a href={link.href}>{link.label}</a>{i < legal.links.length - 1 ? ', ' : '.'}{/each}
 		</p>
@@ -84,8 +84,10 @@
 		min-height: min(100svh, calc(var(--size-font) * 41.25));
 		box-sizing: border-box;
 		padding: var(--space-40) var(--grid-margin) var(--space-20);
-		background: var(--grey-950);
-		color: var(--grey-400);
+		/* Pale slate, so dark ink throughout: the primary lines near-black,
+		   the rest the secondary grey. */
+		background: var(--slate-300);
+		color: var(--grey-700);
 	}
 
 	.statement,
@@ -94,14 +96,14 @@
 		margin: 0;
 	}
 	.statement {
-		color: var(--grey-0);
+		color: var(--grey-950);
 	}
 
 	.bottom {
 		display: grid;
 		gap: var(--space-120);
 		padding-top: var(--space-20);
-		border-top: 1px solid var(--grey-700);
+		border-top: 1px solid var(--grey-400);
 	}
 
 	.links {
@@ -116,17 +118,17 @@
 	}
 	a:hover,
 	a:focus-visible {
-		color: var(--grey-0);
+		color: var(--grey-950);
 	}
 	a:focus-visible {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--grey-950);
 		outline-offset: 2px;
 	}
 	/* 40px at 1440, top-aligned with the first link. */
 	.home {
 		display: block;
 		width: var(--space-40);
-		color: var(--grey-0);
+		color: var(--grey-950);
 	}
 
 	.legal a {

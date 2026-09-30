@@ -5,32 +5,31 @@
  * Images are `?enhanced` imports: each is converted to AVIF/WebP at the
  * widths listed in `w` (never wider than the source) at build time.
  */
-import portrait from '$lib/assets/images/intro3.jpg?w=1000;500&enhanced';
-import rail from '$lib/assets/images/intro2.jpg?w=1000;500&enhanced';
-import facility from '$lib/assets/images/intro1.jpg?w=1600;1200;800&enhanced';
-import lineDiagram from '$lib/assets/images/render-line-diagram.png?w=540;270&enhanced';
-import sideDiagram from '$lib/assets/images/render-line-diagram-02.png?w=380;190&enhanced';
-import heatPipesDiagram from '$lib/assets/images/render-line-diagram-03.png?w=540;270&enhanced';
-import component01 from '$lib/assets/images/component-01.jpg?w=932;466&enhanced';
+import heroImage from '$lib/assets/images/hero-image.png?w=1410;1000;700&enhanced';
+import intro01 from '$lib/assets/images/intro-01.jpg?w=996;500&enhanced';
+import intro02 from '$lib/assets/images/intro-02.jpg?w=648;330&enhanced';
+import sodiumPipes from '$lib/assets/images/02-sodium-pipes.png?w=1641;1100;700&enhanced';
+import circles from '$lib/assets/images/02-circles.svg';
 
 import type { Feature } from '$lib/modules/ReactorExplorer.svelte';
 
+export const hero = {
+	title: 'Purpose-designed modular power',
+	text: 'Graphite and boron carbide control drums with independent actuator motors, inspired by historical space reactor designs.',
+	image: { src: heroImage, alt: 'A spacecraft in orbit above the curve of the Earth' }
+};
+
 export const mission = {
-	label: 'Mission',
 	statement:
-		'Energy abundance drives progress, powering missions, economies, and security. Yet, critical power is often hardest to deliver. At Antares, we build compact nuclear microreactors for reliable, mobile energy in remote military bases, industrial sites, and future space and underwater missions.',
-	milestones: {
-		title: 'Milestones',
-		items: [
-			{ value: '$600M+', label: 'Capital Raised' },
-			{ value: '$161M', label: 'USAF Space Award Winner' },
-			{ value: '322,000 Sq.', label: 'Manufacturing Scale' }
-		]
-	},
+		'We are a team of entrepreneurs trained in operations, design, architecture, construction, accounting, and finance, with the common interest in building communities and creating spaces that inspire active lifestyles.',
+	milestones: [
+		{ value: '322,000 Sq.', label: 'Manufacturing Scale' },
+		{ value: '30+', label: 'Experts' },
+		{ value: '$600M+', label: 'Capital Raised' }
+	],
 	images: {
-		portrait: { src: portrait, alt: 'Portrait of an Antares engineer' },
-		detail: { src: rail, alt: 'Linear guide carriage on a steel rail' },
-		feature: { src: facility, alt: 'A reactor module on a test stand in a bright hall' }
+		primary: { src: intro01, alt: 'An engineer in a hard hat working on the reactor core, seen from above' },
+		secondary: { src: intro02, alt: 'A prefabricated metal building on open ground, in faded colour film' }
 	}
 };
 
@@ -43,47 +42,60 @@ const features: Feature[] = [
 	{
 		title: 'Reactivity Controls',
 		text: 'Graphite and boron carbide control drums with independent actuator motors, inspired by historical space reactor designs.',
-		thumb: lineDiagram,
-		shot: { pos: [0, 1.58, 0.17], target: [0, 0, 0], spin: 0, fov: 20 }
+		shot: { pos: [0, 0.7, 1.4], target: [0, 0, 0], spin: 0, fov: 29 }
 	},
 	{
 		title: 'Sodium Heat Pipes',
 		text: 'Sodium-filled pipes move heat to the power conversion system by capillary action, with no pumps and no primary coolant loop.',
-		thumb: heatPipesDiagram,
-		// A wide, detailed drawing: it needs more room than the others to read.
-		thumbScale: 1.25,
-		// Camera and target lowered together: the same angle, with the model
-		// sitting higher in the frame so the vessel's base clears the panel.
-		shot: { pos: [-0.5, 0.73, 0.5], target: [0, 0, 0], spin: Math.PI * 0.6 }
+		// Its own stage instead of the model.
+		panel: {
+			image: {
+				src: sodiumPipes,
+				alt: 'Cut-away render of the R1 vessel showing the sodium heat pipes inside',
+				ratio: '1641 / 2303'
+			},
+			value: '100kWe',
+			detail: '1MWe for 6+ years',
+			graphic: circles
+		}
 	},
 	{
 		title: 'Primary Heat Exchanger',
-		text: 'Transfers heat from the sodium heat pipes into the power conversion loop, sealed inside the vessel wall.',
-		thumb: sideDiagram,
-		shot: { pos: [0.8, 0.45, 0.95], target: [0, 0, 0], spin: Math.PI * 1.1 }
+		text: 'Transfers heat from the sodium heat pipes into the power conversion loop, sealed inside the vessel wall.'
 	},
 	{
 		title: 'Nitrogen Brayton Cycle',
-		text: 'A closed nitrogen gas turbine turns the heat into electricity, with no water needed on site.',
-		thumb: lineDiagram,
-		shot: { pos: [0.15, 0.1, 0.55], target: [0, 0.05, 0], spin: Math.PI * 1.6 }
+		text: 'A closed nitrogen gas turbine turns the heat into electricity, with no water needed on site.'
 	}
 ];
 
 export const r1 = {
 	title: 'R1 Microreactor',
-	aside: {
-		label: 'Optimized for reliability',
-		text: 'Engineered to bypass civil grid reliance, the R1 delivers megawatt-class continuous baseload power inside a standardized ISO transport envelope. Factory-assembled and tested before shipment, R1 simplifies on-site logistics from years of construction to days of field integration.'
-	},
+	aside: 'Antares provides the infrastructure to make the financial ecosystem more connected, transparent and efficient.',
 	features,
-	architecture: {
-		label: 'Hardware architecture',
-		text: 'Engineered to bypass civil grid reliance, the R1 delivers megawatt-class continuous baseload power inside a standardized ISO transport envelope.'
-	},
-	tiles: [
-		{ src: component01, alt: 'R1 control electronics board' },
-		{ src: undefined, alt: '' }
-	],
-	diagram: { alt: 'Diagram of the R1 power conversion system' }
+	measure: { label: 'Measures', value: '2.5M/8.2ft' },
+	diagram: { alt: 'Diagram of the R1 power conversion system' },
+	note: {
+		// Set in capitals here: Caption is the 14px style, and it isn't uppercase.
+		label: 'ENGINEERING BY ANTARES NUCLEAR',
+		text: 'Inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fug nemo.'
+	}
+};
+
+export const operating = {
+	label: 'Operating model',
+	points: [
+		{
+			title: 'Standardized Deployment',
+			text: 'Factory-built modules designed for rapid delivery and setup via standard transportation, eliminating the need for extensive local site infrastructure or long setup times.'
+		},
+		{
+			title: 'Standardized Deployment',
+			text: 'Passively safe and fully automated control systems built for remote monitoring and continuous, reliable operation with minimal required on-site personnel.'
+		},
+		{
+			title: 'Multi-Year Continuous Power',
+			text: 'Factory-built modules designed for rapid delivery and setup via standard transportation, eliminating the need for extensive local site infrastructure or long setup times.'
+		}
+	]
 };

@@ -23,6 +23,8 @@
 	--space-15: calc(var(--size-font) * 0.9375);
 	/** Panel insets, label to content. */
 	--space-20: calc(var(--size-font) * 1.25);
+	/** Between a hero's intro and the image below it. */
+	--space-30: calc(var(--size-font) * 1.875);
 	/** Between blocks inside a section. */
 	--space-40: calc(var(--size-font) * 2.5);
 	/** Between groups inside a section. */

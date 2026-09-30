@@ -1,29 +1,29 @@
 <!--
 	@component
-	Opens a section: a hairline, the title, and an optional aside that drops
-	in under the title's line at the right. Place in a full-width `subgrid`
-	cell.
+	Opens a section: the title on the left and an optional aside on the
+	right, level with it. Takes the section's text colour, so it works on
+	light and dark; the aside is the secondary tone of either. Place in a
+	full-width `subgrid` cell.
 -->
 <script lang="ts">
 	import Cell from '$lib/layout/Cell.svelte';
-	import Caption from '$lib/components/Caption.svelte';
 
 	let {
 		title,
 		aside
 	}: {
 		title: string;
-		aside?: { label?: string; text: string };
+		aside?: string;
 	} = $props();
 </script>
 
 <header class="header">
 	<Cell span={8} tablet={{ span: 12 }}>
-		<h2 class="title type-heading-1">{title}</h2>
+		<h2 class="title type-title">{title}</h2>
 	</Cell>
 	{#if aside}
 		<Cell start={9} span={4} tablet={{ start: 7, span: 6 }}>
-			<Caption label={aside.label} text={aside.text} />
+			<p class="aside type-body">{aside}</p>
 		</Cell>
 	{/if}
 </header>
@@ -33,15 +33,16 @@
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-columns: subgrid;
-		row-gap: var(--space-8);
-		padding-top: var(--space-20);
-		border-top: 1px solid var(--grey-200);
+		align-items: start;
+		row-gap: var(--space-20);
 	}
-	.title {
+	.title,
+	.aside {
 		margin: 0;
 	}
-	/* The aside starts on the line below the title, not beside it. */
-	.header > :global(:nth-child(2)) {
-		grid-row: 2;
+	.aside {
+		/* Drops a touch so its first line reads level with the title's. */
+		padding-top: var(--space-12);
+		color: var(--secondary, var(--grey-700));
 	}
 </style>

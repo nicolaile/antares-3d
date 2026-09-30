@@ -1,20 +1,24 @@
 <!--
 	@component
-	A titled list of figures: value in the first column, what it measures in
-	the rest. Place in a `subgrid` cell; it uses that cell's columns.
+	A list of figures: value in the first column, what it measures in the
+	rest. With a `title` it sits under a rule, headed; without one it's the
+	bare list. `quiet` sets it all in the secondary grey, in Small. Place in
+	a `subgrid` cell; it uses that cell's columns.
 -->
 <script lang="ts">
 	let {
 		title,
-		items
+		items,
+		quiet = false
 	}: {
-		title: string;
+		title?: string;
 		items: { value: string; label: string }[];
+		quiet?: boolean;
 	} = $props();
 </script>
 
-<div class="milestones type-body">
-	<p class="title">{title}</p>
+<div class="milestones" class:titled={title} class:quiet class:type-body={!quiet} class:type-small={quiet}>
+	{#if title}<p class="title">{title}</p>{/if}
 	<dl class="list">
 		{#each items as item (item.label)}
 			<dt>{item.value}</dt>
@@ -30,8 +34,13 @@
 		grid-template-columns: subgrid;
 		align-content: start;
 		gap: var(--space-20) 0;
+	}
+	.titled {
 		padding-top: var(--space-12);
 		border-top: 1px solid var(--grey-200);
+	}
+	.quiet {
+		color: var(--grey-700);
 	}
 	.title {
 		grid-column: 1 / -1;

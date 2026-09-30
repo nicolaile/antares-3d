@@ -36,19 +36,19 @@ export const DEFAULT_PARAMS: EnergyParams = {
 	speed: 230,
 	tail: 610,
 	pulses: 2,
-	core: 4,
-	glow: 4,
+	core: 3,
+	glow: 6,
 	glowAmount: 1,
-	ambient: 0.1,
+	ambient: 0,
 	flicker: 1,
 	fill: 0.35,
-	wallLight: 0.5,
-	sparks: 0.6,
+	wallLight: 0.19,
+	sparks: 0.31,
 	temperature: 1
 };
 
 /** Multiplier on every line tier's weight. */
-export const DEFAULT_LINE_WEIGHT = 0.65;
+export const DEFAULT_LINE_WEIGHT = 0.5;
 
 /** The line-art tiers, darkest to lightest. */
 export type Tier = 'outline' | 'structure' | 'detail' | 'axes' | 'hatch';
@@ -66,11 +66,11 @@ export const TIERS: { key: Tier; label: string }[] = [
  */
 export type LineTone = { color: string | null; opacity: number };
 export const DEFAULT_TONES: Record<Tier, LineTone> = {
-	outline: { color: null, opacity: 0.5 },
-	structure: { color: null, opacity: 0.38 },
-	detail: { color: null, opacity: 0.3 },
-	axes: { color: null, opacity: 0.26 },
-	hatch: { color: null, opacity: 0.2 }
+	outline: { color: null, opacity: 0.38 },
+	structure: { color: null, opacity: 0.32 },
+	detail: { color: null, opacity: 0.23 },
+	axes: { color: null, opacity: 0.2 },
+	hatch: { color: null, opacity: 0.16 }
 };
 
 export const cloneTones = (t: Record<Tier, LineTone>) =>
@@ -85,21 +85,23 @@ type Stop = { x: number; rgb: [number, number, number]; a: number };
 
 /**
  * Colour from the tail (0) to the head (1), fading out towards the tail. On
- * the light stage the heat stays orange; on dark it runs up to white-hot,
- * which only reads because the glow adds light there rather than covering.
+ * the light stage the heat stays orange. On dark every beam is the cool
+ * white of the low-temperature pipes, whatever its temperature: grey at the
+ * tail, white at the head — it reads because the glow adds light there
+ * rather than covering.
  */
 export const RAMPS: Record<Theme, Stop[]> = {
 	light: [
 		{ x: 0, rgb: [214, 58, 24], a: 0 },
 		{ x: 0.35, rgb: [236, 70, 30], a: 0.45 },
-		{ x: 0.7, rgb: [251, 80, 36], a: 0.9 },
+		{ x: 0.7, rgb: [255, 117, 31], a: 0.9 },
 		{ x: 1, rgb: [255, 132, 78], a: 1 }
 	],
 	dark: [
-		{ x: 0, rgb: [122, 26, 12], a: 0 },
-		{ x: 0.35, rgb: [194, 54, 28], a: 0.6 },
-		{ x: 0.7, rgb: [255, 106, 46], a: 1 },
-		{ x: 1, rgb: [255, 241, 220], a: 1 }
+		{ x: 0, rgb: [150, 150, 158], a: 0 },
+		{ x: 0.35, rgb: [196, 196, 204], a: 0.6 },
+		{ x: 0.7, rgb: [228, 228, 234], a: 1 },
+		{ x: 1, rgb: [255, 255, 255], a: 1 }
 	]
 };
 
@@ -112,8 +114,8 @@ export const COOL: Record<Theme, [number, number, number]> = {
 	dark: [196, 196, 204]
 };
 
-/** The accent, for marker flares; matches `--accent-500`. */
-export const DOT_RGB: [number, number, number] = [251, 80, 36];
+/** The marker dots' grey, for their flares; matches `--grey-400`. */
+export const DOT_RGB: [number, number, number] = [172, 171, 173];
 
 export interface Sampled {
 	/** Flat x,y pairs every `step` units. */

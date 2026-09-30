@@ -181,7 +181,7 @@
 </script>
 
 {#if params}
-	<div class="controls" class:open={isOpen}>
+	<div class="controls" class:open={isOpen} data-tool>
 		{#if isOpen}
 			<!-- data-lenis-prevent: the page's smooth scroll would otherwise take the wheel. -->
 			<div class="panel" data-lenis-prevent>
@@ -282,7 +282,7 @@
 	.controls {
 		position: fixed;
 		right: var(--grid-margin);
-		bottom: var(--grid-margin);
+		bottom: var(--page-margin);
 		z-index: 3;
 		display: flex;
 		flex-direction: column;

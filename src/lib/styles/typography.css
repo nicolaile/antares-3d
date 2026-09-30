@@ -18,16 +18,31 @@
  */
 
 /* ---------------------------------- Faces ---------------------------------- */
+/* Geist and Geist Mono by Vercel, self-hosted (SIL OFL, static/fonts). */
 @font-face {
-	font-family: 'FT System';
-	src: url('/fonts/FTSystemTrial-BlankRegular.woff2') format('woff2');
+	font-family: 'Geist';
+	src: url('/fonts/Geist-Regular.woff2') format('woff2');
 	font-weight: 400;
 	font-style: normal;
 	font-display: swap;
 }
 @font-face {
-	font-family: 'FT System';
-	src: url('/fonts/FTSystemTrial-BlankMedium.woff2') format('woff2');
+	font-family: 'Geist';
+	src: url('/fonts/Geist-Medium.woff2') format('woff2');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist Mono';
+	src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist Mono';
+	src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
 	font-weight: 500;
 	font-style: normal;
 	font-display: swap;
@@ -35,46 +50,67 @@
 
 /* --------------------------------- Tokens ---------------------------------- */
 :root {
-	--font-sans: 'FT System', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	/* Labels: the technical, uppercase voice. */
+	--font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-	/* 155px */
-	--type-display-1-size: calc(var(--size-font) * 9.6875);
-	--type-display-1-leading: 0.95;
-	--type-display-1-tracking: -0.05em;
+	/* 140px */
+	--type-display-size: calc(var(--size-font) * 8.75);
+	--type-display-leading: 1;
+	--type-display-tracking: -0.01em;
 
-	/* 78px */
-	--type-display-2-size: calc(var(--size-font) * 4.875);
-	--type-display-2-leading: 0.95;
-	--type-display-2-tracking: -0.04em;
+	/* 72px */
+	--type-title-size: calc(var(--size-font) * 4.5);
+	--type-title-leading: 1;
+	--type-title-tracking: -0.03em;
 
-	/* 56px */
-	--type-heading-1-size: calc(var(--size-font) * 3.5);
-	--type-heading-1-leading: 1;
-	--type-heading-1-tracking: -0.035em;
+	/* 48/52px */
+	--type-heading-1-size: calc(var(--size-font) * 3);
+	--type-heading-1-leading: 1.0833;
+	--type-heading-1-tracking: -0.01em;
 
-	/* 38px */
-	--type-heading-2-size: calc(var(--size-font) * 2.375);
-	--type-heading-2-leading: 1;
-	--type-heading-2-tracking: -0.04em;
+	/* 36/40px */
+	--type-heading-2-size: calc(var(--size-font) * 2.25);
+	--type-heading-2-leading: 1.1111;
+	--type-heading-2-tracking: -0.01em;
 
-	/* 28px */
-	--type-heading-3-size: calc(var(--size-font) * 1.75);
-	--type-heading-3-leading: 1;
-	--type-heading-3-tracking: -0.02em;
+	/* 24/30px */
+	--type-heading-3-size: calc(var(--size-font) * 1.5);
+	--type-heading-3-leading: 1.25;
+	--type-heading-3-tracking: -0.01em;
 
-	/* 18px, never above 24px. */
-	--type-body-large-size: min(calc(var(--size-font) * 1.125), 24px);
-	--type-body-large-leading: 1.15;
-	--type-body-large-tracking: -0.02em;
+	/* 20/26px */
+	--type-paragraph-size: calc(var(--size-font) * 1.25);
+	--type-paragraph-leading: 1.3;
+	--type-paragraph-tracking: -0.01em;
 
-	/* 15px, never above 20px — the scale runs to 2560, but running text
-	   past 20px stops reading as body copy. */
-	--type-body-size: min(calc(var(--size-font) * 0.9375), 20px);
-	--type-body-leading: 1.3;
-	--type-body-tracking: -0.01em;
+	/* 18/22px */
+	--type-body-size: calc(var(--size-font) * 1.125);
+	--type-body-leading: 1.2222;
+	--type-body-tracking: 0em;
 
-	/* 15px, never above 20px — capped with Body, which it runs into. */
-	--type-label-large-size: min(calc(var(--size-font) * 0.9375), 20px);
+	/* 16/20px */
+	--type-small-size: calc(var(--size-font) * 1);
+	--type-small-leading: 1.25;
+	--type-small-tracking: 0em;
+
+	/* 14/18px */
+	--type-caption-size: calc(var(--size-font) * 0.875);
+	--type-caption-leading: 1.2857;
+	--type-caption-tracking: 0em;
+
+	/* 12/15px */
+	--type-annotation-size: calc(var(--size-font) * 0.75);
+	--type-annotation-leading: 1.25;
+	--type-annotation-tracking: 0em;
+
+	/* 10/12px */
+	--type-caption-small-size: calc(var(--size-font) * 0.625);
+	--type-caption-small-leading: 1.2;
+	--type-caption-small-tracking: 0.02em;
+
+	/* 15px */
+	--type-label-large-size: calc(var(--size-font) * 0.9375);
 	--type-label-large-leading: 1.3;
 	--type-label-large-tracking: 0.02em;
 
@@ -84,25 +120,21 @@
 	--type-label-tracking: 0.02em;
 }
 
-/* Tablet: 112 / 64 / 48 / 34 / 24. */
+/* Tablet: Display steps down to 100px, Title to 56px; the rest hold their size. */
 @media screen and (max-width: 991px) {
 	:root {
-		--type-display-1-size: calc(var(--size-font) * 7);
-		--type-display-2-size: calc(var(--size-font) * 4);
-		--type-heading-1-size: calc(var(--size-font) * 3);
-		--type-heading-2-size: calc(var(--size-font) * 2.125);
-		--type-heading-3-size: calc(var(--size-font) * 1.5);
+		--type-display-size: calc(var(--size-font) * 6.25);
+		--type-title-size: calc(var(--size-font) * 3.5);
 	}
 }
 
-/* Mobile: 72 / 48 / 36 / 28 / 22. */
+/* Mobile: Display at 64px, Title at 40px, Heading 1 at 36px, Heading 2 at 28px. */
 @media screen and (max-width: 767px) {
 	:root {
-		--type-display-1-size: calc(var(--size-font) * 4.5);
-		--type-display-2-size: calc(var(--size-font) * 3);
+		--type-display-size: calc(var(--size-font) * 4);
+		--type-title-size: calc(var(--size-font) * 2.5);
 		--type-heading-1-size: calc(var(--size-font) * 2.25);
 		--type-heading-2-size: calc(var(--size-font) * 1.75);
-		--type-heading-3-size: calc(var(--size-font) * 1.375);
 	}
 }
 
@@ -146,23 +178,23 @@ pre {
 
 /* --------------------------------- Styles ---------------------------------- */
 
-/** Display 1 — the hero statement. At most one per page. */
-.type-display-1 {
+/** Display — the hero statement. At most one per page. */
+.type-display {
 	font-family: var(--font-sans);
-	font-size: var(--type-display-1-size);
-	line-height: var(--type-display-1-leading);
-	letter-spacing: var(--type-display-1-tracking);
+	font-size: var(--type-display-size);
+	line-height: var(--type-display-leading);
+	letter-spacing: var(--type-display-tracking);
 }
 
-/** Display 2 — secondary statements and large section openers. */
-.type-display-2 {
+/** Title — section titles: the big name that opens a section. */
+.type-title {
 	font-family: var(--font-sans);
-	font-size: var(--type-display-2-size);
-	line-height: var(--type-display-2-leading);
-	letter-spacing: var(--type-display-2-tracking);
+	font-size: var(--type-title-size);
+	line-height: var(--type-title-leading);
+	letter-spacing: var(--type-title-tracking);
 }
 
-/** Heading 1 — section titles. */
+/** Heading 1 — large headings within a section. */
 .type-heading-1 {
 	font-family: var(--font-sans);
 	font-size: var(--type-heading-1-size);
@@ -170,7 +202,7 @@ pre {
 	letter-spacing: var(--type-heading-1-tracking);
 }
 
-/** Heading 2 — subsection titles and large callouts. */
+/** Heading 2 — statements, subsection titles and the menu links. */
 .type-heading-2 {
 	font-family: var(--font-sans);
 	font-size: var(--type-heading-2-size);
@@ -186,12 +218,12 @@ pre {
 	letter-spacing: var(--type-heading-3-tracking);
 }
 
-/** Body Large — ledes and feature copy. */
-.type-body-large {
+/** Paragraph — ledes and feature copy. */
+.type-paragraph {
 	font-family: var(--font-sans);
-	font-size: var(--type-body-large-size);
-	line-height: var(--type-body-large-leading);
-	letter-spacing: var(--type-body-large-tracking);
+	font-size: var(--type-paragraph-size);
+	line-height: var(--type-paragraph-leading);
+	letter-spacing: var(--type-paragraph-tracking);
 }
 
 /** Body — default running text. */
@@ -202,9 +234,42 @@ pre {
 	letter-spacing: var(--type-body-tracking);
 }
 
+/** Small — secondary copy: menu extras, update titles, dense panels. */
+.type-small {
+	font-family: var(--font-sans);
+	font-size: var(--type-small-size);
+	line-height: var(--type-small-leading);
+	letter-spacing: var(--type-small-tracking);
+}
+
+/** Caption — notes under media and the smallest running text. */
+.type-caption {
+	font-family: var(--font-sans);
+	font-size: var(--type-caption-size);
+	line-height: var(--type-caption-leading);
+	letter-spacing: var(--type-caption-tracking);
+}
+
+/** Annotation — labels set on imagery: the model's ruler, diagram notes. */
+.type-annotation {
+	font-family: var(--font-sans);
+	font-size: var(--type-annotation-size);
+	line-height: var(--type-annotation-leading);
+	letter-spacing: var(--type-annotation-tracking);
+}
+
+/** Caption Small — fine print: credits, footnotes and tiny annotations, like dates. Always uppercase. */
+.type-caption-small {
+	font-family: var(--font-sans);
+	font-size: var(--type-caption-small-size);
+	line-height: var(--type-caption-small-leading);
+	letter-spacing: var(--type-caption-small-tracking);
+	text-transform: uppercase;
+}
+
 /** Label Large — labels run into body text, like caption leads. Always uppercase. */
 .type-label-large {
-	font-family: var(--font-sans);
+	font-family: var(--font-mono);
 	font-weight: 500;
 	font-size: var(--type-label-large-size);
 	line-height: var(--type-label-large-leading);
@@ -214,7 +279,7 @@ pre {
 
 /** Label — technical labels, specs, buttons and controls. Always uppercase. */
 .type-label {
-	font-family: var(--font-sans);
+	font-family: var(--font-mono);
 	font-weight: 500;
 	font-size: var(--type-label-size);
 	line-height: var(--type-label-leading);

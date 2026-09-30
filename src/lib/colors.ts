@@ -6,10 +6,10 @@
  */
 import source from '$lib/styles/colors.css?raw';
 
-export type ScaleStep = { token: string; family: 'grey' | 'accent'; step: string; usage: string; hex: string };
+export type ScaleStep = { token: string; family: 'grey' | 'slate' | 'accent'; step: string; usage: string; hex: string };
 
 export const SCALE: ScaleStep[] = [
-	...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--(grey|accent)-(\d+)):\s*(#[0-9a-fA-F]{3,8})/g)
+	...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--(grey|slate|accent)-(\d+)):\s*(#[0-9a-fA-F]{3,8})/g)
 ].map(([, usage, token, family, step, hex]) => ({
 	token,
 	family: family as ScaleStep['family'],

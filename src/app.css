@@ -5,7 +5,7 @@
   --size-unit: 16; /* base unit in design (1em) - no px */
   --size-container-ideal: 1440; /* screen-size in design - no px */
   --size-container-min: 992px;
-  --size-container-max: 2560px;
+  --size-container-max: 1920px;
   --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
   --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 }
@@ -40,10 +40,17 @@
 /* ------------------------------- App tokens -------------------------------- */
 :root {
 	--grid-columns: 12;
-	/* 20px margin, 12px gutter at the 1440 design width, scaling with the
-	   Osmo system from there. */
-	--grid-margin: calc(var(--size-font) * 1.25);
-	--grid-gutter: calc(var(--size-font) * 0.75);
+	/* 16px margin, 16px gutter at the 1440 design width, scaling with the
+	   Osmo system from there.
+	   --page-margin is the inset from the screen's edges, for anything
+	   measured from the top or bottom (the menu button, fixed controls).
+	   --grid-margin is where the grid starts across: the same inset, plus
+	   half of any width past the scale's maximum (1920), so the content
+	   stays a centred 1920 column on wider screens while full-bleed
+	   backgrounds still run edge to edge. */
+	--page-margin: calc(var(--size-font) * 1);
+	--grid-margin: calc(var(--page-margin) + max(0px, (100vw - var(--size-container-max)) / 2));
+	--grid-gutter: calc(var(--size-font) * 1);
 	--stage-radius: 2px;
 	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);
@@ -57,10 +64,23 @@ html {
 	scrollbar-gutter: stable;
 }
 
+/* html has its own background so body's isn't lifted onto the canvas: the
+   canvas sits outside blending, and the hero wordmark's difference blend
+   needs a real white layer under it to read black. */
+html {
+	background: var(--grey-0);
+}
+
 body {
 	margin: 0;
 	background: var(--grey-0);
 	color: var(--grey-950);
+}
+
+/* Tool buttons (pause, render and energy controls) are hidden until
+   Shift+H shows them; the layout toggles `data-tools` on <html>. */
+html:not([data-tools]) [data-tool] {
+	display: none !important;
 }
 
 html.lenis-stopped {

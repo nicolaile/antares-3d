@@ -53,8 +53,8 @@
 <div class="page">
 	<header class="intro">
 		<p class="type-label eyebrow">Antares — Design System</p>
-		<h1 class="type-display-1">Design System</h1>
-		<p class="type-body-large lede">
+		<h1 class="type-display">Design System</h1>
+		<p class="type-paragraph lede">
 			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
 			Everything on the site is built from what's below. This page reads the system's own stylesheets, so it's
 			always current.
@@ -71,7 +71,7 @@
 			{#each SCALE as color (color.token)}
 				<li class="color">
 					<div class="chip" style:background="var({color.token})"></div>
-					<h3 class="type-heading-3 type-tabular">{color.family === 'accent' ? 'Accent' : color.step}</h3>
+					<h3 class="type-heading-3 type-tabular">{color.family === 'accent' ? 'Accent' : color.family === 'slate' ? `Slate ${color.step}` : color.step}</h3>
 					<p class="type-label type-tabular">{color.hex}</p>
 					<code class="type-body class">{color.token}</code>
 					<p class="type-body usage">{color.usage}</p>
@@ -186,7 +186,7 @@
 
 	<section>
 		<h2 class="type-label section-title">Rules</h2>
-		<ol class="rules type-body-large">
+		<ol class="rules type-paragraph">
 			<li>Text gets its type from exactly one style class. Modifiers can be added on top.</li>
 			<li>
 				Components never set <code>font-size</code>, <code>line-height</code>, <code>letter-spacing</code>,
@@ -206,7 +206,7 @@
 	.page {
 		display: grid;
 		gap: calc(var(--size-font) * 6);
-		padding: calc(var(--grid-margin) * 3) var(--grid-margin) calc(var(--size-font) * 8);
+		padding: calc(var(--page-margin) * 3) var(--grid-margin) calc(var(--size-font) * 8);
 	}
 
 	/* Shared 12-column frame, same as the Grid overlay. */

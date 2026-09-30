@@ -1,42 +1,78 @@
 <!--
 	@component
-	The live 3D model on a panel, with a numbered feature list beside it.
-	Selecting a feature moves the camera to that feature's shot. Nothing
-	changes on its own: the reader picks. The button pauses the model's slow
-	turn. Place in a full-width `subgrid` cell.
+	The live 3D model on a dark stage (columns 5–12), with a numbered
+	feature list beside it (1–4) that fills the stage's height: the open
+	card stretches to take up what the closed ones leave. Selecting a
+	feature moves the camera to that feature's shot. Nothing changes on its
+	own: the reader picks. A ruler beside the model gives its height; the
+	button pauses its slow turn. Place in a full-width `subgrid` cell.
 -->
 <script lang="ts" module>
 	import type { Picture as PictureSource } from 'vite-imagetools';
 	import type { Shot } from '$lib/three/shot';
 
+	/**
+	 * A feature's own stage, in place of the model: an image bleeding off
+	 * the stage's right and bottom edges, and a figure with a small graphic
+	 * under it.
+	 */
+	export type Panel = {
+		image: { src: PictureSource; alt: string; ratio: string };
+		value: string;
+		detail: string;
+		/** URL of a small line graphic under the figure. */
+		graphic?: string;
+	};
+
 	export type Feature = {
 		title: string;
 		text: string;
-		thumb?: PictureSource;
-		/** Thumbnail size against the default for its shape; 1 when omitted. */
-		thumbScale?: number;
-		/** Where the camera goes while this feature is open. */
-		shot: Shot;
+		/**
+		 * Shows the model while this feature is open, from this camera shot.
+		 * Without one the model hides: the stage shows the feature's panel, or
+		 * stays empty until it has one.
+		 */
+		shot?: Shot;
+		/** The feature's own stage, in place of the model. */
+		panel?: Panel;
 	};
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import FeatureCard from '$lib/components/FeatureCard.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
 	import Scene from '$lib/components/Scene.svelte';
+	import Picture from '$lib/components/Picture.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import type { ModelViewer } from '$lib/three/ModelViewer';
-	import { gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
+	import { prefersReducedMotion } from '$lib/scroll';
 
-	let { features }: { features: Feature[] } = $props();
+	let {
+		features,
+		measure
+	}: {
+		features: Feature[];
+		/** The ruler beside the model, e.g. `{ label: 'Measures', value: '2.5M/8.2ft' }`. */
+		measure?: { label: string; value: string };
+	} = $props();
 
 	let active = $state(0);
 	let paused = $state(false);
-	let panel: HTMLElement;
-	let viewport: HTMLElement;
-	let list: HTMLElement;
+	/** The model only shows for features with a camera shot. */
+	const modelShown = $derived(!!features[active].shot);
+	/**
+	 * The camera stays on the last shot while the model is hidden, so it
+	 * doesn't swing about unseen and is already framed when the model returns.
+	 */
+	/** A plain three-quarter view, for a feature list with no shots at all. */
+	const FALLBACK: Shot = { pos: [0, 0.7, 1.4], target: [0, 0, 0], spin: 0 };
+	let shot = $state(untrack(() => features.find((f) => f.shot)?.shot) ?? FALLBACK);
+	$effect(() => {
+		const next = features[active].shot;
+		if (next) shot = next;
+	});
 	let viewer: ModelViewer | null = $state(null);
 	// The render tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
@@ -44,73 +80,18 @@
 	onMount(() => {
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
-		// Scroll reveal, scrubbed to scroll so it plays backwards too:
-		// - the model scales up and settles into place (no fade — it's always
-		//   fully there);
-		// - the card list drifts slower than the page, a light parallax.
-		// Only transforms move — the canvas never resizes, so the
-		// model doesn't re-render at a new size each frame.
-		const ctx = gsap.context(() => {
-			if (prefersReducedMotion()) return;
-			const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
-			// Long range, small moves and a heavy scrub lag: the model drifts
-			// into place rather than snapping to the scroll.
-			gsap.fromTo(
-				viewport,
-				{ scale: 0.96, y: () => unit() * 3 },
-				{
-					scale: 1,
-					y: 0,
-					ease: 'sine.out',
-					scrollTrigger: {
-						trigger: panel,
-						start: 'top bottom',
-						end: 'top 20%',
-						scrub: 1.2,
-						invalidateOnRefresh: true
-					}
-				}
-			);
-
-			// Up to 80px below its place on the way in, 80px above on the way
-			// out — less when the panel is capped short, so the cards never
-			// drift past its edges.
-			// Held locally: on unmount Svelte clears the bindings before the
-			// revert below re-evaluates this, which would throw and leave the
-			// scroll triggers running.
-			const box = panel;
-			const cards = list;
-			const drift = () => Math.min(unit() * 5, Math.max(0, (box.offsetHeight - cards.offsetHeight) / 2 - unit()));
-			gsap.fromTo(
-				list,
-				{ y: () => drift() },
-				{
-					y: () => -drift(),
-					ease: 'none',
-					scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
-				}
-			);
-		}, panel);
-		// Webfonts shift everything above the panel once they land.
-		document.fonts.ready.then(() => ScrollTrigger.refresh());
-
-		return () => {
-			ctx.revert();
-		};
 	});
 
 </script>
 
-<div class="explorer" bind:this={panel}>
-	<Cell span={3} tablet={{ span: 5 }}>
-		<ol class="list" bind:this={list}>
+<div class="explorer" style:--closed-count={features.length - 1}>
+	<Cell span={4} tablet={{ span: 5 }}>
+		<ol class="list">
 			{#each features as feature, i (feature.title)}
 				<FeatureCard
 					index={i}
 					title={feature.title}
 					text={feature.text}
-					thumb={feature.thumb}
-					thumbScale={feature.thumbScale}
 					open={i === active}
 					onselect={() => (active = i)}
 				/>
@@ -118,13 +99,42 @@
 		</ol>
 	</Cell>
 
-	<Cell start={4} span={9} tablet={{ start: 6, span: 7 }} self="stretch">
-		<div class="viewport" bind:this={viewport}>
-			<Scene shot={features[active].shot} {paused} onready={(v) => (viewer = v)} />
+	<Cell start={5} span={8} tablet={{ start: 6, span: 7 }} self="stretch">
+		<div class="viewport">
+			<!-- The model stays mounted under a panel, so it never reloads. -->
+			<div class="layer" class:hidden={!modelShown}>
+				<Scene {shot} paused={paused || !modelShown} onready={(v) => (viewer = v)} />
+			</div>
+			{#each features as feature, i (feature.title)}
+				{#if feature.panel}
+					{@const p = feature.panel}
+					<div class="layer panel" class:hidden={i !== active} aria-hidden={i !== active}>
+						<div class="panel-image" style:aspect-ratio={p.image.ratio}>
+							<Picture src={p.image.src} alt={p.image.alt} ratio={p.image.ratio} fit="contain" sizes="(max-width: 767px) 100vw, 50vw" />
+						</div>
+						<div class="figure">
+							<p class="value type-body">
+								<svg class="mark" viewBox="0 0 10 9" aria-hidden="true"><path d="M5 0l5 9H0z" fill="currentColor" /></svg>
+								{p.value}
+							</p>
+							<p class="detail type-caption">{p.detail}</p>
+							{#if p.graphic}<img class="graphic" src={p.graphic} alt="" />{/if}
+						</div>
+					</div>
+				{/if}
+			{/each}
+			{#if measure}
+				<div class="ruler type-annotation" class:hidden={!modelShown} aria-hidden="true">
+					<span class="ruler-label">{measure.label}</span>
+					<span class="ruler-top"></span>
+					<span class="ruler-value">{measure.value}</span>
+					<span class="ruler-scale"></span>
+				</div>
+			{/if}
 		</div>
 	</Cell>
 
-	<div class="pause">
+	<div class="pause" data-tool>
 		<IconButton label={paused ? 'Resume rotation' : 'Pause rotation'} pressed={paused} onclick={() => (paused = !paused)}>
 			<svg viewBox="0 0 12 12" aria-hidden="true">
 				{#if paused}
@@ -143,26 +153,27 @@
 {/if}
 
 <style>
-	/* 832px tall at 1440, capped to the screen. */
+	/* 673px tall at 1440, capped to the screen. The list and the stage share
+	   this height; the open card takes what the closed ones leave. */
 	.explorer {
+		--stage-height: min(calc(var(--size-font) * 42), calc(100svh - var(--page-margin) * 2));
+		--list-gap: var(--space-4);
+		--open-height: calc(
+			var(--stage-height) - var(--closed-count) * (var(--size-font) * 6 + var(--list-gap))
+		);
 		position: relative;
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-columns: subgrid;
-		align-items: center;
-		/* Never taller than the screen (less the page margin top and bottom):
-		   the height scales with width, so on wide monitors 52 units would
-		   outgrow the window and the model, framed to the panel, with it. */
-		height: min(calc(var(--size-font) * 52), calc(100svh - var(--grid-margin) * 2));
-		background: var(--grey-100);
+		align-items: stretch;
+		height: var(--stage-height);
 	}
 
-	/* Inset from the panel edge; 301px wide at 1440. */
 	.list {
 		display: grid;
-		width: calc(var(--size-font) * 18.8125);
-		gap: var(--space-4);
-		margin: 0 0 0 var(--space-20);
+		align-content: start;
+		gap: var(--list-gap);
+		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
@@ -170,6 +181,129 @@
 	.viewport {
 		position: relative;
 		height: 100%;
+		overflow: hidden;
+		border-radius: var(--stage-radius);
+		background: var(--grey-800);
+	}
+	/* The model and each panel fill the stage, stacked, and crossfade. */
+	.layer {
+		position: absolute;
+		inset: 0;
+		transition:
+			opacity 0.6s ease,
+			visibility 0s linear 0s;
+	}
+	.hidden {
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.6s ease,
+			visibility 0s linear 0.6s;
+	}
+
+	/* The cut-away bleeds off the right and bottom edges: 155% of the stage's
+	   height, its left edge 42% across, so the vessel's top half fills the
+	   right of the panel. */
+	.panel-image {
+		position: absolute;
+		top: 2%;
+		left: 42%;
+		height: 155%;
+	}
+	.panel-image :global(.picture) {
+		height: 100%;
+	}
+
+	/* The figure sits left of the image, a little below the middle. */
+	.figure {
+		position: absolute;
+		top: 58%;
+		left: 30%;
+		display: grid;
+		justify-items: start;
+		gap: var(--space-4);
+		color: var(--grey-0);
+	}
+	.value,
+	.detail {
+		margin: 0;
+	}
+	.value {
+		display: flex;
+		align-items: center;
+		gap: var(--space-4);
+	}
+	/* The Antares triangle, at the figure's cap height. */
+	.mark {
+		width: 0.7em;
+		height: auto;
+	}
+	.detail {
+		color: var(--grey-300);
+	}
+	.graphic {
+		display: block;
+		width: calc(var(--size-font) * 4.5);
+		margin-top: var(--space-20);
+	}
+
+	/* The poster is a render on the old light stage; on dark it would show as
+	   a pale box while the model loads. The canvas fades in on its own.
+	   Recapture it on grey-800 to bring it back. */
+	.viewport :global(.poster) {
+		display: none;
+	}
+
+	/* The model's height, drawn beside it. The ruler itself is a zero-width
+	   line at 74% across the stage; everything hangs off it: the label to
+	   its left, a rule across its top out to the value, and the scale down
+	   its left side with a tick every fifth of the way. Placed for the
+	   opening shot. */
+	.ruler {
+		--tick: var(--space-12);
+		--mid: calc(var(--type-annotation-size) * var(--type-annotation-leading) / 2);
+		position: absolute;
+		transition: opacity 0.6s ease;
+		top: 12%;
+		bottom: 11%;
+		left: 74%;
+		width: 0;
+		color: var(--grey-0);
+		pointer-events: none;
+	}
+	.ruler-label,
+	.ruler-value {
+		position: absolute;
+		top: 0;
+		white-space: nowrap;
+	}
+	.ruler-label {
+		right: calc(var(--tick) * 2);
+		color: var(--grey-400);
+	}
+	.ruler-value {
+		left: calc(var(--tick) * 4.5);
+	}
+	.ruler-top {
+		position: absolute;
+		top: var(--mid);
+		left: calc(var(--tick) * -1);
+		width: calc(var(--tick) * 5);
+		border-top: 1px solid var(--grey-400);
+	}
+	.ruler-scale {
+		position: absolute;
+		top: var(--mid);
+		bottom: 0;
+		right: 0;
+		width: var(--tick);
+		border-right: 1px solid var(--grey-400);
+		border-bottom: 1px solid var(--grey-400);
+		background: repeating-linear-gradient(
+			to bottom,
+			transparent 0 calc(100% / 5 - 1px),
+			var(--grey-400) calc(100% / 5 - 1px) calc(100% / 5)
+		);
 	}
 
 	.pause {
@@ -178,22 +312,21 @@
 		bottom: var(--space-20);
 	}
 
-	/* Phones: the model on top, the list under it. */
+	/* Phones: the model on top, the list under it, at its own height. */
 	@media screen and (max-width: 767px) {
 		.explorer {
+			--open-height: auto;
 			height: auto;
 			row-gap: var(--space-20);
-			padding-bottom: var(--space-20);
 		}
 		.explorer > :global(:first-child) {
 			grid-row: 2;
 		}
-		.list {
-			width: auto;
-			margin: 0 var(--space-20);
-		}
 		.viewport {
 			aspect-ratio: 1;
+		}
+		.ruler {
+			display: none;
 		}
 		.pause {
 			top: var(--space-20);

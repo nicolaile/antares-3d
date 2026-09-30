@@ -39,24 +39,25 @@ export const LOOK: Partial<RenderParams> = {
 	gradientOffset: 1,
 	gradientTrack: 0,
 
-	// Studio: on. The backdrop matches the panel's Fog (grey-100), so the
-	// sweep reads as the panel itself rather than a box inside it.
-	sweepLight: '#f5f5f5',
-	sweepDark: '#f5f5f5',
+	// Studio: on. The backdrop matches the dark stage (grey-800, #363636),
+	// so the sweep reads as the panel itself rather than a box inside it.
+	sweepLight: '#363636',
+	sweepDark: '#363636',
 	sweepAngle: 0,
 	sweepMid: 0.49,
 	sweepSpread: 1,
 	sweepCurve: 1.4,
 	sweepLift: 0,
 	sweepFalloff: 0.55,
-	shadeAzimuth: 360,
-	shadeElevation: 58,
-	shadeCoverage: 0.26,
-	shadeSoftness: 0.68,
-	shadeDepth: 1,
+	shadeAzimuth: 35,
+	shadeElevation: 39,
+	shadeCoverage: 0.54,
+	shadeSoftness: 0.72,
+	shadeDepth: 0.26,
 	studioBounce: 0,
 	studioKey: 1,
-	studioGrain: 0.165,
+	// No grain: on the dark stage it reads as noise over the whole panel.
+	studioGrain: 0,
 	studioGrainSize: 1,
 	studioGrainSpeed: 0,
 

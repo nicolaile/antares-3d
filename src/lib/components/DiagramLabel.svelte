@@ -1,7 +1,9 @@
 <!--
 	@component
-	A marker on a diagram: an accent dot that reveals its label on hover or
-	focus, with a leader line up to a boxed tag. The dot keeps one size on
+	A marker on a diagram: a small grey square that, on hover or focus,
+	opens into an orange pill carrying the part's name — the square turns
+	white and sits inside it, and the pill grows out from it towards the
+	middle of the diagram. The dot keeps one size on
 	screen whatever size the diagram is; its position is a fraction of the
 	diagram so it tracks the drawing exactly.
 -->
@@ -43,13 +45,16 @@
 	style:--order={order}
 >
 	<span class="dot" aria-hidden="true"></span>
-	<span class="tag type-label">{label}</span>
+	<span class="tag type-caption">{label}</span>
 </button>
 
 <style>
 	.marker {
-		--dot: calc(var(--size-font) * 0.42);
-		--leader: calc(var(--size-font) * 1.8);
+		/* 10px at 1440. */
+		--dot: calc(var(--size-font) * 0.625);
+		/* The pill: 26px tall, the square inset evenly from its end. */
+		--pill: calc(var(--size-font) * 1.625);
+		--inset: calc((var(--pill) - var(--dot)) / 2);
 		/* Hit area well past the dot, centred on the point, so small dots stay easy to hover and tap. */
 		--hit: calc(var(--size-font) * 1.8);
 		position: absolute;
@@ -64,88 +69,88 @@
 	/* The type unit grows on phones; the diagram doesn't, so hold the dots back. */
 	@media screen and (max-width: 767px) {
 		.marker {
-			--dot: calc(var(--size-font) * 0.36);
+			--dot: calc(var(--size-font) * 0.54);
 		}
 	}
 
 	.dot {
 		position: absolute;
 		inset: 0;
+		z-index: 2;
 		margin: auto;
 		width: var(--dot);
 		height: var(--dot);
-		border-radius: 50%;
+		border-radius: var(--stage-radius);
+		background: var(--grey-400);
+		transition: background 0.25s ease;
+	}
+	.marker:focus-visible {
+		outline: none;
+	}
+
+	/* Centred on the dot vertically; one end sits the square's inset past
+	   the dot, so the dot lands inside it like the square in a tag. Hidden
+	   as a sliver around the dot, it opens out along its length. */
+	.tag {
+		position: absolute;
+		top: 50%;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		height: var(--pill);
+		box-sizing: border-box;
+		border-radius: 4px;
 		background: var(--accent-500);
-		transition: transform 0.3s ease;
+		color: var(--grey-950);
+		white-space: nowrap;
+		translate: 0 -50%;
+		opacity: 0;
+		transition:
+			opacity 0.15s ease,
+			clip-path 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+		pointer-events: none;
+	}
+	/* Opens to the right, square at the left end. */
+	.start .tag,
+	.center .tag {
+		left: calc(50% - var(--dot) / 2 - var(--inset));
+		padding: 0 var(--space-12) 0 calc(var(--inset) + var(--dot) + var(--space-8));
+		clip-path: inset(0 calc(100% - var(--pill)) 0 0 round 4px);
+	}
+	/* Near the right edge it opens to the left instead, square at the right. */
+	.end .tag {
+		right: calc(50% - var(--dot) / 2 - var(--inset));
+		padding: 0 calc(var(--inset) + var(--dot) + var(--space-8)) 0 var(--space-12);
+		clip-path: inset(0 0 0 calc(100% - var(--pill)) round 4px);
+	}
+
+	.marker:hover,
+	.marker:focus-visible {
+		z-index: 3;
 	}
 	.marker:hover .dot,
 	.marker:focus-visible .dot {
-		transform: scale(1.35);
+		background: var(--grey-0);
 	}
-	.marker:focus-visible {
-		outline: 1px solid var(--label-ink);
-		outline-offset: -2px;
-		border-radius: 50%;
-	}
-
-	/* Leader line from the dot up to the tag. */
-	.marker::after {
-		content: '';
-		position: absolute;
-		left: 50%;
-		bottom: calc(50% + var(--dot) * 0.5);
-		width: 1px;
-		height: var(--leader);
-		background: var(--label-ink);
-		transform: scaleY(0);
-		transform-origin: bottom;
-		transition: transform 0.25s ease;
-	}
-
-	.tag {
-		position: absolute;
-		bottom: calc(50% + var(--dot) * 0.5 + var(--leader));
-		padding: calc(var(--size-font) * 0.3) calc(var(--size-font) * 0.55);
-		border: 1px solid var(--label-ink);
-		background: var(--label-fill);
-		color: var(--label-ink);
-		white-space: nowrap;
-		opacity: 0;
-		transform: translateY(calc(var(--size-font) * 0.3));
-		transition:
-			opacity 0.2s ease,
-			transform 0.25s ease;
-		pointer-events: none;
-	}
-	.center .tag {
-		left: 50%;
-		translate: -50% 0;
-	}
-	.start .tag {
-		left: calc(50% - var(--size-font) * 0.6);
-	}
-	.end .tag {
-		right: calc(50% - var(--size-font) * 0.6);
-	}
-
-	.marker:hover::after,
-	.marker:focus-visible::after {
-		transform: scaleY(1);
-	}
+	/* Open, the pill takes the pointer too: it's inside the marker, so moving
+	   from the dot onto it keeps the marker hovered and the pill open. */
 	.marker:hover .tag,
 	.marker:focus-visible .tag {
 		opacity: 1;
-		transform: none;
-		transition-delay: 0.08s;
+		clip-path: inset(0 round 4px);
+		pointer-events: auto;
 	}
 	/* Touch has no hover: a tap focuses the marker, so show it on plain focus. */
 	@media (hover: none) {
-		.marker:focus::after {
-			transform: scaleY(1);
+		.marker:focus {
+			z-index: 3;
+		}
+		.marker:focus .dot {
+			background: var(--grey-0);
 		}
 		.marker:focus .tag {
 			opacity: 1;
-			transform: none;
+			clip-path: inset(0 round 4px);
 		}
 	}
 </style>

@@ -1,7 +1,7 @@
 <!--
 	@component
 	The round menu toggle: four 3px dots in a square that glide to the centre
-	and merge into one when the menu is open. 37px at 1440, scaling with the
+	and merge into one when the menu is open. 34px at 1440, scaling with the
 	Osmo system; the dots are vector so they stay crisp at any size.
 -->
 <script lang="ts">
@@ -59,8 +59,8 @@
 		onclick(e);
 	}}
 >
-	<!-- 37-unit box centred on 0,0, so a dot's resting place is its offset. -->
-	<svg viewBox="-18.5 -18.5 37 37" aria-hidden="true">
+	<!-- 34-unit box centred on 0,0, so a dot's resting place is its offset. -->
+	<svg viewBox="-17 -17 34 34" aria-hidden="true">
 		{#each DOTS as dot, i (i)}
 			<rect
 				class="dot"
@@ -83,15 +83,15 @@
 		--ease: cubic-bezier(0.48, 0.02, 0.03, 0.98);
 		position: relative;
 		display: block;
-		width: calc(var(--size-font) * 2.3125);
-		height: calc(var(--size-font) * 2.3125);
+		width: calc(var(--size-font) * 2.125);
+		height: calc(var(--size-font) * 2.125);
 		padding: 0;
 		border: 0;
 		border-radius: 50%;
 		background: none;
 		color: var(--grey-950);
 		cursor: pointer;
-		/* Frosted glass behind the translucent fill. Only a 37px circle, so
+		/* Frosted glass behind the translucent fill. Only a 34px circle, so
 		   the blur costs next to nothing. */
 		-webkit-backdrop-filter: blur(4px);
 		backdrop-filter: blur(4px);

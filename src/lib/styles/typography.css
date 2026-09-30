@@ -74,6 +74,11 @@
 	--type-heading-2-leading: 1.1111;
 	--type-heading-2-tracking: -0.01em;
 
+	/* 28/34px */
+	--type-statement-size: calc(var(--size-font) * 1.75);
+	--type-statement-leading: 1.2143;
+	--type-statement-tracking: -0.01em;
+
 	/* 24/30px */
 	--type-heading-3-size: calc(var(--size-font) * 1.5);
 	--type-heading-3-leading: 1.25;
@@ -208,6 +213,14 @@ pre {
 	font-size: var(--type-heading-2-size);
 	line-height: var(--type-heading-2-leading);
 	letter-spacing: var(--type-heading-2-tracking);
+}
+
+/** Statement — the statement that opens a section's copy. */
+.type-statement {
+	font-family: var(--font-sans);
+	font-size: var(--type-statement-size);
+	line-height: var(--type-statement-leading);
+	letter-spacing: var(--type-statement-tracking);
 }
 
 /** Heading 3 — card titles and small headings. */

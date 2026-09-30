@@ -47,7 +47,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import type { ModelViewer } from '$lib/three/ModelViewer';
-	import { prefersReducedMotion } from '$lib/scroll';
+	import { gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
 
 	let {
 		features,
@@ -74,6 +74,43 @@
 		if (next) shot = next;
 	});
 
+	/**
+	 * What each feature puts on the stage: the model, its own panel, or
+	 * nothing yet. A switch fades the outgoing view out (0.3s), then the
+	 * incoming one in (0.3s) — never both at once. The model fades by
+	 * opacity alone, never visibility: a hidden WebGL canvas can lose its
+	 * last frame and flash empty on the way back.
+	 */
+	type View = 'model' | number | null;
+	const viewOf = (i: number): View => (features[i].shot ? 'model' : features[i].panel ? i : null);
+	let modelEl = $state<HTMLElement>();
+	const panelEls: HTMLElement[] = $state([]);
+	let showing: View = untrack(() => viewOf(active));
+	let fade: gsap.core.Timeline | null = null;
+
+	const layersOf = (v: View): HTMLElement[] =>
+		v === 'model' ? [modelEl, ruler].filter((el): el is HTMLElement => !!el) : v === null ? [] : [panelEls[v]];
+	const hideVars = (el: HTMLElement) =>
+		el === modelEl ? { opacity: 0, pointerEvents: 'none' } : { autoAlpha: 0 };
+	const showVars = (el: HTMLElement) =>
+		el === modelEl ? { opacity: 1, pointerEvents: 'auto' } : { autoAlpha: 1 };
+
+	$effect(() => {
+		const next = viewOf(active);
+		if (next === showing) return;
+		showing = next;
+		const incoming = layersOf(next);
+		// Everything else goes, including a view left half-shown by a switch
+		// cut short.
+		const all: View[] = ['model', ...features.map((_, i) => (features[i].panel ? i : null))];
+		const outgoing = all.flatMap((v) => layersOf(v)).filter((el) => !incoming.includes(el));
+		const t = prefersReducedMotion() ? 0 : 0.3;
+		fade?.kill();
+		fade = gsap.timeline();
+		for (const el of outgoing) fade.to(el, { ...hideVars(el), duration: t, ease: 'power1.in' }, 0);
+		for (const el of incoming) fade.to(el, { ...showVars(el), duration: t, ease: 'power1.out' }, t);
+	});
+
 	function select(i: number) {
 		if (i !== active) active = i;
 	}
@@ -81,9 +118,69 @@
 	// The render tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
 
+	let ruler = $state<HTMLElement>();
+	/** Draws the ruler on; built once mounted, unless motion is reduced. */
+	let drawRuler: gsap.core.Timeline | null = null;
+	/** The ruler has had its first reveal, so returning to the model replays it. */
+	let rulerRevealed = false;
+
 	onMount(() => {
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
+		if (!ruler || prefersReducedMotion()) return;
+
+		// The ruler draws itself on: the top rule across, left to right, then
+		// the scale down its side, ticks appearing as it goes, while the label
+		// and value fade up. Clipped rather than scaled, so the ticks never
+		// stretch.
+		const q = (sel: string) => ruler!.querySelector(sel);
+		const ctx = gsap.context(() => {
+			drawRuler = gsap
+				.timeline({ paused: true })
+				.fromTo(
+					q('.ruler-top'),
+					{ clipPath: 'inset(0 100% 0 0)' },
+					{ clipPath: 'inset(0 0% 0 0)', duration: 0.5, ease: 'power2.inOut' },
+					0
+				)
+				.fromTo(
+					q('.ruler-scale'),
+					{ clipPath: 'inset(0 0 100% 0)' },
+					{ clipPath: 'inset(0 0 0% 0)', duration: 1.1, ease: 'power2.inOut' },
+					0.25
+				)
+				.fromTo(
+					[q('.ruler-label'), q('.ruler-value')],
+					{ autoAlpha: 0, y: 6 },
+					{ autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'power2.out' },
+					0.35
+				);
+			ScrollTrigger.create({
+				trigger: ruler,
+				start: 'top 80%',
+				once: true,
+				onEnter: () => {
+					rulerRevealed = true;
+					if (modelShown) drawRuler?.restart();
+				}
+			});
+		});
+		return () => {
+			ctx.revert();
+			drawRuler = null;
+		};
+	});
+
+	// Back on the model: redraw, once the outgoing view has faded (0.3s).
+	let replay: gsap.core.Tween | null = null;
+	$effect(() => {
+		const shown = modelShown;
+		replay?.kill();
+		if (!drawRuler || !rulerRevealed) return;
+		if (shown) {
+			drawRuler.pause(0);
+			replay = gsap.delayedCall(0.3, () => drawRuler?.play());
+		}
 	});
 
 </script>
@@ -106,13 +203,13 @@
 	<Cell start={5} span={8} tablet={{ start: 6, span: 7 }} self="stretch">
 		<div class="viewport">
 			<!-- The model stays mounted under a panel, so it never reloads. -->
-			<div class="layer model" class:faded={!modelShown}>
+			<div class="layer model" bind:this={modelEl}>
 				<Scene {shot} paused={paused || !modelShown} onready={(v) => (viewer = v)} />
 			</div>
 			{#each features as feature, i (feature.title)}
 				{#if feature.panel}
 					{@const p = feature.panel}
-					<div class="layer panel" class:hidden={i !== active} aria-hidden={i !== active}>
+					<div class="layer panel" aria-hidden={i !== active} bind:this={panelEls[i]}>
 						<div class="panel-image" style:aspect-ratio={p.image.ratio}>
 							<Picture src={p.image.src} alt={p.image.alt} ratio={p.image.ratio} fit="contain" sizes="(max-width: 767px) 100vw, 50vw" />
 						</div>
@@ -128,7 +225,7 @@
 				{/if}
 			{/each}
 			{#if measure}
-				<div class="ruler type-annotation" class:hidden={!modelShown} aria-hidden="true">
+				<div class="ruler type-annotation" aria-hidden="true" bind:this={ruler}>
 					<span class="ruler-label">{measure.label}</span>
 					<span class="ruler-top"></span>
 					<span class="ruler-value">{measure.value}</span>
@@ -189,29 +286,16 @@
 		border-radius: var(--stage-radius);
 		background: var(--grey-800);
 	}
-	/* The model and each panel fill the stage, stacked. They never overlap
-	   on a switch: the outgoing one fades out (0.3s), then the incoming one
-	   fades in (0.3s) — showing waits out the hiding. */
+	/* The model and each panel fill the stage, stacked; GSAP fades between
+	   them (see the script). Panels start hidden: the page opens on the
+	   model. */
 	.layer {
 		position: absolute;
 		inset: 0;
-		transition:
-			opacity 0.3s ease 0.3s,
-			visibility 0s linear 0s;
 	}
-	.hidden {
+	.panel {
 		opacity: 0;
 		visibility: hidden;
-		transition:
-			opacity 0.3s ease 0s,
-			visibility 0s linear 0.3s;
-	}
-	/* The model fades by opacity alone, never visibility: a hidden WebGL
-	   canvas can lose its last frame and flash empty on the way back. */
-	.model.faded {
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.3s ease 0s;
 	}
 
 	/* The cut-away bleeds off the right and bottom edges: 155% of the stage's
@@ -276,19 +360,12 @@
 		--tick: var(--space-12);
 		--mid: calc(var(--type-annotation-size) * var(--type-annotation-leading) / 2);
 		position: absolute;
-		/* In step with the model: after the outgoing view has faded. */
-		transition: opacity 0.3s ease 0.3s;
 		top: 12%;
 		bottom: 11%;
 		left: 74%;
 		width: 0;
 		color: var(--grey-0);
 		pointer-events: none;
-	}
-	.ruler.hidden {
-		transition:
-			opacity 0.3s ease 0s,
-			visibility 0s linear 0.3s;
 	}
 	.ruler-label,
 	.ruler-value {

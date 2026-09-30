@@ -1,6 +1,6 @@
 <!--
 	@component
-	Who we are: a statement over the left half, the figures under it, and
+	Who we are: a statement across the first seven columns, the figures under it, and
 	two images on the right whose bottoms line up — a large one on columns
 	8–10 and a smaller one on 11–12.
 
@@ -29,8 +29,8 @@
 
 <section class="mission">
 	<Row gap={40}>
-		<Cell span={6} tablet={{ span: 9 }} mobile={{ span: 12 }}>
-			<p class="statement type-heading-3">{statement}</p>
+		<Cell span={7} tablet={{ span: 12 }} mobile={{ span: 12 }}>
+			<p class="statement type-statement">{statement}</p>
 		</Cell>
 
 		<!-- The figures sit at the top of this row, the images at its foot,
@@ -68,9 +68,10 @@
 		overflow: hidden;
 	}
 	/* Columns 8–10 and 11–12 of the page. */
+	/* Starts well below the figures, the images sitting low in the row. */
 	.primary {
 		grid-column: span 3;
-		margin-top: var(--space-60);
+		margin-top: var(--space-120);
 	}
 	.secondary {
 		grid-column: span 2;

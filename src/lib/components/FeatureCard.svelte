@@ -28,6 +28,7 @@
 
 	let card: HTMLLIElement;
 	let textEl: HTMLSpanElement;
+	let copyEl: HTMLSpanElement;
 	/** Lags `open` on the way closed, so the close can play in the open layout. */
 	let expanded = $state(untrack(() => open));
 	/** The state last asked for — may differ from `expanded` mid-close. */
@@ -37,19 +38,20 @@
 	/**
 	 * Height runs the same length and curve both ways, so the card closing
 	 * and the card opening move in lockstep and the list's total height stays
-	 * nearly constant. The title's grow and shrink (CSS, keyed on `open`)
-	 * runs the same length, so everything lands together.
+	 * nearly constant. The title's drop rides the same tween, so everything
+	 * lands together.
 	 */
-	const HEIGHT = { duration: 0.75, ease: 'power3.inOut' };
+	const HEIGHT = { duration: 0.3, ease: 'power3.inOut' };
 
 	/** Base units, resolved from the body's font-size, which Osmo keeps at one unit. */
 	const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
 	/** Closed card: 6 units (96px at 1440). Keep in step with --closed-height. */
 	const closedHeight = () => unit() * 6;
 
-	// Open: the card grows and, partway in, the description fades in. It
-	// doesn't move on its own: it rides the drop the title makes (CSS, on the
-	// wrapper), so the two move as one. Close: it fades as the card shrinks,
+	// Open: the card grows, the title and description drop together as one
+	// block (`--drop`, 0 closed to 1 open, a CSS variable so the distance
+	// stays right if the window resizes), and partway in the description
+	// fades in. Close: it fades as the card shrinks,
 	// its edge masking it. The title never fades, so nothing flickers.
 	// GSAP tweens from wherever things are, so a click mid-animation just
 	// turns it around.
@@ -63,8 +65,11 @@
 			expanded = next;
 			gsap.set(card, { clearProps: 'height' });
 			gsap.set(textEl, { clearProps: 'opacity,visibility' });
+			gsap.set(copyEl, { '--drop': next ? 1 : 0 });
 			return;
 		}
+		// Starts on the click, before the layout switches below.
+		const drop = gsap.to(copyEl, { '--drop': next ? 1 : 0, ...HEIGHT });
 
 		(async () => {
 			const from = card.offsetHeight;
@@ -79,13 +84,13 @@
 					.fromTo(card, { height: from }, { height: to, ...HEIGHT, clearProps: 'height' }, 0)
 					.to(
 						textEl,
-						{ autoAlpha: 1, duration: 0.65, ease: 'power2.out' },
+						{ autoAlpha: 1, duration: 0.3, ease: 'power2.out' },
 						HEIGHT.duration * 0.3
 					);
 			} else {
 				// The card's height is held by the tween, so the layout can switch
 				// to closed as soon as the copy is gone.
-				const out = 0.3;
+				const out = 0.12;
 				tl = gsap
 					.timeline({ onComplete: () => gsap.set(card, { clearProps: 'height' }) })
 					.fromTo(card, { height: from }, { height: closedHeight(), ...HEIGHT }, 0)
@@ -101,14 +106,17 @@
 			}
 		})();
 
-		return () => tl?.kill();
+		return () => {
+			tl?.kill();
+			drop.kill();
+		};
 	});
 </script>
 
 <li class="card" class:open={expanded} class:active={open} bind:this={card}>
 	<button type="button" class="face" aria-expanded={open} onclick={onselect}>
 		<span class="number type-annotation type-tabular">{number}</span>
-		<span class="copy">
+		<span class="copy" bind:this={copyEl} style:--drop={untrack(() => (open ? 1 : 0))}>
 			<span class="title type-body">{title}</span>
 			<span class="text type-small" bind:this={textEl}>{text}</span>
 		</span>
@@ -120,7 +128,6 @@
 	   the list stretches it. */
 	.card {
 		--closed-height: calc(var(--size-font) * 6);
-		--turn: 0.75s cubic-bezier(0.65, 0, 0.35, 1);
 		overflow: hidden;
 		border-radius: var(--stage-radius);
 		background: var(--grey-800);
@@ -158,9 +165,9 @@
 		border-radius: var(--stage-radius);
 		background: var(--grey-300);
 		color: var(--grey-950);
-		transition:
-			background 0.3s ease,
-			color 0.3s ease;
+		/* Swaps at once, no transition: fading the fill and the number
+		   together passes through a moment where they're the same shade,
+		   and the number flickers. */
 	}
 	.active .number {
 		background: var(--accent-500);
@@ -168,17 +175,14 @@
 	}
 
 	/* Title and description as one block. Open, it drops to sit further
-	   from the badge, carrying both. The offset is a transform, keyed on
-	   `open` so it starts on the click, and never changes the layout — the
-	   height tween owns that. */
+	   from the badge, carrying both: --drop runs 0 to 1, tweened by GSAP in
+	   the script. A transform, so it never changes the layout — the height
+	   tween owns that. */
 	.copy {
 		display: grid;
 		justify-items: start;
 		margin-top: var(--space-12);
-		transition: translate var(--turn);
-	}
-	.active .copy {
-		translate: 0 calc(var(--space-30) - var(--space-12));
+		translate: 0 calc((var(--space-30) - var(--space-12)) * var(--drop, 0));
 	}
 	.card:not(.open) {
 		height: var(--closed-height);

@@ -41,7 +41,7 @@
 	 * nearly constant. The title's drop rides the same tween, so everything
 	 * lands together.
 	 */
-	const HEIGHT = { duration: 0.3, ease: 'power3.inOut' };
+	const HEIGHT = { duration: 0.4, ease: 'power3.inOut' };
 
 	/** Base units, resolved from the body's font-size, which Osmo keeps at one unit. */
 	const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
@@ -84,13 +84,13 @@
 					.fromTo(card, { height: from }, { height: to, ...HEIGHT, clearProps: 'height' }, 0)
 					.to(
 						textEl,
-						{ autoAlpha: 1, duration: 0.3, ease: 'power2.out' },
+						{ autoAlpha: 1, duration: 0.4, ease: 'power2.out' },
 						HEIGHT.duration * 0.3
 					);
 			} else {
 				// The card's height is held by the tween, so the layout can switch
 				// to closed as soon as the copy is gone.
-				const out = 0.12;
+				const out = 0.16;
 				tl = gsap
 					.timeline({ onComplete: () => gsap.set(card, { clearProps: 'height' }) })
 					.fromTo(card, { height: from }, { height: closedHeight(), ...HEIGHT }, 0)

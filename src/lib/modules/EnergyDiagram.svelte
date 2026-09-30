@@ -21,6 +21,7 @@
 		DEFAULT_PARAMS,
 		DEFAULT_TONES,
 		cloneTones,
+		dotFlares,
 		sampleNetwork,
 		type EnergyParams
 	} from '$lib/energy/energy';
@@ -105,6 +106,7 @@
 	const PAD = 18;
 
 	let host: HTMLElement;
+	let markersEl: HTMLElement;
 	let canvas: HTMLCanvasElement;
 	/** Diagram units per CSS pixel, so line weights hold on screen at any size. */
 	let unit = $state(FRAME.width / 800);
@@ -148,8 +150,20 @@
 		let theme: 'light' | 'dark' = 'light';
 		/** Something on screen changed since the last draw. */
 		let dirty = true;
+		// Each marker lights up as a pulse passes through it: the same flare
+		// the canvas draws behind it, handed to the marker as --lit (0..1).
+		const flares = new Float32Array(MARKERS.length);
+		const lightMarkers = () => {
+			dotFlares(net, look, head, flares);
+			const els = markersEl?.children;
+			if (!els) return;
+			for (let i = 0; i < els.length && i < flares.length; i++) {
+				(els[i] as HTMLElement).style.setProperty('--lit', flares[i].toFixed(3));
+			}
+		};
 		const draw = () => {
 			flow?.render(head, time, look, theme);
+			lightMarkers();
 			dirty = false;
 		};
 
@@ -320,7 +334,7 @@
 		{/each}
 	</svg>
 
-	<div class="markers" class:focused={spot !== null}>
+	<div class="markers" class:focused={spot !== null} bind:this={markersEl}>
 		{#each MARKERS as m, i (m.label)}
 			<DiagramLabel
 				label={m.label}

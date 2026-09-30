@@ -116,8 +116,8 @@ export const COOL: Record<Theme, [number, number, number]> = {
 	dark: [240, 240, 245]
 };
 
-/** The marker dots' grey, for their flares; matches `--grey-400`. */
-export const DOT_RGB: [number, number, number] = [172, 171, 173];
+/** The glow behind a marker as energy passes: white, as the dot itself lights up. */
+export const DOT_RGB: [number, number, number] = [255, 255, 255];
 
 export interface Sampled {
 	/** Flat x,y pairs every `step` units. */

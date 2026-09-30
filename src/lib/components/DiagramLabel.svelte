@@ -145,6 +145,17 @@
 		border-radius: var(--stage-radius);
 		background: var(--grey-400);
 	}
+	/* Lights up as energy passes through: a white wash over the grey, at the
+	   strength the diagram hands down as --lit (0 at rest, 1 as a pulse's
+	   head crosses the dot). */
+	.dot::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: var(--grey-0);
+		opacity: calc(var(--lit, 0) * 0.9);
+	}
 	.marker:focus-visible {
 		outline: none;
 	}

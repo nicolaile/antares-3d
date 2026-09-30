@@ -33,8 +33,8 @@ export interface EnergyParams {
 
 /** Tuned for the R1 diagram, whose pipes are 27 units across. */
 export const DEFAULT_PARAMS: EnergyParams = {
-	speed: 230,
-	tail: 720,
+	speed: 180,
+	tail: 500,
 	pulses: 3,
 	core: 2,
 	glow: 6,
@@ -42,7 +42,7 @@ export const DEFAULT_PARAMS: EnergyParams = {
 	ambient: 0,
 	flicker: 1,
 	fill: 0.14,
-	wallLight: 0.16,
+	wallLight: 0.5,
 	sparks: 0.2,
 	temperature: 1
 };
@@ -85,10 +85,10 @@ type Stop = { x: number; rgb: [number, number, number]; a: number };
 
 /**
  * Colour from the tail (0) to the head (1), fading out towards the tail. On
- * the light stage the heat stays orange. On dark every beam is the cool
- * white of the low-temperature pipes, whatever its temperature: grey at the
- * tail, white at the head — it reads because the glow adds light there
- * rather than covering.
+ * the light stage the heat stays orange; on dark it runs up to white-hot,
+ * which only reads because the glow adds light there rather than covering.
+ * Each route's temperature then cools it towards COOL, so hot pipes glow
+ * orange and cold ones read grey-white.
  */
 export const RAMPS: Record<Theme, Stop[]> = {
 	light: [
@@ -98,20 +98,22 @@ export const RAMPS: Record<Theme, Stop[]> = {
 		{ x: 1, rgb: [255, 132, 78], a: 1 }
 	],
 	dark: [
-		{ x: 0, rgb: [150, 150, 158], a: 0 },
-		{ x: 0.35, rgb: [196, 196, 204], a: 0.6 },
-		{ x: 0.7, rgb: [228, 228, 234], a: 1 },
-		{ x: 1, rgb: [255, 255, 255], a: 1 }
+		{ x: 0, rgb: [122, 26, 12], a: 0 },
+		{ x: 0.35, rgb: [194, 54, 28], a: 0.6 },
+		{ x: 0.7, rgb: [255, 106, 46], a: 1 },
+		{ x: 1, rgb: [255, 241, 220], a: 1 }
 	]
 };
 
 /**
- * What a pipe's colour cools towards: the grey of gas that has given its
- * heat up. Warm-tinted on light so it still reads as the same material.
+ * What a pipe's colour cools towards: gas that has given its heat up. On
+ * the light stage a warm grey, so it still reads as the same material; on
+ * dark a crisp near-white, so the cooled half of the loop reads as the heat
+ * drained out, not as the energy fading.
  */
 export const COOL: Record<Theme, [number, number, number]> = {
 	light: [168, 160, 156],
-	dark: [196, 196, 204]
+	dark: [240, 240, 245]
 };
 
 /** The marker dots' grey, for their flares; matches `--grey-400`. */

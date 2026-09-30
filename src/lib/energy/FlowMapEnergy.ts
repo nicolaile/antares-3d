@@ -221,11 +221,13 @@ vec4 heat(float arc, float sd, bool pipe) {
 		col = over(paint(tint(ramp(1.0).rgb, temp), spark * bore), col);
 	}
 
-	// Core on top: widens and whitens into the comet head.
+	// Core on top: widens and whitens into the comet head — as strongly on a
+	// cold pipe as a hot one, so cooled pulses stay as prominent: white-hot
+	// on the hot side, clean white on the cool.
 	float halfw = uCore * 0.5 * (1.0 + 0.9 * head);
 	float core = 1.0 - smoothstep(halfw * 0.45, halfw + uPx, dist);
 	vec4 c = ramp(Im);
-	vec3 rgb = mix(tint(c.rgb, temp), ramp(1.0).rgb, head * 0.7 * temp);
+	vec3 rgb = mix(tint(c.rgb, temp), tint(ramp(1.0).rgb, temp), head * 0.7);
 	return over(paint(rgb, max(c.a, head) * core), col);
 }
 

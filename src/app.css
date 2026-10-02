@@ -5,7 +5,7 @@
   --size-unit: 16; /* base unit in design (1em) - no px */
   --size-container-ideal: 1440; /* screen-size in design - no px */
   --size-container-min: 992px;
-  --size-container-max: 1920px;
+  --size-container-max: 1600px; /* type and spacing stop growing here (16px base reaches 17.8px) */
   --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
   --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 }
@@ -40,18 +40,26 @@
 /* ------------------------------- App tokens -------------------------------- */
 :root {
 	--grid-columns: 12;
-	/* 16px margin, 16px gutter at the 1440 design width, scaling with the
-	   Osmo system from there.
+	/* 20px margin, 16px gutter at the 1440 design width, scaling with the
+	   Osmo system from there: a column is 102px, three are 338px, four 456px.
 	   --page-margin is the inset from the screen's edges, for anything
 	   measured from the top or bottom (the menu button, fixed controls).
 	   --grid-margin is where the grid starts across: the same inset, plus
-	   half of any width past the scale's maximum (1920), so the content
-	   stays a centred 1920 column on wider screens while full-bleed
-	   backgrounds still run edge to edge. */
-	--page-margin: calc(var(--size-font) * 1);
-	--grid-margin: calc(var(--page-margin) + max(0px, (100vw - var(--size-container-max)) / 2));
+	   half of any width past --content-max, so the content stays a centred
+	   1920 column on wider screens while full-bleed backgrounds still run
+	   edge to edge. Type and spacing stop scaling earlier, at 1600
+	   (--size-container-max above); between 1600 and 1920 only the columns
+	   keep widening. */
+	--content-max: 1920px;
+	--page-margin: calc(var(--size-font) * 1.25);
+	--grid-margin: calc(var(--page-margin) + max(0px, (100vw - var(--content-max)) / 2));
 	--grid-gutter: calc(var(--size-font) * 1);
 	--stage-radius: 2px;
+	/* Image cards: the updates grid and the press kit. */
+	--card-radius: 4px;
+	/* Inside the position cards, all round: 20px at 1440, the page margin's
+	   width rather than a step on the 8px spacing scale. */
+	--card-padding: calc(var(--size-font) * 1.25);
 	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);
 }

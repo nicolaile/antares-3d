@@ -66,8 +66,8 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-		padding: var(--space-40) var(--grid-margin) var(--space-60);
-		background: var(--grey-900);
+		padding: var(--space-40) var(--grid-margin) var(--space-64);
+		background: var(--grey-850);
 		color: var(--grey-0);
 	}
 
@@ -77,11 +77,11 @@
 	   the frame. A percentage margin is of the width, and the frame is 2/3
 	   as tall as it is wide, so 10% of the width is roughly 15% of its
 	   height — about 116px at 1440, just inside the 120px gap above, so the
-	   frame never reaches the explorer. Capped at 7.25 units (116px at
-	   1440): past 1920 the gap stops growing but the columns don't, and an
+	   frame never reaches the explorer. Capped at --space-120 less
+	   --space-4 (116px at 1440): past 1600 the gap stops growing but the columns don't, and an
 	   uncapped pull would run the frame up over the explorer. */
 	.diagram {
-		margin-block: max(-10%, calc(var(--size-font) * -7.25));
+		margin-block: max(-10%, calc(var(--space-4) - var(--space-120)));
 	}
 
 	/* Above the diagram's frame, which it now overlaps and which paints its
@@ -91,7 +91,7 @@
 		z-index: 1;
 		display: grid;
 		/* A touch more air between the drawing and the caption. */
-		margin-top: var(--space-12);
+		margin-top: var(--space-16);
 		gap: var(--space-4);
 		margin: 0;
 	}

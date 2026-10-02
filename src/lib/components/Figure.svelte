@@ -31,7 +31,7 @@
 <style>
 	.figure {
 		display: grid;
-		gap: var(--space-12);
+		gap: var(--space-16);
 		margin: 0;
 	}
 </style>

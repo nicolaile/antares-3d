@@ -197,7 +197,7 @@
 		width: calc(var(--size-font) * 15);
 		/* Never taller than the diagram it sits in (less the toggle and insets),
 		   which clips it. */
-		max-height: min(62svh, calc(100cqh - var(--toggle-size) - var(--space-20) * 2 - var(--space-8)));
+		max-height: min(62svh, calc(100cqh - var(--toggle-size) - var(--space-24) * 2 - var(--space-8)));
 		box-sizing: border-box;
 		overflow-y: auto;
 		overscroll-behavior: contain;

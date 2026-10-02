@@ -194,7 +194,7 @@
 	}
 	.start .pill,
 	.center .pill {
-		padding: 0 var(--space-12) 0 calc(var(--inset) + var(--dot) + var(--space-8));
+		padding: 0 var(--space-16) 0 calc(var(--inset) + var(--dot) + var(--space-8));
 		clip-path: inset(0 calc(100% - var(--pill)) 0 0 round 4px);
 	}
 	/* Near the right edge it opens to the left instead, square at the right. */
@@ -202,7 +202,7 @@
 		right: calc(50% - var(--dot) / 2 - var(--inset));
 	}
 	.end .pill {
-		padding: 0 calc(var(--inset) + var(--dot) + var(--space-8)) 0 var(--space-12);
+		padding: 0 calc(var(--inset) + var(--dot) + var(--space-8)) 0 var(--space-16);
 		clip-path: inset(0 0 0 calc(100% - var(--pill)) round 4px);
 	}
 

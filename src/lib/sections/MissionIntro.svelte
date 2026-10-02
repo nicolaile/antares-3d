@@ -30,7 +30,7 @@
 <section class="mission">
 	<Row gap={40}>
 		<Cell span={7} tablet={{ span: 12 }} mobile={{ span: 12 }}>
-			<p class="statement type-statement">{statement}</p>
+			<p class="statement type-h4">{statement}</p>
 		</Cell>
 
 		<!-- The figures sit at the top of this row, the images at its foot,

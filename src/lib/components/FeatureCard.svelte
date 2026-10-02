@@ -141,7 +141,7 @@
 		width: 100%;
 		min-height: var(--closed-height);
 		box-sizing: border-box;
-		padding: var(--space-20);
+		padding: var(--space-24);
 		border: 0;
 		background: none;
 		color: var(--grey-0);
@@ -181,8 +181,8 @@
 	.copy {
 		display: grid;
 		justify-items: start;
-		margin-top: var(--space-12);
-		translate: 0 calc((var(--space-30) - var(--space-12)) * var(--drop, 0));
+		margin-top: var(--space-16);
+		translate: 0 calc((var(--space-32) - var(--space-16)) * var(--drop, 0));
 	}
 	.card:not(.open) {
 		height: var(--closed-height);

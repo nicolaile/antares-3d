@@ -404,7 +404,7 @@
 	}
 	/* The dark sections' own grey, so the diagram sits in them seamlessly. */
 	.diagram.dark {
-		--stage: var(--grey-900);
+		--stage: var(--grey-850);
 		--ink: var(--grey-0);
 		--label-ink: var(--grey-0);
 		--label-fill: var(--grey-950);
@@ -560,16 +560,16 @@
 
 	.tools {
 		position: absolute;
-		right: var(--space-20);
-		bottom: var(--space-20);
+		right: var(--space-24);
+		bottom: var(--space-24);
 		display: flex;
 		align-items: flex-end;
 		gap: var(--space-8);
 	}
 	@media screen and (max-width: 767px) {
 		.tools {
-			right: var(--space-12);
-			bottom: var(--space-12);
+			right: var(--space-16);
+			bottom: var(--space-16);
 		}
 	}
 </style>

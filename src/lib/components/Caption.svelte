@@ -17,7 +17,7 @@
 		color: var(--grey-700);
 	}
 	.label {
-		margin-right: var(--space-20);
+		margin-right: var(--space-24);
 		color: var(--grey-950);
 	}
 </style>

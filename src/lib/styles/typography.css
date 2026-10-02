@@ -10,6 +10,10 @@
  * the px values in comments are at the 1440 desktop design width. The large
  * styles step down at the tablet and mobile breakpoints below.
  *
+ * Caption is trimmed to cap height and baseline (`text-box`), like Figma's
+ * vertical trim, so spacing around it measures from the letters rather than
+ * the line box. Line height still sets the space between its lines.
+ *
  * The /design-system page reads this file directly. A style's doc comment
  * becomes its description there, so keep the format:
  *
@@ -18,7 +22,7 @@
  */
 
 /* ---------------------------------- Faces ---------------------------------- */
-/* Geist and Geist Mono by Vercel, self-hosted (SIL OFL, static/fonts). */
+/* Geist by Vercel, self-hosted (SIL OFL, static/fonts). The only face. */
 @font-face {
 	font-family: 'Geist';
 	src: url('/fonts/Geist-Regular.woff2') format('woff2');
@@ -33,56 +37,35 @@
 	font-style: normal;
 	font-display: swap;
 }
-@font-face {
-	font-family: 'Geist Mono';
-	src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
-	font-weight: 400;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'Geist Mono';
-	src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
-	font-weight: 500;
-	font-style: normal;
-	font-display: swap;
-}
 
 /* --------------------------------- Tokens ---------------------------------- */
 :root {
 	--font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-	/* Labels: the technical, uppercase voice. */
-	--font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
 	/* 140px */
-	--type-display-size: calc(var(--size-font) * 8.75);
-	--type-display-leading: 1;
-	--type-display-tracking: -0.01em;
+	--type-h1-size: calc(var(--size-font) * 8.75);
+	--type-h1-leading: 1;
+	--type-h1-tracking: -0.04em;
 
-	/* 72px */
-	--type-title-size: calc(var(--size-font) * 4.5);
-	--type-title-leading: 1;
-	--type-title-tracking: -0.03em;
-
-	/* 48/52px */
-	--type-heading-1-size: calc(var(--size-font) * 3);
-	--type-heading-1-leading: 1.0833;
-	--type-heading-1-tracking: -0.01em;
+	/* 72/76px */
+	--type-h2-size: calc(var(--size-font) * 4.5);
+	--type-h2-leading: 1.0556;
+	--type-h2-tracking: -0.03em;
 
 	/* 36/40px */
-	--type-heading-2-size: calc(var(--size-font) * 2.25);
-	--type-heading-2-leading: 1.1111;
-	--type-heading-2-tracking: -0.01em;
+	--type-h3-size: calc(var(--size-font) * 2.25);
+	--type-h3-leading: 1.1111;
+	--type-h3-tracking: -0.02em;
 
 	/* 28/34px */
-	--type-statement-size: calc(var(--size-font) * 1.75);
-	--type-statement-leading: 1.2143;
-	--type-statement-tracking: -0.01em;
+	--type-h4-size: calc(var(--size-font) * 1.75);
+	--type-h4-leading: 1.2143;
+	--type-h4-tracking: -0.02em;
 
-	/* 24/30px */
-	--type-heading-3-size: calc(var(--size-font) * 1.5);
-	--type-heading-3-leading: 1.25;
-	--type-heading-3-tracking: -0.01em;
+	/* 24/28px */
+	--type-h5-size: calc(var(--size-font) * 1.5);
+	--type-h5-leading: 1.1667;
+	--type-h5-tracking: -0.02em;
 
 	/* 20/26px */
 	--type-paragraph-size: calc(var(--size-font) * 1.25);
@@ -92,12 +75,12 @@
 	/* 18/22px */
 	--type-body-size: calc(var(--size-font) * 1.125);
 	--type-body-leading: 1.2222;
-	--type-body-tracking: 0em;
+	--type-body-tracking: -0.01em;
 
 	/* 16/20px */
 	--type-small-size: calc(var(--size-font) * 1);
 	--type-small-leading: 1.25;
-	--type-small-tracking: 0em;
+	--type-small-tracking: -0.01em;
 
 	/* 14/18px */
 	--type-caption-size: calc(var(--size-font) * 0.875);
@@ -125,21 +108,20 @@
 	--type-label-tracking: 0.02em;
 }
 
-/* Tablet: Display steps down to 100px, Title to 56px; the rest hold their size. */
+/* Tablet: H1 steps down to 100px, H2 to 56px; the rest hold their size. */
 @media screen and (max-width: 991px) {
 	:root {
-		--type-display-size: calc(var(--size-font) * 6.25);
-		--type-title-size: calc(var(--size-font) * 3.5);
+		--type-h1-size: calc(var(--size-font) * 6.25);
+		--type-h2-size: calc(var(--size-font) * 3.5);
 	}
 }
 
-/* Mobile: Display at 64px, Title at 40px, Heading 1 at 36px, Heading 2 at 28px. */
+/* Mobile: H1 at 64px, H2 at 40px, H3 at 28px. */
 @media screen and (max-width: 767px) {
 	:root {
-		--type-display-size: calc(var(--size-font) * 4);
-		--type-title-size: calc(var(--size-font) * 2.5);
-		--type-heading-1-size: calc(var(--size-font) * 2.25);
-		--type-heading-2-size: calc(var(--size-font) * 1.75);
+		--type-h1-size: calc(var(--size-font) * 4);
+		--type-h2-size: calc(var(--size-font) * 2.5);
+		--type-h3-size: calc(var(--size-font) * 1.75);
 	}
 }
 
@@ -183,52 +165,44 @@ pre {
 
 /* --------------------------------- Styles ---------------------------------- */
 
-/** Display — the hero statement. At most one per page. */
-.type-display {
+/** H1 — the hero statement. At most one per page. */
+.type-h1 {
 	font-family: var(--font-sans);
-	font-size: var(--type-display-size);
-	line-height: var(--type-display-leading);
-	letter-spacing: var(--type-display-tracking);
+	font-size: var(--type-h1-size);
+	line-height: var(--type-h1-leading);
+	letter-spacing: var(--type-h1-tracking);
 }
 
-/** Title — section titles: the big name that opens a section. */
-.type-title {
+/** H2 — section titles: the big name that opens a section. */
+.type-h2 {
 	font-family: var(--font-sans);
-	font-size: var(--type-title-size);
-	line-height: var(--type-title-leading);
-	letter-spacing: var(--type-title-tracking);
+	font-size: var(--type-h2-size);
+	line-height: var(--type-h2-leading);
+	letter-spacing: var(--type-h2-tracking);
 }
 
-/** Heading 1 — large headings within a section. */
-.type-heading-1 {
+/** H3 — statements, subsection titles and the menu links. */
+.type-h3 {
 	font-family: var(--font-sans);
-	font-size: var(--type-heading-1-size);
-	line-height: var(--type-heading-1-leading);
-	letter-spacing: var(--type-heading-1-tracking);
+	font-size: var(--type-h3-size);
+	line-height: var(--type-h3-leading);
+	letter-spacing: var(--type-h3-tracking);
 }
 
-/** Heading 2 — statements, subsection titles and the menu links. */
-.type-heading-2 {
+/** H4 — the statement that opens a section's copy. */
+.type-h4 {
 	font-family: var(--font-sans);
-	font-size: var(--type-heading-2-size);
-	line-height: var(--type-heading-2-leading);
-	letter-spacing: var(--type-heading-2-tracking);
+	font-size: var(--type-h4-size);
+	line-height: var(--type-h4-leading);
+	letter-spacing: var(--type-h4-tracking);
 }
 
-/** Statement — the statement that opens a section's copy. */
-.type-statement {
+/** H5 — card titles and small headings. */
+.type-h5 {
 	font-family: var(--font-sans);
-	font-size: var(--type-statement-size);
-	line-height: var(--type-statement-leading);
-	letter-spacing: var(--type-statement-tracking);
-}
-
-/** Heading 3 — card titles and small headings. */
-.type-heading-3 {
-	font-family: var(--font-sans);
-	font-size: var(--type-heading-3-size);
-	line-height: var(--type-heading-3-leading);
-	letter-spacing: var(--type-heading-3-tracking);
+	font-size: var(--type-h5-size);
+	line-height: var(--type-h5-leading);
+	letter-spacing: var(--type-h5-tracking);
 }
 
 /** Paragraph — ledes and feature copy. */
@@ -258,6 +232,7 @@ pre {
 /** Caption — notes under media and the smallest running text. */
 .type-caption {
 	font-family: var(--font-sans);
+	text-box: trim-both cap alphabetic;
 	font-size: var(--type-caption-size);
 	line-height: var(--type-caption-leading);
 	letter-spacing: var(--type-caption-tracking);
@@ -282,7 +257,7 @@ pre {
 
 /** Label Large — labels run into body text, like caption leads. Always uppercase. */
 .type-label-large {
-	font-family: var(--font-mono);
+	font-family: var(--font-sans);
 	font-weight: 500;
 	font-size: var(--type-label-large-size);
 	line-height: var(--type-label-large-leading);
@@ -292,7 +267,7 @@ pre {
 
 /** Label — technical labels, specs, buttons and controls. Always uppercase. */
 .type-label {
-	font-family: var(--font-mono);
+	font-family: var(--font-sans);
 	font-weight: 500;
 	font-size: var(--type-label-size);
 	line-height: var(--type-label-leading);

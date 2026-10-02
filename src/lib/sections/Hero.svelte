@@ -279,7 +279,7 @@
 		/** The wordmark's height once it's in the corner: 16px at 1440. */
 		const REST = 1;
 		// Where the wordmark comes to rest: centred on the 34px menu button,
-		// which sits one page margin (--page-margin, 1 unit) in from the top.
+		// which sits one page margin (--page-margin, 1.25 units) in from the top.
 		const restTop = () => unit() * (1 + (2.125 - REST) / 2);
 
 		const ctx = gsap.context(() => {
@@ -423,7 +423,7 @@
 		justify-content: flex-end;
 		box-sizing: border-box;
 		height: calc(var(--size-font) * 22.25);
-		padding: 0 var(--grid-margin) var(--space-30);
+		padding: 0 var(--grid-margin) var(--space-32);
 	}
 
 	/* Above the page and footer once pinned, below the menu (z-index 50).
@@ -531,7 +531,7 @@
 	.slide {
 		grid-area: 1 / 1;
 		display: flex;
-		gap: var(--space-15);
+		gap: var(--space-16);
 		color: inherit;
 		text-decoration: none;
 		visibility: hidden;
@@ -571,7 +571,7 @@
 	.copy {
 		display: grid;
 		align-content: start;
-		gap: var(--space-12);
+		gap: var(--space-16);
 		padding-top: var(--space-4);
 		padding-right: var(--space-8);
 	}
@@ -583,10 +583,12 @@
 		/* The intro stacks, wordmark over the blurb, so it sizes to fit. */
 		.intro {
 			height: auto;
-			padding-top: calc(var(--size-font) * 7.5);
+			padding-top: var(--space-120);
 		}
+		/* The wordmark is about 11.5 times as wide as it is tall: 30px tall
+		   keeps it inside a phone's width (about 346px at 390). */
 		.home {
-			height: calc(var(--size-font) * 2.5);
+			height: calc(var(--size-font) * 1.875);
 		}
 	}
 </style>

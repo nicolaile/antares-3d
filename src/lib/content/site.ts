@@ -18,8 +18,8 @@ export const footer = {
 		{ label: 'Missions', href: '#' },
 		{ label: 'Company', href: '#' },
 		{ label: 'Progress', href: '#' },
-		{ label: 'Updates', href: '#' },
-		{ label: 'Careers', href: '#' },
+		{ label: 'Updates', href: '/updates' },
+		{ label: 'Careers', href: '/careers' },
 		{ label: 'Contact', href: '#' }
 	] satisfies Link[],
 	social: [
@@ -50,12 +50,12 @@ export const menu = {
 		{ label: 'Missions', href: '#' },
 		{ label: 'Company', href: '#' },
 		{ label: 'Progress', href: '#' },
-		{ label: 'Updates', href: '#' }
+		{ label: 'Updates', href: '/updates' }
 	] satisfies Link[],
 	/** Smaller links under the main ones. */
 	secondary: [
 		{ label: 'Contact', href: '#' },
-		{ label: 'Careers', href: '#' }
+		{ label: 'Careers', href: '/careers' }
 	] satisfies Link[],
 	/**
 	 * The latest updates, cycled at the foot of the open menu. Only the first

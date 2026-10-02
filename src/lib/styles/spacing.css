@@ -1,36 +1,47 @@
 /*
- * Spacing system — vertical rhythm and insets.
+ * Spacing system — the only place spacing is defined.
  *
- * Horizontal placement comes from the grid (columns, --grid-gutter,
- * --grid-margin); these tokens cover everything else: gaps between stacked
- * blocks, padding inside cards and panels, space between sections.
+ * An 8px scale: every step is a multiple of 8 at the 1440 design width,
+ * with 4 as the one half-step for hairline offsets. Horizontal placement
+ * comes from the grid (columns, --grid-gutter, --grid-margin, also 16px);
+ * these tokens cover everything else: gaps between stacked blocks, padding
+ * inside cards and panels, space between sections.
  *
- * Each token is named after its px value at the 1440 design width and scales
- * with the Osmo system like everything else. The /design-system page reads
- * this file, so keep the doc-comment format:
+ * Margins, padding and gaps anywhere else use these tokens, the grid's, or
+ * 0; `npm run check` fails on a raw length (scripts/check-system.mjs).
+ *
+ * Each token is named after its px value at 1440 and scales with the Osmo
+ * system like everything else. The /design-system page reads this file, so
+ * keep the doc-comment format:
  *
  *     /** When to use it. *\/
  *     --space-n: calc(var(--size-font) * …);
  */
 :root {
-	/** Hairline offsets, icon nudges. */
+	/** Half-step: hairline offsets, icon nudges. */
 	--space-4: calc(var(--size-font) * 0.25);
 	/** Between a heading and the line under it; stacked cards. */
 	--space-8: calc(var(--size-font) * 0.5);
-	/** Caption under media. */
-	--space-12: calc(var(--size-font) * 0.75);
-	/** Feature card padding. */
-	--space-15: calc(var(--size-font) * 0.9375);
+	/** Card and panel padding; caption under media. Matches the gutter. */
+	--space-16: calc(var(--size-font) * 1);
 	/** Panel insets, label to content. */
-	--space-20: calc(var(--size-font) * 1.25);
+	--space-24: calc(var(--size-font) * 1.5);
 	/** Between a hero's intro and the image below it. */
-	--space-30: calc(var(--size-font) * 1.875);
+	--space-32: calc(var(--size-font) * 2);
 	/** Between blocks inside a section. */
 	--space-40: calc(var(--size-font) * 2.5);
+	/** Between a block and the group it opens. */
+	--space-48: calc(var(--size-font) * 3);
 	/** Between groups inside a section. */
-	--space-60: calc(var(--size-font) * 3.75);
+	--space-64: calc(var(--size-font) * 4);
+	/** Between closely related sections. */
+	--space-80: calc(var(--size-font) * 5);
+	/** Large insets: copy set over a full-bleed image. */
+	--space-96: calc(var(--size-font) * 6);
 	/** Between loosely related sections. */
 	--space-120: calc(var(--size-font) * 7.5);
+	/** Between rows of cards in a grid: the updates list. */
+	--space-128: calc(var(--size-font) * 8);
 	/** Between sections, and the end of the page. */
 	--space-160: calc(var(--size-font) * 10);
 }

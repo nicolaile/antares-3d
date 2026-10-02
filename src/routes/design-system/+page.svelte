@@ -53,7 +53,7 @@
 <div class="page">
 	<header class="intro">
 		<p class="type-label eyebrow">Antares — Design System</p>
-		<h1 class="type-display">Design System</h1>
+		<h1 class="type-h1">Design System</h1>
 		<p class="type-paragraph lede">
 			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
 			Everything on the site is built from what's below. This page reads the system's own stylesheets, so it's
@@ -71,7 +71,7 @@
 			{#each SCALE as color (color.token)}
 				<li class="color">
 					<div class="chip" style:background="var({color.token})"></div>
-					<h3 class="type-heading-3 type-tabular">{color.family === 'accent' ? 'Accent' : color.family === 'slate' ? `Slate ${color.step}` : color.step}</h3>
+					<h3 class="type-h5 type-tabular">{color.family === 'accent' ? 'Accent' : color.family === 'slate' ? `Slate ${color.step}` : color.step}</h3>
 					<p class="type-label type-tabular">{color.hex}</p>
 					<code class="type-body class">{color.token}</code>
 					<p class="type-body usage">{color.usage}</p>
@@ -108,7 +108,7 @@
 						ABCDEFGHIJKLMNOPQRSTUVWXYZ<br />abcdefghijklmnopqrstuvwxyz<br />0123456789 &amp;@—.,:;!?
 					</p>
 					<div class="face-meta">
-						<h3 class="type-heading-3">{face.name} {WEIGHT_NAMES[face.weight] ?? face.weight}</h3>
+						<h3 class="type-h5">{face.name} {WEIGHT_NAMES[face.weight] ?? face.weight}</h3>
 						<dl class="type-label specs">
 							<dt>Token</dt>
 							<dd>{face.token}</dd>
@@ -178,7 +178,7 @@
 					<code class="type-body class">.{mod.className}</code>
 					<p class="type-body">{mod.title}</p>
 					<p class="type-body usage">{mod.usage}</p>
-					<p class="type-heading-2 {mod.className}">0123456789</p>
+					<p class="type-h3 {mod.className}">0123456789</p>
 				</li>
 			{/each}
 		</ul>
@@ -205,8 +205,8 @@
 <style>
 	.page {
 		display: grid;
-		gap: calc(var(--size-font) * 6);
-		padding: calc(var(--page-margin) * 3) var(--grid-margin) calc(var(--size-font) * 8);
+		gap: var(--space-96);
+		padding: var(--space-48) var(--grid-margin) var(--space-128);
 	}
 
 	/* Shared 12-column frame, same as the Grid overlay. */
@@ -228,34 +228,34 @@
 		color: var(--grey-700);
 	}
 	.intro h1 {
-		margin-top: calc(var(--size-font) * 2);
+		margin-top: var(--space-32);
 	}
 	.lede {
 		grid-column: 1 / span 6;
-		margin-top: calc(var(--size-font) * 2);
+		margin-top: var(--space-32);
 		color: var(--grey-700);
 	}
 	.now {
 		display: flex;
-		gap: calc(var(--size-font) * 1);
-		margin-top: calc(var(--size-font) * 2);
+		gap: var(--space-16);
+		margin-top: var(--space-32);
 		color: var(--grey-700);
 	}
 
 	section {
 		display: grid;
-		gap: calc(var(--size-font) * 1.5);
+		gap: var(--space-24);
 	}
 	.section-title {
 		margin: 0;
-		padding-bottom: calc(var(--size-font) * 0.75);
+		padding-bottom: var(--space-16);
 		border-bottom: 1px solid var(--grey-200);
 		color: var(--grey-950);
 	}
 	.section-head {
 		align-items: end;
 		border-bottom: 1px solid var(--grey-200);
-		padding-bottom: calc(var(--size-font) * 0.75);
+		padding-bottom: var(--space-16);
 	}
 	.section-head .section-title {
 		grid-column: 1 / span 6;
@@ -267,13 +267,13 @@
 		grid-column: 7 / -1;
 		display: flex;
 		align-items: center;
-		gap: calc(var(--size-font) * 1);
+		gap: var(--space-16);
 		color: var(--grey-700);
 	}
 	.sample-input input {
 		flex: 1;
 		min-width: 0;
-		padding: calc(var(--size-font) * 0.4) calc(var(--size-font) * 0.6);
+		padding: var(--space-8);
 		border: 0;
 		border-radius: var(--stage-radius);
 		background: var(--grey-100);
@@ -286,8 +286,8 @@
 	.face {
 		grid-column: span 6;
 		display: grid;
-		gap: calc(var(--size-font) * 1.5);
-		padding: calc(var(--size-font) * 1.5);
+		gap: var(--space-24);
+		padding: var(--space-24);
 		border-radius: var(--stage-radius);
 		background: var(--grey-100);
 	}
@@ -299,13 +299,13 @@
 		color: var(--grey-700);
 	}
 	.face-meta h3 {
-		margin: 0 0 calc(var(--size-font) * 1);
+		margin: 0 0 var(--space-16);
 	}
 
 	.specs {
 		display: grid;
 		grid-template-columns: auto 1fr;
-		gap: calc(var(--size-font) * 0.35) calc(var(--size-font) * 1.5);
+		gap: var(--space-4) var(--space-24);
 		margin: 0;
 		color: var(--grey-700);
 	}
@@ -317,7 +317,7 @@
 	.palette {
 		display: grid;
 		grid-template-columns: repeat(var(--grid-columns), 1fr);
-		gap: calc(var(--size-font) * 2) var(--grid-gutter);
+		gap: var(--space-32) var(--grid-gutter);
 		margin: 0;
 		padding: 0;
 		list-style: none;
@@ -325,7 +325,7 @@
 	.color {
 		grid-column: span 2;
 		display: grid;
-		gap: calc(var(--size-font) * 0.5);
+		gap: var(--space-8);
 		justify-items: start;
 	}
 	.color h3,
@@ -336,14 +336,14 @@
 	.chip {
 		justify-self: stretch;
 		aspect-ratio: 1;
-		margin-bottom: calc(var(--size-font) * 0.5);
+		margin-bottom: var(--space-8);
 		border: 1px solid var(--grey-200);
 		border-radius: var(--stage-radius);
 	}
 
 	.spacing {
 		display: grid;
-		gap: var(--space-12);
+		gap: var(--space-16);
 		margin: 0;
 		padding: 0;
 		list-style: none;
@@ -360,7 +360,7 @@
 	}
 	.space .bar {
 		grid-column: 3 / span 3;
-		height: var(--space-12);
+		height: calc(var(--size-font) * 0.75);
 		background: var(--grey-950);
 	}
 	.space .usage {
@@ -377,14 +377,14 @@
 	}
 	.style {
 		align-items: start;
-		row-gap: calc(var(--size-font) * 1);
-		padding: calc(var(--size-font) * 2) 0;
+		row-gap: var(--space-16);
+		padding: var(--space-32) 0;
 		border-bottom: 1px solid var(--grey-200);
 	}
 	.style-meta {
 		grid-column: 1 / span 3;
 		display: grid;
-		gap: calc(var(--size-font) * 0.5);
+		gap: var(--space-8);
 		justify-items: start;
 	}
 	.style-meta h3 {
@@ -395,8 +395,8 @@
 		color: var(--grey-700);
 	}
 	.class {
-		margin: calc(var(--size-font) * 0.5) 0;
-		padding: calc(var(--size-font) * 0.3) calc(var(--size-font) * 0.45);
+		margin: var(--space-8) 0;
+		padding: var(--space-4) var(--space-8);
 		border-radius: var(--stage-radius);
 		background: var(--grey-100);
 		color: var(--grey-950);
@@ -410,7 +410,7 @@
 	.modifier {
 		grid-column: span 6;
 		display: grid;
-		gap: calc(var(--size-font) * 0.5);
+		gap: var(--space-8);
 		justify-items: start;
 	}
 	.modifier p {
@@ -419,7 +419,7 @@
 
 	.rules {
 		display: grid;
-		gap: calc(var(--size-font) * 1);
+		gap: var(--space-16);
 		max-width: 40em;
 		counter-reset: rule;
 	}
@@ -433,7 +433,7 @@
 		color: var(--grey-400);
 	}
 	.rules code {
-		padding: 0 calc(var(--size-font) * 0.25);
+		padding: 0 var(--space-4);
 		border-radius: var(--stage-radius);
 		background: var(--grey-100);
 	}
@@ -470,7 +470,7 @@
 			grid-column: span 6;
 		}
 		.sample-input {
-			margin-top: calc(var(--size-font) * 1);
+			margin-top: var(--space-16);
 		}
 		.face + .face,
 		.modifier + .modifier {

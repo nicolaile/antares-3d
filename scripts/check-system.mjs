@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Fails if type or colour is defined outside the design system.
+// Fails if type, colour or spacing is defined outside the design system.
 //
-// src/lib/styles/typography.css is the single source of type, and
-// src/lib/styles/colors.css the single source of colour. Everywhere else picks
-// a `.type-*` class and a colour token; a stray font-size or hex value is a
+// src/lib/styles/typography.css is the single source of type,
+// src/lib/styles/colors.css of colour and src/lib/styles/spacing.css of
+// spacing. Everywhere else picks a `.type-*` class, a colour token and a
+// spacing token; a stray font-size, hex value or 13px margin is a
 // custom style, and custom styles are what the system exists to prevent.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -22,7 +23,7 @@ const RULES = [
 		// `font: inherit` only resets a control to the system; any other `font:`
 		// shorthand sets a size.
 		banned:
-			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform)\s*:|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
+			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform|text-box(?:-trim|-edge)?)\s*:|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
 	},
 	{
 		name: 'Colour',
@@ -38,8 +39,25 @@ const RULES = [
 		],
 		banned:
 			/(?<![\w{&])#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(|(?<![\w-])(color|background|background-color|border|border-color|outline|outline-color|fill|stroke|accent-color|caret-color|box-shadow)\s*[:=]\s*["']?[^;"'>]*(?<![\w-])(white|black|red|green|blue|gr[ae]y|silver)(?![\w-])/
+	},
+	{
+		name: 'Spacing',
+		fix: 'use a --space-* token, or the grid’s',
+		source: 'src/lib/styles/spacing.css',
+		extensions: /\.(svelte|css|html)$/,
+		exempt: [
+			// Developer tool panels, hidden behind Shift+H: dense, not part of
+			// the design.
+			'src/lib/components/Controls.svelte',
+			'src/lib/components/EnergyControls.svelte'
+		],
+		// A margin, padding or gap set in raw lengths or base units. Tokens,
+		// 0, auto, percentages and a component's own derived variables are fine.
+		banned:
+			/(?<![\w-])(margin|padding|gap|row-gap|column-gap)(-[a-z-]+)?\s*:[^;]*(\d(px|r?em|v[wh]|[sdl]v[wh])\b|--size-font)|style:(margin|padding|gap|row-gap|column-gap)[\w-]*=[^>]*(\d(px|r?em)\b|--size-font)/
 	}
 ];
+
 
 function walk(dir) {
 	return readdirSync(dir).flatMap((name) => {

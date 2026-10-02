@@ -33,10 +33,10 @@
 		display: grid;
 		grid-template-columns: subgrid;
 		align-content: start;
-		gap: var(--space-20) 0;
+		gap: var(--space-24) 0;
 	}
 	.titled {
-		padding-top: var(--space-12);
+		padding-top: var(--space-16);
 		border-top: 1px solid var(--grey-200);
 	}
 	.quiet {

@@ -44,7 +44,7 @@
 		outline-offset: 2px;
 	}
 	.icon-button :global(svg) {
-		width: var(--space-12);
-		height: var(--space-12);
+		width: calc(var(--size-font) * 0.75);
+		height: calc(var(--size-font) * 0.75);
 	}
 </style>

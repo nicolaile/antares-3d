@@ -21,7 +21,7 @@
 
 <div class="statement" style:--indent={label ? indent : 0}>
 	{#if label}<p class="label type-body">{label}</p>{/if}
-	<p class="text type-heading-2">{text}</p>
+	<p class="text type-h3">{text}</p>
 </div>
 
 <style>
@@ -45,7 +45,7 @@
 	/* Two columns are too narrow for the label on phones: stack instead. */
 	@media screen and (max-width: 767px) {
 		.statement {
-			gap: var(--space-20);
+			gap: var(--space-24);
 		}
 		.label,
 		.text {

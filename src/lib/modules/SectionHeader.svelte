@@ -19,7 +19,7 @@
 
 <header class="header">
 	<Cell span={8} tablet={{ span: 12 }}>
-		<h2 class="title type-title">{title}</h2>
+		<h2 class="title type-h2">{title}</h2>
 	</Cell>
 	{#if aside}
 		<Cell start={9} span={4} tablet={{ start: 7, span: 6 }}>
@@ -34,7 +34,7 @@
 		display: grid;
 		grid-template-columns: subgrid;
 		align-items: start;
-		row-gap: var(--space-20);
+		row-gap: var(--space-24);
 	}
 	.title,
 	.aside {
@@ -42,7 +42,7 @@
 	}
 	.aside {
 		/* Drops a touch so its first line reads level with the title's. */
-		padding-top: var(--space-12);
+		padding-top: var(--space-16);
 		color: var(--secondary, var(--grey-700));
 	}
 </style>

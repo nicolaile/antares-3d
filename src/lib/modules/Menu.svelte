@@ -227,7 +227,7 @@
 								<li class="line">
 									<a
 										data-nav-link
-										class="link type-heading-2"
+										class="link type-h3"
 										class:current={link.href === current}
 										aria-current={link.href === current ? 'page' : undefined}
 										href={link.href}
@@ -339,7 +339,7 @@
 	   on the same columns as the page. It starts under the button. */
 	.bar {
 		position: absolute;
-		top: calc(var(--page-margin) + var(--size-font) * 2.125 + var(--space-12));
+		top: calc(var(--page-margin) + var(--size-font) * 2.125 + var(--space-16));
 		left: 0;
 		right: 0;
 		padding-inline: var(--grid-margin);
@@ -355,10 +355,10 @@
 		gap: var(--space-40);
 		min-height: min(
 			calc(var(--size-font) * 35.75),
-			100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-12)
+			100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-16)
 		);
 		box-sizing: border-box;
-		padding: var(--space-20);
+		padding: var(--space-24);
 		border-radius: var(--panel-radius);
 		background: var(--grey-0);
 		visibility: hidden;
@@ -371,14 +371,14 @@
 		list-style: none;
 	}
 	.secondary {
-		margin-top: var(--space-60);
+		margin-top: var(--space-64);
 	}
 	/* Each link's mask. The bottom is padded out and pulled back so the clip
 	   clears the descenders (the y in Company, the g in Progress). The main
 	   links pull back a little further (--tighten), setting them solid
-	   rather than on Heading 2's looser line height. */
+	   rather than on H3's looser line height. */
 	.line {
-		--line-size: var(--type-heading-2-size);
+		--line-size: var(--type-h3-size);
 		--tighten: 0.15;
 		overflow: hidden;
 		padding-bottom: calc(var(--line-size) * 0.15);
@@ -409,7 +409,7 @@
 	   the dashes in the bottom-right corner. */
 	.updates {
 		position: relative;
-		padding-top: var(--space-20);
+		padding-top: var(--space-24);
 		border-top: 1px solid var(--grey-200);
 	}
 	.slides {
@@ -418,7 +418,7 @@
 	.update {
 		grid-area: 1 / 1;
 		display: flex;
-		gap: var(--space-20);
+		gap: var(--space-24);
 		color: var(--grey-950);
 		text-decoration: none;
 		visibility: hidden;
@@ -460,7 +460,7 @@
 	.dash {
 		position: relative;
 		width: calc(var(--size-font) * 1.25);
-		height: var(--space-20);
+		height: calc(var(--size-font) * 1.25);
 		margin: 0;
 		padding: 0;
 		border: 0;
@@ -521,7 +521,7 @@
 		.panel {
 			min-height: min(
 				calc(var(--size-font) * 32),
-				100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-12)
+				100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-16)
 			);
 		}
 		.thumb {

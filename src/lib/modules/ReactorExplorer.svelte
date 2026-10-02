@@ -341,7 +341,7 @@
 	.graphic {
 		display: block;
 		width: calc(var(--size-font) * 4.5);
-		margin-top: var(--space-20);
+		margin-top: var(--space-24);
 	}
 
 	/* The poster is a render on the old light stage; on dark it would show as
@@ -357,7 +357,7 @@
 	   its left side with a tick every fifth of the way. Placed for the
 	   opening shot. */
 	.ruler {
-		--tick: var(--space-12);
+		--tick: calc(var(--size-font) * 0.75);
 		--mid: calc(var(--type-annotation-size) * var(--type-annotation-leading) / 2);
 		position: absolute;
 		top: 12%;
@@ -404,8 +404,8 @@
 
 	.pause {
 		position: absolute;
-		right: var(--space-20);
-		bottom: var(--space-20);
+		right: var(--space-24);
+		bottom: var(--space-24);
 	}
 
 	/* Phones: the model on top, the list under it, at its own height. */
@@ -413,7 +413,7 @@
 		.explorer {
 			--open-height: auto;
 			height: auto;
-			row-gap: var(--space-20);
+			row-gap: var(--space-24);
 		}
 		.explorer > :global(:first-child) {
 			grid-row: 2;
@@ -425,7 +425,7 @@
 			display: none;
 		}
 		.pause {
-			top: var(--space-20);
+			top: var(--space-24);
 			bottom: auto;
 		}
 	}

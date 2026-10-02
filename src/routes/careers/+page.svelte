@@ -1,11 +1,10 @@
 <script lang="ts">
 	import Grid from '$lib/components/Grid.svelte';
-	import Row from '$lib/layout/Row.svelte';
-	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PositionCard from '$lib/components/PositionCard.svelte';
 	import OperatingModel from '$lib/sections/OperatingModel.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
+	import PageIntro from '$lib/modules/PageIntro.svelte';
 	import { careers } from '$lib/content/careers';
 	import { footer } from '$lib/content/site';
 
@@ -23,14 +22,7 @@
 
 <main class="careers">
 	<div class="head">
-		<Row>
-			<Cell span={4} tablet={{ span: 6 }}>
-				<h1 class="intro type-h5">
-					{title}
-					<span>{intro}</span>
-				</h1>
-			</Cell>
-		</Row>
+		<PageIntro {title} {intro} />
 
 		<div class="hero">
 			<Picture {...image} ratio="20 / 9" sizes="100vw" loading="eager" />
@@ -49,10 +41,10 @@
 
 	<figure class="quote">
 		<div class="quote-image">
-			<Picture {...quote.image} ratio="24 / 11" sizes="100vw" />
+			<Picture {...quote.image} ratio="2880 / 1494" sizes="100vw" />
 		</div>
 		<figcaption class="quote-body">
-			<blockquote class="quote-text type-body">{quote.text}</blockquote>
+			<blockquote class="quote-text type-h5">{quote.text}</blockquote>
 			<p class="quote-name type-caption">
 				{quote.name}
 				<span>{quote.role}</span>
@@ -65,7 +57,7 @@
 	</div>
 </main>
 
-<Footer {...footer} />
+<Footer {...footer} tone="white" />
 
 <style>
 	.careers {
@@ -84,21 +76,14 @@
 	.head {
 		padding-top: var(--space-120);
 	}
-	.intro {
-		margin: 0;
-	}
-	.intro span {
-		display: block;
-	}
-
 	.hero {
-		margin-top: var(--space-160);
+		margin-top: var(--space-48);
 		overflow: hidden;
 		border-radius: var(--card-radius);
 	}
 
 	.positions {
-		margin-top: var(--space-120);
+		margin-top: var(--space-80);
 	}
 	.label,
 	.count {
@@ -130,7 +115,7 @@
 	}
 
 	/* The quote sits over the light left side of the portrait, its copy
-	   lined up with the copy inside the position cards. */
+	   on columns 1–5, inset 80px: a little short of column 2. */
 	.quote {
 		display: grid;
 		margin: var(--space-120) 0 0;
@@ -152,7 +137,7 @@
 	.quote-name {
 		grid-column: 1 / span 5;
 		margin: 0;
-		padding-left: var(--card-padding);
+		padding-left: var(--space-80);
 	}
 	.quote-name {
 		margin-top: var(--space-24);
@@ -172,7 +157,8 @@
 		}
 		.quote-text,
 		.quote-name {
-			grid-column: 1 / span 6;
+			grid-column: 2 / span 6;
+			padding-left: 0;
 		}
 	}
 

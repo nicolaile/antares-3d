@@ -12,6 +12,9 @@ gsap.registerPlugin(ScrollTrigger, CustomEase);
  */
 CustomEase.create('menu', '0.48, 0.02, 0.03, 0.98');
 
+/** The person panel's slide: `cubic-bezier(0.32, 0, 0, 0.97)`, an easy start and a long, soft landing. */
+CustomEase.create('panel', '0.32, 0, 0, 0.97');
+
 let lenis: Lenis | null = null;
 let refs = 0;
 

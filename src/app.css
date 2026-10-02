@@ -91,7 +91,10 @@ html:not([data-tools]) [data-tool] {
 	display: none !important;
 }
 
-html.lenis-stopped {
+/* Scrolling paused: by Lenis on pages that run it, by `scroll-locked` (an
+   open person panel) on pages that don't. */
+html.lenis-stopped,
+html.scroll-locked {
 	overflow: hidden;
 }
 

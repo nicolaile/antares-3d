@@ -585,8 +585,8 @@
 			height: auto;
 			padding-top: var(--space-120);
 		}
-		/* The wordmark is about 11.5 times as wide as it is tall: 30px tall
-		   keeps it inside a phone's width (about 346px at 390). */
+		/* The wordmark is about 9.4 times as wide as it is tall: 30px tall
+		   keeps it well inside a phone's width (about 282px at 390). */
 		.home {
 			height: calc(var(--size-font) * 1.875);
 		}

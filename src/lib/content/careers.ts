@@ -16,8 +16,7 @@ const titles = ['Quality Assurance Specialist', 'Operations Manager', 'Project M
 
 export const careers = {
 	title: 'Careers',
-	intro:
-		'Antares provides the infrastructure to make the financial ecosystem more connected, transparent and efficient.',
+	intro: 'Antares provides the infrastructure to make the financial ecosystem',
 	image: {
 		src: heroImage,
 		alt: 'Silhouette of a face against a window onto Earth from orbit'

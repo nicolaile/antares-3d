@@ -25,6 +25,8 @@
 	--grey-300: #d1d1d1;
 	/** Tertiary text, slider tracks, borders. */
 	--grey-400: #acabad;
+	/** Muted text on light: the line under a page title, like the Careers intro. */
+	--grey-500: #6b6b6b;
 	/** Secondary text, spec labels. */
 	--grey-700: #59585b;
 	/** Raised surfaces on dark: the cards and stage inside a dark band. Also article body copy, a step softer than primary text. */

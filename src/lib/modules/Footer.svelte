@@ -2,8 +2,9 @@
 	@component
 	The site footer: a statement and aside at the top, then a rule, two link
 	columns and the legal line pinned to the bottom. Full-bleed and at least
-	one screen tall. Pale slate by default; `dark` puts it on the dark grey,
-	for pages that are dark throughout. Content comes from `$lib/content/site`, so every page
+	one screen tall. Pale slate by default; `tone="white"` sets it on white
+	behind a hairline, and `tone="dark"` on the dark grey, for pages that are
+	dark throughout. Content comes from `$lib/content/site`, so every page
 	gets the same footer with a single `<Footer {...footer} />`.
 -->
 <script lang="ts">
@@ -18,20 +19,20 @@
 		nav,
 		social,
 		legal,
-		dark = false
+		tone = 'slate'
 	}: {
 		statement: string[];
 		aside?: string;
 		nav: Link[];
 		social: Link[];
 		legal: { owner: string; links: Link[] };
-		dark?: boolean;
+		tone?: 'slate' | 'white' | 'dark';
 	} = $props();
 
 	const year = new Date().getFullYear();
 </script>
 
-<footer class="footer" class:dark>
+<footer class="footer {tone}">
 	<Row gap={40}>
 		<Cell span={6} tablet={{ span: 8 }}>
 			<p class="statement type-h5">
@@ -91,9 +92,24 @@
 		   the rest the secondary grey. */
 		background: var(--slate-300);
 		color: var(--grey-700);
-		/* The primary ink and the rule, swapped by `dark`. */
+		/* The primary ink and the rule, swapped by `tone`. */
 		--ink: var(--grey-950);
 		--rule: var(--grey-400);
+	}
+	/* White on a white page: a hairline across the top, inset to the grid
+	   like the rule above the links, marks where the footer starts. */
+	.white {
+		position: relative;
+		background: var(--grey-0);
+		--rule: var(--grey-200);
+	}
+	.white::before {
+		position: absolute;
+		top: 0;
+		right: var(--grid-margin);
+		left: var(--grid-margin);
+		border-top: 1px solid var(--rule);
+		content: '';
 	}
 	.dark {
 		background: var(--grey-850);

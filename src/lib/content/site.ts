@@ -16,7 +16,7 @@ export const footer = {
 		'Join us and help turn breakthrough nuclear technology into reliable power for critical missions on Earth, in space, and underwater.',
 	nav: [
 		{ label: 'Missions', href: '#' },
-		{ label: 'Company', href: '#' },
+		{ label: 'Company', href: '/company' },
 		{ label: 'Progress', href: '#' },
 		{ label: 'Updates', href: '/updates' },
 		{ label: 'Careers', href: '/careers' },
@@ -48,7 +48,7 @@ export const menu = {
 	links: [
 		{ label: 'Home', href: '/' },
 		{ label: 'Missions', href: '#' },
-		{ label: 'Company', href: '#' },
+		{ label: 'Company', href: '/company' },
 		{ label: 'Progress', href: '#' },
 		{ label: 'Updates', href: '/updates' }
 	] satisfies Link[],

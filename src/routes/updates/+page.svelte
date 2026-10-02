@@ -76,7 +76,7 @@
 	</a>
 </main>
 
-<Footer {...footer} dark />
+<Footer {...footer} tone="dark" />
 
 <style>
 	/* The whole page is dark, html included, so overscroll doesn't flash white. */

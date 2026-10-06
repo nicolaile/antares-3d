@@ -75,11 +75,10 @@ export const r1 = {
 	features,
 	measure: { label: 'Measures', value: '2.5M/8.2ft' },
 	diagram: { alt: 'Diagram of the R1 power conversion system' },
-	note: {
-		// Set in capitals here: Caption is the 14px style, and it isn't uppercase.
-		label: 'ENGINEERING BY ANTARES NUCLEAR',
-		text: 'Inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fug nemo.'
-	}
+	views: {
+		title: 'Technical specifications',
+		text: 'Purpose-designed modular power for defense-critical assets'
+	},
 };
 
 export const operating = {

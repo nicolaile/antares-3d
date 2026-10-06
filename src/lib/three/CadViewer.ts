@@ -107,11 +107,13 @@ export class CadViewer {
 	 */
 	private anchors: THREE.Vector3[] = [];
 	private anchorShown: boolean[] = [];
+	/** A shown label hides once less than `hide` of its patch is clear, and a hidden one shows once more than `show` is. */
+	protected anchorThresholds = { hide: 0.25, show: 0.6 };
 	private anchorTest = { due: false, last: 0 };
 	private distanceTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 	private distanceMaterial = distanceMaterial();
 	/** The line drawing (`setLines`): how far in (0..1), and the drawing pass itself, made on first use. */
-	private lines = { mix: 0, on: false, drawing: null as LineDrawing | null, ink: '#111111', paper: '#ffffff', weight: 0.5 };
+	private lines = { mix: 0, on: false, drawing: null as LineDrawing | null, ink: '#111111', paper: '#ffffff', opacity: 1, weight: 0.5 };
 
 	constructor(protected host: HTMLElement) {
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -333,12 +335,21 @@ export class CadViewer {
 	 * read as an axonometric drawing while keeping a hint of depth, settling
 	 * at an isometric-ish height. Orbiting stays on, but tilting is held to
 	 * the band a drawing would be seen from, so it turns like a turntable.
+	 * Without `animate` it switches at once and leaves the camera to the caller.
 	 */
-	setLines(on: boolean) {
+	setLines(on: boolean, animate = true) {
 		if (on === this.lines.on) return;
 		this.lines.on = on;
 		this.lines.drawing ??= new LineDrawing(this.renderer);
 		this.applyLineStyle();
+		// At once, lens and all, leaving the camera where it is.
+		if (!animate) {
+			this.lines.mix = on ? 1 : 0;
+			this.camera.fov = on ? 4 : 35;
+			this.camera.updateProjectionMatrix();
+			this.dirty = true;
+			return;
+		}
 
 		const target = this.controls.target;
 		const offset = this.camera.position.clone().sub(target);
@@ -380,8 +391,8 @@ export class CadViewer {
 		});
 	}
 
-	/** The drawing's ink and paper (any CSS colour), and its line weight in CSS pixels. */
-	setLineStyle(style: { ink?: string; paper?: string; weight?: number }) {
+	/** The drawing's ink and paper (any CSS colour), the ink's opacity over the paper, and its line weight in CSS pixels. */
+	setLineStyle(style: { ink?: string; paper?: string; opacity?: number; weight?: number }) {
 		Object.assign(this.lines, style);
 		this.applyLineStyle();
 	}
@@ -389,7 +400,7 @@ export class CadViewer {
 	private applyLineStyle() {
 		const drawing = this.lines.drawing;
 		if (!drawing) return;
-		drawing.setColors(this.lines.ink, this.lines.paper);
+		drawing.setColors(this.lines.ink, this.lines.paper, this.lines.opacity);
 		drawing.weight = this.lines.weight;
 		this.dirty = true;
 	}
@@ -407,7 +418,7 @@ export class CadViewer {
 		this.model = null;
 	}
 
-	private resize() {
+	protected resize() {
 		const { clientWidth: w, clientHeight: h } = this.host;
 		if (!w || !h) return;
 		this.view = { width: w, height: h };
@@ -500,7 +511,8 @@ export class CadViewer {
 		const sample = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / h;
 		this.anchorShown = this.anchors.map((p, i) => {
 			const clear = this.anchorClear(p, w, h, sample, px, planes, view);
-			return this.anchorShown[i] ? clear > 0.25 : clear > 0.6;
+			const { hide, show } = this.anchorThresholds;
+			return this.anchorShown[i] ? clear > hide : clear > show;
 		});
 		this.renderer.setRenderTarget(null);
 		this.renderer.setClearAlpha(clear);

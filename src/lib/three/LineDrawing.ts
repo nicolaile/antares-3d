@@ -257,6 +257,7 @@ function smoothMaterial(lines: THREE.Texture) {
 			`uniform vec3 ink;
 uniform vec3 paper;
 uniform float amount;
+uniform float inkOpacity;
 uniform vec2 samples;
 void main() {
 	// The 2×2 samples, a quarter of a screen pixel either side of its centre.
@@ -267,6 +268,7 @@ void main() {
 		ApplyFXAA(tDiffuse, resolution.xy, vUv + vec2(-h.x, h.y)).rg +
 		ApplyFXAA(tDiffuse, resolution.xy, vUv + vec2(h.x, h.y)).rg
 	) / 4.0;
+	l.r *= inkOpacity;
 	// Of the pixel, ink covers l.r, paper the rest of the model's share
 	// (l.g), and the background shows through what's left.
 	float a = max(l.g, l.r);
@@ -284,6 +286,7 @@ void main() {
 			samples: { value: new THREE.Vector2(1, 1) },
 			ink: { value: new THREE.Color(0x111111) },
 			paper: { value: new THREE.Color(0xffffff) },
+			inkOpacity: { value: 1 },
 			amount: { value: 1 }
 		},
 		vertexShader: /* glsl */ `
@@ -341,10 +344,12 @@ export class LineDrawing {
 		this.ink.uniforms.weight.value = v;
 	}
 
-	setColors(ink: THREE.ColorRepresentation, paper: THREE.ColorRepresentation) {
+	/** The ink, laid at `opacity` over the paper (as a drawing's tone is a group opacity of its ink). */
+	setColors(ink: THREE.ColorRepresentation, paper: THREE.ColorRepresentation, opacity = 1) {
 		// Written after tone mapping, straight to the screen: sRGB as given.
 		this.smooth.uniforms.ink.value.set(ink).convertLinearToSRGB();
 		this.smooth.uniforms.paper.value.set(paper).convertLinearToSRGB();
+		this.smooth.uniforms.inkOpacity.value = opacity;
 	}
 
 	/** Draws over whatever the canvas already holds (the shaded render, while fading). */

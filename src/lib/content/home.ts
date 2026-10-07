@@ -318,6 +318,7 @@ const capabilityPlaceholder =
 /** Only the first row's copy is written; the others carry placeholder text. */
 export const capabilities = {
 	label: 'Capabilities',
+	intro: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 	items: [
 		{
 			title: 'Special Purpose Reactors',

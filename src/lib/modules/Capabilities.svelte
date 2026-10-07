@@ -12,15 +12,20 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
+	import Row from '$lib/layout/Row.svelte';
+	import Cell from '$lib/layout/Cell.svelte';
 	import { gsap, prefersReducedMotion } from '$lib/scroll';
 	import type { Capability } from '$lib/content/home';
 
 	let {
 		label,
+		intro,
 		items,
 		closeSiblings = true
 	}: {
 		label: string;
+		/** With an intro, the label becomes a heading over a short paragraph. */
+		intro?: string;
 		items: Capability[];
 		/** Opening a row closes the one open; off, rows open and close on their own. */
 		closeSiblings?: boolean;
@@ -66,7 +71,16 @@
 </script>
 
 <section class="capabilities" aria-labelledby="{id}-label">
-	<h2 id="{id}-label" class="label type-caption">{label}</h2>
+	{#if intro}
+		<Row>
+			<Cell span={3} tablet={{ span: 5 }}>
+				<h2 id="{id}-label" class="section-title type-h3">{label}</h2>
+				<p class="intro type-body-default">{intro}</p>
+			</Cell>
+		</Row>
+	{:else}
+		<h2 id="{id}-label" class="label type-caption">{label}</h2>
+	{/if}
 	<ol class="list">
 		{#each items as item, i (i)}
 			<li class="item" class:open={open[i]}>
@@ -111,8 +125,14 @@
 
 <style>
 	.label,
+	.section-title,
+	.intro,
 	.heading {
 		margin: 0;
+	}
+	.intro {
+		margin-top: var(--space-16);
+		color: var(--grey-500);
 	}
 	.label {
 		color: var(--grey-700);

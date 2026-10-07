@@ -9,7 +9,8 @@
 	`data-nav-status`, and `data-nav-toggle` marks what opens and closes it.
 	The panel sits on the page grid, columns 8–12: the main links and the
 	secondary ones pinned top, the latest updates pinned bottom, cycling on
-	their own while the menu is open (dashes pick one directly).
+	their own while the menu is open, turning like a wheel (dashes pick one
+	directly).
 -->
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
@@ -41,9 +42,13 @@
 	let swap: gsap.core.Timeline | null = null;
 
 	/**
-	 * Switching updates: the images crossfade. The old text fades up and out; the new date and title rise
-	 * in once the wipe is underway. A switch mid-transition finishes the
-	 * running one first, so nothing is left half-drawn.
+	 * Switching updates turns them like a wheel. Each update moves as one
+	 * piece, image and text together: the old one leaves through the top,
+	 * tilting back and shrinking a little, while the new one rolls in from
+	 * below, tilted the other way, and settles flat. Forward (the next one,
+	 * or a later dash) turns up; an earlier dash turns the same way mirrored.
+	 * A switch mid-turn finishes the running one first, so nothing is left
+	 * half-turned.
 	 */
 	function transition(from: number, to: number) {
 		swap?.progress(1).kill();
@@ -51,20 +56,21 @@
 		if (!slides || prefersReducedMotion()) return;
 		const out = slides.children[from] as HTMLElement;
 		const inn = slides.children[to] as HTMLElement;
-		const q = (el: HTMLElement, sel: string) => el.querySelectorAll(sel);
-		const touched = [out, inn, ...q(out, '.thumb, .date, .title'), ...q(inn, '.thumb, .date, .title')];
-		// The outgoing update stays drawn under the incoming one until the end.
+		const dir = to === (from + 1) % updates.length || to > from ? 1 : -1;
+		const travel = slides.offsetHeight * dir;
+		// The outgoing update stays drawn until it has turned away.
 		gsap.set(out, { visibility: 'inherit' });
 		swap = gsap
-			.timeline({ onComplete: () => gsap.set(touched, { clearProps: 'all' }) })
-			.to(q(out, '.date, .title'), { autoAlpha: 0, y: -6, duration: 0.6, stagger: 0.06, ease: 'power2.inOut' }, 0)
-			.to(q(out, '.thumb'), { autoAlpha: 0, duration: 1.2, ease: 'power2.inOut' }, 0)
-			.fromTo(q(inn, '.thumb'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 1.2, ease: 'power2.inOut' }, 0)
+			.timeline({
+				defaults: { duration: 1.2, ease: 'menu', lazy: false },
+				onComplete: () => gsap.set([out, inn], { clearProps: 'all' })
+			})
+			.to(out, { y: -travel, scale: 0.85, rotationX: 50 * dir, autoAlpha: 0 }, 0)
 			.fromTo(
-				q(inn, '.date, .title'),
-				{ autoAlpha: 0, y: 14 },
-				{ autoAlpha: 1, y: 0, duration: 1.2, stagger: 0.1, ease: 'expo.out' },
-				0.7
+				inn,
+				{ y: travel, scale: 0.85, rotationX: -40 * dir, autoAlpha: 0 },
+				{ y: 0, scale: 1, rotationX: 0, autoAlpha: 1 },
+				0
 			);
 	}
 
@@ -194,13 +200,41 @@
 		}
 	}
 
+	/**
+	 * Whether the button sits over a dark region: anything marked
+	 * `data-tone="dark"` (the R1 band, slideshows, dark footers, dark
+	 * pages). Checked at the button's centre on every scroll and resize, and
+	 * after each navigation.
+	 */
+	let dark = $state(false);
+	function probe() {
+		const button = toggle?.querySelector('button');
+		if (!button) return;
+		const b = button.getBoundingClientRect();
+		const x = b.left + b.width / 2;
+		const y = b.top + b.height / 2;
+		dark = [...document.querySelectorAll('[data-tone="dark"]')].some((el) => {
+			const r = el.getBoundingClientRect();
+			return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+		});
+	}
+	$effect(() => {
+		void current;
+		tick().then(probe);
+	});
+
 	onMount(() => {
+		window.addEventListener('scroll', probe, { passive: true });
+		window.addEventListener('resize', probe);
+		probe();
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape' && open) setOpen(false);
 		};
 		window.addEventListener('keydown', onKey);
 		return () => {
 			window.removeEventListener('keydown', onKey);
+			window.removeEventListener('scroll', probe);
+			window.removeEventListener('resize', probe);
 			tl?.kill();
 			if (open) getLenis()?.start();
 		};
@@ -227,7 +261,7 @@
 								<li class="line">
 									<a
 										data-nav-link
-										class="link type-h3"
+										class="link type-h2"
 										class:current={link.href === current}
 										aria-current={link.href === current ? 'page' : undefined}
 										href={link.href}
@@ -242,7 +276,7 @@
 									<li class="line">
 										<a
 											data-nav-link
-											class="link type-small"
+											class="link type-body-default"
 											class:current={link.href === current}
 											aria-current={link.href === current ? 'page' : undefined}
 											href={link.href}
@@ -256,7 +290,7 @@
 
 					{#if updates.length}
 						<div class="updates" data-nav-item>
-							<!-- Stacked in one cell, so switching crossfades without a jump. -->
+							<!-- Stacked in one cell, so switching turns without a jump. -->
 							<div class="slides" bind:this={slides}>
 								{#each updates as update, i (i)}
 									<a
@@ -270,13 +304,13 @@
 											<Picture
 												src={update.image.src}
 												alt={update.image.alt}
-												ratio="1 / 1"
-												sizes="(max-width: 767px) 25vw, 11vw"
+												ratio="456 / 277"
+												sizes="(max-width: 767px) 32vw, 14vw"
 											/>
 										</span>
 										<span class="copy">
 											<span class="type-caption-small date">{update.date}</span>
-											<span class="type-small title">{update.title}</span>
+											<span class="type-body-default title">{update.title}</span>
 										</span>
 									</a>
 								{/each}
@@ -306,6 +340,7 @@
 	<div class="toggle" data-nav-toggle="toggle" bind:this={toggle}>
 		<MenuButton
 			{open}
+			tone={dark ? 'dark' : 'light'}
 			controls="site-menu"
 			onclick={(e?: MouseEvent) => {
 				// detail is 0 for Enter/Space presses, 1+ for real clicks.
@@ -376,28 +411,26 @@
 	/* Each link's mask. The bottom is padded out and pulled back so the clip
 	   clears the descenders (the y in Company, the g in Progress). The main
 	   links pull back a little further (--tighten), setting them solid
-	   rather than on H3's looser line height. */
+	   rather than on H2's looser line height. */
 	.line {
-		--line-size: var(--type-h3-size);
+		--line-size: var(--type-h2-size);
 		--tighten: 0.15;
 		overflow: hidden;
 		padding-bottom: calc(var(--line-size) * 0.15);
 		margin-bottom: calc(var(--line-size) * -0.15 - var(--line-size) * var(--tighten));
 	}
 	.secondary .line {
-		--line-size: var(--type-small-size);
+		--line-size: var(--type-body-default-size);
 		--tighten: 0;
 	}
 	.link {
 		display: inline-block;
-		color: var(--grey-700);
+		color: var(--grey-950);
 		text-decoration: none;
 		transition: color 0.2s ease;
 	}
-	.link:hover,
-	.link:focus-visible,
-	.link.current {
-		color: var(--grey-950);
+	.link:hover {
+		color: var(--grey-500);
 	}
 	a:focus-visible,
 	button:focus-visible {
@@ -405,15 +438,18 @@
 		outline-offset: 2px;
 	}
 
-	/* A hairline, then the update: thumbnail left, date and title beside it,
-	   the dashes in the bottom-right corner. */
+	/* The update: thumbnail left, date and title beside it, the dashes in
+	   the bottom-right corner. */
 	.updates {
 		position: relative;
 		padding-top: var(--space-24);
-		border-top: 1px solid var(--grey-200);
 	}
+	/* One vanishing point for the whole stack, so the updates turn on a
+	   shared wheel; clipped, so a turn never passes over the links above. */
 	.slides {
 		display: grid;
+		perspective: 600px;
+		overflow: clip;
 	}
 	.update {
 		grid-area: 1 / 1;
@@ -432,7 +468,7 @@
 
 	.thumb {
 		flex: none;
-		width: calc(var(--size-font) * 9.5);
+		width: calc(var(--size-font) * 12);
 		border-radius: var(--stage-radius);
 		overflow: hidden;
 	}
@@ -525,7 +561,7 @@
 			);
 		}
 		.thumb {
-			width: calc(var(--size-font) * 6);
+			width: calc(var(--size-font) * 7.5);
 		}
 	}
 </style>

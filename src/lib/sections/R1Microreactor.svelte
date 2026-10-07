@@ -1,61 +1,55 @@
 <!--
 	@component
 	Product section, on a full-bleed dark band: the header, the interactive
-	model with its features, then the energy diagram with a caption under
-	it at the left.
+	model with its features, then the system's drawing (section or
+	isometric, SystemViews).
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import SectionHeader from '$lib/modules/SectionHeader.svelte';
-	import ReactorExplorer, { type Feature } from '$lib/modules/ReactorExplorer.svelte';
-	import EnergyDiagram from '$lib/modules/EnergyDiagram.svelte';
+	import ReactorExplorer, { type Feature, type CadModel, type CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
+	import SystemViews from '$lib/modules/SystemViews.svelte';
+	import { reveal } from '$lib/reveal';
 
 	let {
 		title,
 		aside,
 		features,
-		measure,
+		models,
 		diagram,
-		note
+		views
 	}: {
 		title: string;
 		aside?: string;
 		features: Feature[];
-		/** The height ruler beside the model. */
-		measure?: { label: string; value: string };
+		/** The CAD models' files and setup (ReactorExplorer). */
+		models: Partial<Record<CadModel, CadModelSetup>>;
 		/** Accessible description of the energy diagram. */
 		diagram: { alt: string };
-		/** Under the diagram, at the left: a short label over a line or two. */
-		note?: { label: string; text: string };
+		/** Beside the drawing, at the left: a title over a line. */
+		views: { title: string; text: string };
 	} = $props();
+
+	const REVEAL = '.header .title, .header .aside, .explorer > .tabs, .explorer > .detail, .explorer > .viewport';
 </script>
 
-<section class="band">
-	<Row gap={120}>
-		<Cell subgrid gap={120}>
+<section class="band" data-tone="dark">
+	<Row gap={64}>
+		<!-- In turn: the title, the line under it, the tabs, then the model (which turns in, too). -->
+		<Cell subgrid gap={120} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
 			<Cell subgrid>
-				<SectionHeader {title} {aside} />
+				<SectionHeader {title} {aside} align="center" />
 			</Cell>
 			<Cell subgrid>
-				<ReactorExplorer {features} {measure} />
+				<ReactorExplorer {features} {models} />
 			</Cell>
 		</Cell>
 
 		<Cell subgrid gap={40}>
-			<Cell start={2} span={10} tablet={{ start: 1, span: 12 }}>
-				<div class="diagram">
-					<EnergyDiagram label={diagram.alt} dark />
-				</div>
-			</Cell>
-			{#if note}
-				<Cell span={3} tablet={{ span: 6 }}>
-					<p class="note">
-						<span class="type-caption note-label">{note.label}</span>
-						<span class="type-caption note-text">{note.text}</span>
-					</p>
-				</Cell>
-			{/if}
+			<div class="diagram">
+				<SystemViews label={diagram.alt} {...views} />
+			</div>
 		</Cell>
 	</Row>
 </section>
@@ -66,36 +60,17 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-		padding: var(--space-40) var(--grid-margin) var(--space-64);
+		/* Room above the centred heading, so it opens the band rather than sitting on its edge. */
+		padding: var(--space-80) var(--grid-margin) var(--space-64);
 		background: var(--grey-850);
 		color: var(--grey-0);
 	}
 
-	/* The drawing sits inside its frame with empty stage above (about 18%)
-	   and below (about 18%). Pull the frame into the gaps either side, so
-	   the model above and the caption below sit by the drawing rather than
-	   the frame. A percentage margin is of the width, and the frame is 2/3
-	   as tall as it is wide, so 10% of the width is roughly 15% of its
-	   height — about 116px at 1440, just inside the 120px gap above, so the
-	   frame never reaches the explorer. Capped at --space-120 less
-	   --space-4 (116px at 1440): past 1600 the gap stops growing but the columns don't, and an
-	   uncapped pull would run the frame up over the explorer. */
+	/* The section's drawing (SystemViews): on desktop a panel one screen tall. */
 	.diagram {
-		margin-block: max(-10%, calc(var(--space-4) - var(--space-120)));
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: subgrid;
 	}
 
-	/* Above the diagram's frame, which it now overlaps and which paints its
-	   own background. */
-	.note {
-		position: relative;
-		z-index: 1;
-		display: grid;
-		/* A touch more air between the drawing and the caption. */
-		margin-top: var(--space-16);
-		gap: var(--space-4);
-		margin: 0;
-	}
-	.note-text {
-		color: var(--grey-400);
-	}
 </style>

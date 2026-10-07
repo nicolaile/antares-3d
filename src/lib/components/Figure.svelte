@@ -25,7 +25,7 @@
 
 <figure class="figure">
 	<Picture {src} {alt} {ratio} {sizes} {surface} />
-	{#if caption}<figcaption class="type-body">{caption}</figcaption>{/if}
+	{#if caption}<figcaption class="type-body-large">{caption}</figcaption>{/if}
 </figure>
 
 <style>

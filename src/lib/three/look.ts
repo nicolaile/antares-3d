@@ -39,10 +39,10 @@ export const LOOK: Partial<RenderParams> = {
 	gradientOffset: 1,
 	gradientTrack: 0,
 
-	// Studio: on. The backdrop matches the dark stage (grey-800, #242424),
-	// so the sweep reads as the panel itself rather than a box inside it.
-	sweepLight: '#242424',
-	sweepDark: '#242424',
+	// Studio: on. The backdrop matches the R1 band (grey-850, #121212), so
+	// the model stands on the band itself rather than in a box inside it.
+	sweepLight: '#121212',
+	sweepDark: '#121212',
 	sweepAngle: 0,
 	sweepMid: 0.49,
 	sweepSpread: 1,

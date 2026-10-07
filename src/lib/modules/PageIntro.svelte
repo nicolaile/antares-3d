@@ -1,6 +1,6 @@
 <!--
 	@component
-	The title block that opens a light page: the page's name in H5, then a
+	The title block that opens a light page: the page's name in H3, then a
 	line about it in muted grey, on the first four columns (six on tablet).
 -->
 <script lang="ts">
@@ -12,7 +12,7 @@
 
 <Row>
 	<Cell span={4} tablet={{ span: 6 }}>
-		<h1 class="intro type-h5">
+		<h1 class="intro type-h3">
 			{title}
 			<span>{intro}</span>
 		</h1>

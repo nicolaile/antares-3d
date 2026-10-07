@@ -10,9 +10,15 @@
 	The first time it scrolls into view the lines draw themselves on, then
 	the detail, markers and flow follow. Off-screen it stops. With reduced
 	motion it is a still frame; without WebGL it is the drawing and markers.
+
+	Another view can stand in for the drawing (SystemViews): `drawing` fades
+	the line art and the flow, `layer` goes between them and the markers,
+	and `markersEl` hands over the markers to be moved. `conceal` and
+	`reveal` replay the draw-on when the drawing comes back, leaving the
+	markers where they are.
 -->
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import DiagramLabel from '$lib/components/DiagramLabel.svelte';
 	import EnergyControls from '$lib/components/EnergyControls.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
@@ -21,7 +27,6 @@
 		DEFAULT_PARAMS,
 		DEFAULT_TONES,
 		cloneTones,
-		dotFlares,
 		sampleNetwork,
 		type EnergyParams
 	} from '$lib/energy/energy';
@@ -44,12 +49,21 @@
 
 	let {
 		label,
-		dark: startDark = false
+		dark: startDark = false,
+		drawing = 1,
+		layer,
+		markersEl = $bindable()
 	}: {
 		/** Accessible description of the diagram. */
 		label: string;
 		/** Starts on the dark stage, for dark sections. The controls can still flip it. */
 		dark?: boolean;
+		/** How much of the drawing and its energy shows, 0..1; at 0 the flow stops. */
+		drawing?: number;
+		/** Over the drawing, under the markers: another view of the system. */
+		layer?: Snippet;
+		/** The markers' container, for a parent to move them. */
+		markersEl?: HTMLElement;
 	} = $props();
 
 	/** Where the still frame sits: one pulse rising out of the core. */
@@ -83,7 +97,7 @@
 	let ink = $state('');
 	let paused = $state(false);
 	let dark = $state(untrack(() => startDark));
-	// The tuning panel: on in dev, or with ?controls on any build.
+	// The tuning panel: hidden for now, ?controls only.
 	let showControls = $state(false);
 	/** Motion allowed: false means a still frame and no pause button. */
 	let moving = $state(false);
@@ -92,6 +106,23 @@
 	let revealed = $state(false);
 	/** Draw-on finished: the dash tricks come off. */
 	let settled = $state(false);
+	/** Drawing on again (`conceal`, `reveal`): the markers stay put rather than popping in. */
+	let replaying = $state(false);
+	/** Starts the draw-on; set up on mount. */
+	let drawOn = () => {};
+
+	/** Hides the drawing at once, ready to draw on again. Markers stay. */
+	export function conceal() {
+		if (!moving) return;
+		replaying = true;
+		settled = false;
+		revealed = false;
+		pending = true;
+	}
+	/** Draws the drawing on again after `conceal`, and restarts the energy from the core. */
+	export function reveal() {
+		if (pending) drawOn();
+	}
 	/** The marker being hovered or focused. */
 	let active = $state<number | null>(null);
 	/**
@@ -106,8 +137,9 @@
 	const PAD = 18;
 
 	let host: HTMLElement;
-	let markersEl: HTMLElement;
 	let canvas: HTMLCanvasElement;
+	/** Drawing shown at all: the flow only runs while it is. */
+	const shown = $derived(drawing > 0);
 	/** Diagram units per CSS pixel, so line weights hold on screen at any size. */
 	let unit = $state(FRAME.width / 800);
 	/**
@@ -121,7 +153,7 @@
 	const DESKTOP_WIDTH = 880;
 
 	onMount(() => {
-		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
+		showControls = new URLSearchParams(location.search).has('controls');
 		const readInk = () => (ink = getComputedStyle(host).getPropertyValue('--ink').trim());
 		readInk();
 		const stopInk = $effect.root(() => {
@@ -150,22 +182,16 @@
 		let theme: 'light' | 'dark' = 'light';
 		/** Something on screen changed since the last draw. */
 		let dirty = true;
-		// Each marker lights up as a pulse passes through it: the same flare
-		// the canvas draws behind it, handed to the marker as --lit (0..1).
-		const flares = new Float32Array(MARKERS.length);
-		const lightMarkers = () => {
-			dotFlares(net, look, head, flares);
-			const els = markersEl?.children;
-			if (!els) return;
-			for (let i = 0; i < els.length && i < flares.length; i++) {
-				(els[i] as HTMLElement).style.setProperty('--lit', flares[i].toFixed(3));
-			}
-		};
 		const draw = () => {
 			flow?.render(head, time, look, theme);
-			lightMarkers();
 			dirty = false;
 		};
+		// Back in view: draw again.
+		const stopShown = $effect.root(() => {
+			$effect(() => {
+				if (shown) dirty = true;
+			});
+		});
 
 		// Dev-only handle for tuning from the console, e.g. park a pulse:
 		// __energy.paused = true; __energy.head = 900
@@ -200,15 +226,22 @@
 
 		let visible = false;
 		let flowing = !moving;
+
+		let timers: ReturnType<typeof setTimeout>[] = [];
+		drawOn = () => {
+			timers.forEach(clearTimeout);
+			pending = false;
+			revealed = true;
+			flowing = false;
+			head = 0;
+			dirty = true;
+			timers = [setTimeout(() => (flowing = true), FLOW_DELAY * 1000), setTimeout(() => (settled = true), 3200)];
+		};
 		const io = new IntersectionObserver(
 			([entry]) => {
 				visible = entry.isIntersecting;
-				if (pending && entry.intersectionRatio >= 0.35) {
-					pending = false;
-					revealed = true;
-					setTimeout(() => (flowing = true), FLOW_DELAY * 1000);
-					setTimeout(() => (settled = true), 3200);
-				}
+				// The first time it scrolls in; a replay waits for `reveal`.
+				if (pending && !replaying && entry.intersectionRatio >= 0.35) drawOn();
 			},
 			{ threshold: [0, 0.35] }
 		);
@@ -225,12 +258,12 @@
 			raf = requestAnimationFrame(function tick(now) {
 				const dt = Math.min(0.05, (now - last) / 1000);
 				last = now;
-				if (visible && flowing && !paused) {
+				if (visible && shown && flowing && !paused) {
 					time += dt;
 					head = (head + dt * look.speed) % net.total;
 					dirty = true;
 				}
-				if (visible && dirty && now - lastDraw >= FRAME_MS) {
+				if (visible && shown && dirty && now - lastDraw >= FRAME_MS) {
 					draw();
 					lastDraw = now;
 				}
@@ -252,6 +285,8 @@
 
 		return () => {
 			stopInk();
+			stopShown();
+			timers.forEach(clearTimeout);
 			cancelAnimationFrame(raf);
 			ro.disconnect();
 			io.disconnect();
@@ -267,77 +302,83 @@
 	class:pending
 	class:revealed
 	class:settled
+	class:replaying
 	bind:this={host}
 	style={toneStyle}
 	style:--unit={unit}
 	style:--fit-weight={fitWeight}
 	style:--weight={lineWeight}
 >
-	<canvas bind:this={canvas} aria-hidden="true"></canvas>
+	<div class="art" style:opacity={drawing}>
+		<canvas bind:this={canvas} aria-hidden="true"></canvas>
 
-	<svg viewBox="{FRAME.x} {FRAME.y} {FRAME.width} {FRAME.height}" role="img" aria-label={label}>
-		<defs>
-			<pattern id="{uid}-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-				<line x1="0" y1="0" x2="0" y2="9" />
-			</pattern>
-			<!-- The spotlight holes are blurred so a lit part fades into the dimmed rest. -->
-			<filter id="{uid}-soft" x="-10%" y="-10%" width="120%" height="120%">
-				<feGaussianBlur stdDeviation="9" />
-			</filter>
-			{#each MARKERS as m, i (m.label)}
-				<mask id="{uid}-focus-{i}" maskUnits="userSpaceOnUse" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height}>
-					<rect class="mask-veil" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height} />
-					<g filter="url(#{uid}-soft)">
-						{#each m.focus.areas as [x0, y0, x1, y1], j (j)}
-							<rect class="mask-hole" x={x0 - PAD} y={y0 - PAD} width={x1 - x0 + PAD * 2} height={y1 - y0 + PAD * 2} rx={PAD} />
-						{/each}
-						{#each focusPipes[i] as d, j (j)}<path class="mask-pipe" {d} />{/each}
-					</g>
-				</mask>
-			{/each}
-			<pattern id="{uid}-winding" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-60)">
-				<line x1="0" y1="0" x2="0" y2="4" />
-			</pattern>
-		</defs>
-		<!-- Everything a section drawing adds once the parts are there: fades in after the draw-on. -->
-		<g class="secondary">
-			<g class="tone hatch">
-				{#each HATCH as h, i (i)}
-					<rect x={h.x} y={h.y} width={h.w} height={h.h} fill="url(#{uid}-{h.dense ? 'winding' : 'hatch'})" />
+		<svg viewBox="{FRAME.x} {FRAME.y} {FRAME.width} {FRAME.height}" role="img" aria-label={label}>
+			<defs>
+				<pattern id="{uid}-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+					<line x1="0" y1="0" x2="0" y2="9" />
+				</pattern>
+				<!-- The spotlight holes are blurred so a lit part fades into the dimmed rest. -->
+				<filter id="{uid}-soft" x="-10%" y="-10%" width="120%" height="120%">
+					<feGaussianBlur stdDeviation="9" />
+				</filter>
+				{#each MARKERS as m, i (m.label)}
+					<mask id="{uid}-focus-{i}" maskUnits="userSpaceOnUse" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height}>
+						<rect class="mask-veil" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height} />
+						<g filter="url(#{uid}-soft)">
+							{#each m.focus.areas as [x0, y0, x1, y1], j (j)}
+								<rect class="mask-hole" x={x0 - PAD} y={y0 - PAD} width={x1 - x0 + PAD * 2} height={y1 - y0 + PAD * 2} rx={PAD} />
+							{/each}
+							{#each focusPipes[i] as d, j (j)}<path class="mask-pipe" {d} />{/each}
+						</g>
+					</mask>
 				{/each}
+				<pattern id="{uid}-winding" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-60)">
+					<line x1="0" y1="0" x2="0" y2="4" />
+				</pattern>
+			</defs>
+			<!-- Everything a section drawing adds once the parts are there: fades in after the draw-on. -->
+			<g class="secondary">
+				<g class="tone hatch">
+					{#each HATCH as h, i (i)}
+						<rect x={h.x} y={h.y} width={h.w} height={h.h} fill="url(#{uid}-{h.dense ? 'winding' : 'hatch'})" />
+					{/each}
+				</g>
+				<g class="tone detail">
+					{#each DETAIL as d, i (i)}<path {d} />{/each}
+				</g>
+				<g class="tone axes">
+					{#each HIDDEN as d, i (i)}<path class="hidden" {d} />{/each}
+					{#each CENTRES as d, i (i)}<path class="centre" {d} />{/each}
+				</g>
 			</g>
-			<g class="tone detail">
-				{#each DETAIL as d, i (i)}<path {d} />{/each}
+			<g class="tone structure">
+				{#each structure as line, i (i)}<path d={line.d} pathLength="1" style:--delay={line.delay} />{/each}
 			</g>
-			<g class="tone axes">
-				{#each HIDDEN as d, i (i)}<path class="hidden" {d} />{/each}
-				{#each CENTRES as d, i (i)}<path class="centre" {d} />{/each}
+			<g class="tone outline">
+				{#each outlines as line, i (i)}<path d={line.d} pathLength="1" style:--delay={line.delay} />{/each}
 			</g>
-		</g>
-		<g class="tone structure">
-			{#each structure as line, i (i)}<path d={line.d} pathLength="1" style:--delay={line.delay} />{/each}
-		</g>
-		<g class="tone outline">
-			{#each outlines as line, i (i)}<path d={line.d} pathLength="1" style:--delay={line.delay} />{/each}
-		</g>
-		<!-- One veil per marker, so moving between markers crossfades. -->
-		{#each MARKERS as m, i (m.label)}
-			<rect
-				class="veil"
-				class:on={spot === i}
-				x={FRAME.x}
-				y={FRAME.y}
-				width={FRAME.width}
-				height={FRAME.height}
-				mask="url(#{uid}-focus-{i})"
-			/>
-		{/each}
-	</svg>
+			<!-- One veil per marker, so moving between markers crossfades. -->
+			{#each MARKERS as m, i (m.label)}
+				<rect
+					class="veil"
+					class:on={spot === i}
+					x={FRAME.x}
+					y={FRAME.y}
+					width={FRAME.width}
+					height={FRAME.height}
+					mask="url(#{uid}-focus-{i})"
+				/>
+			{/each}
+		</svg>
+	</div>
+
+	{@render layer?.()}
 
 	<div class="markers" class:focused={spot !== null} bind:this={markersEl}>
 		{#each MARKERS as m, i (m.label)}
 			<DiagramLabel
 				label={m.label}
+				text={m.text}
 				x={(m.x - FRAME.x) / FRAME.width}
 				y={(m.y - FRAME.y) / FRAME.height}
 				order={i}
@@ -350,7 +391,7 @@
 		{/each}
 	</div>
 
-	<div class="tools" data-tool>
+	<div class="tools" data-tool style:opacity={drawing} inert={drawing < 0.5}>
 		{#if showControls}
 			<EnergyControls bind:params bind:lineWeight bind:tones bind:dark {ink} />
 		{/if}
@@ -410,8 +451,9 @@
 		--label-fill: var(--grey-950);
 	}
 
-	.diagram > canvas,
-	.diagram > svg {
+	.art,
+	.art > canvas,
+	.art > svg {
 		position: absolute;
 		inset: 0;
 		width: 100%;
@@ -419,12 +461,12 @@
 		pointer-events: none;
 	}
 	/* On dark, the energy adds light, like a real glow. */
-	.dark > canvas {
+	.dark .art > canvas {
 		mix-blend-mode: plus-lighter;
 	}
 
 	/* Weights are CSS px on screen; --unit converts them to diagram units. */
-	.diagram > svg :is(path, line) {
+	.art > svg :is(path, line) {
 		fill: none;
 		stroke-linejoin: round;
 		transition: stroke 0.4s ease;
@@ -505,20 +547,20 @@
 		transition: stroke-dashoffset 1.1s cubic-bezier(0.45, 0, 0.2, 1) var(--delay);
 	}
 	.pending .secondary,
-	.pending > canvas,
-	.pending .markers :global(.marker) {
+	.pending .art > canvas,
+	.pending:not(.replaying) .markers :global(.marker) {
 		opacity: 0;
 	}
 	.revealed .secondary {
 		transition: opacity 0.8s ease 1.1s;
 	}
-	.revealed > canvas {
+	.revealed .art > canvas {
 		transition: opacity 1s ease 1.9s;
 	}
-	.pending .markers :global(.marker) {
+	.pending:not(.replaying) .markers :global(.marker) {
 		scale: 0.3;
 	}
-	.revealed .markers :global(.marker) {
+	.revealed:not(.replaying) .markers :global(.marker) {
 		transition:
 			opacity 0.35s ease,
 			scale 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
@@ -545,7 +587,7 @@
 	.mask-hole {
 		fill: var(--grey-950);
 	}
-	.diagram > svg .mask-pipe {
+	.art > svg .mask-pipe {
 		fill: none;
 		stroke: var(--grey-950);
 		stroke-width: 46;

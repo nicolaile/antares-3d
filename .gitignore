@@ -26,3 +26,20 @@ vite.config.ts.timestamp-*
 # in static/fonts, so these never need to leave the machine.
 src/fonts/
 .env*
+
+# Raw STEP exports from the client: hundreds of MB each, and confidential.
+# Only the converted .glb in static/models/cad is committed.
+src/lib/cad files/
+
+# Output of scripts/render/render.py
+renders/
+# Tagging-tool conversions (/cad/tag): ~50–80 MB each, rebuilt with
+# `npm run convert:step -- <stp> <glb> 0.0008 --parts`.
+static/models/cad/*.parts.glb
+
+# NASA Blue Marble textures for the orbit look (public domain, ~60 MB).
+# Re-download with the URLs in scripts/render/render.py.
+scripts/render/textures/
+
+# Python bytecode from scripts/render.
+__pycache__/

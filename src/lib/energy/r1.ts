@@ -83,6 +83,8 @@ type Area = [number, number, number, number];
  */
 export interface Marker {
 	label: string;
+	/** What the part does: the line under its name on the marker's card. */
+	text: string;
 	x: number;
 	y: number;
 	on?: [route: number, at: number];
@@ -100,13 +102,13 @@ const RECUPERATOR: Area = [932, 768, 1140, 960];
 const COOLER: Area = [1406, 708, 1704, 911];
 
 export const MARKERS: Marker[] = [
-	{ label: 'Primary heat exchanger', x: 438.6, y: 377.5, on: [0, 890 - 377.5], focus: { areas: [REACTOR_TOP], pipes: ['return', 'hot'] } },
-	{ label: 'Nuclear core', x: 439, y: 802, on: [0, 88], focus: { areas: [REACTOR_CORE], pipes: [] } },
-	{ label: 'Turbine', x: 918.2, y: 507.8, after: 0, focus: { areas: [TURBINE], pipes: ['hot', 'exhaust'] } },
-	{ label: 'Compressor', x: 1160.6, y: 507.8, after: 3, focus: { areas: [COMPRESSOR], pipes: ['loop', 's'] } },
-	{ label: 'Alternator', x: 1521, y: 507.8, after: 0, focus: { areas: [ALTERNATOR], pipes: [] } },
-	{ label: 'Recuperator', x: 1037, y: 866, after: 1, focus: { areas: [RECUPERATOR], pipes: ['exhaust', 'cooler', 's', 'return'] } },
-	{ label: 'Waste heat rejection', x: 1585, y: 858, after: 2, focus: { areas: [COOLER], pipes: ['cooler', 'loop'] } }
+	{ label: 'Primary heat exchanger', text: 'Transfers core heat to the working fluid', x: 438.6, y: 377.5, on: [0, 890 - 377.5], focus: { areas: [REACTOR_TOP], pipes: ['return', 'hot'] } },
+	{ label: 'Nuclear core', text: 'TRISO fuel in a prismatic graphite core: the source of the heat', x: 439, y: 802, on: [0, 88], focus: { areas: [REACTOR_CORE], pipes: [] } },
+	{ label: 'Turbine', text: 'Hot nitrogen expands through it, turning the shaft', x: 918.2, y: 507.8, after: 0, focus: { areas: [TURBINE], pipes: ['hot', 'exhaust'] } },
+	{ label: 'Compressor', text: 'Raises the cooled nitrogen to pressure for the next pass', x: 1160.6, y: 507.8, after: 3, focus: { areas: [COMPRESSOR], pipes: ['loop', 's'] } },
+	{ label: 'Alternator', text: 'Turns the shaft’s rotation into electricity', x: 1521, y: 507.8, after: 0, focus: { areas: [ALTERNATOR], pipes: [] } },
+	{ label: 'Recuperator', text: 'Reclaims exhaust heat to warm the gas on its way back', x: 1037, y: 866, after: 1, focus: { areas: [RECUPERATOR], pipes: ['exhaust', 'cooler', 's', 'return'] } },
+	{ label: 'Waste heat rejection', text: 'Sheds the heat the cycle can’t use before the gas is compressed', x: 1585, y: 858, after: 2, focus: { areas: [COOLER], pipes: ['cooler', 'loop'] } }
 ];
 
 const rods = (xs: number[], from: number, to: number) => xs.map((x) => `M${x} ${from}V${to}`);

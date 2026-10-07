@@ -187,9 +187,9 @@
 			<div class="panel" data-lenis-prevent>
 				{#each GROUPS as group (group.title)}
 					{@const rows = group.rows.filter((r) => available?.has(r.key) ?? true)}
-					<p class="group type-label">{group.title}</p>
+					<p class="group type-caption">{group.title}</p>
 					{#if group.title === 'Gradient map' && stops}
-						<p class="sub type-label">Stops</p>
+						<p class="sub type-caption">Stops</p>
 						{#each stops as stop, i (i)}
 							<div class="stop">
 								<input
@@ -215,20 +215,20 @@
 									}}
 								/>
 								<button
-									class="rm type-label"
+									class="rm type-caption"
 									disabled={stops.length <= MIN_STOPS}
 									aria-label="Remove stop {i + 1}"
 									onclick={() => removeStop(i)}>&times;</button
 								>
 							</div>
 						{/each}
-						<button class="add type-label" disabled={stops.length >= MAX_STOPS} onclick={addStop}>
+						<button class="add type-caption" disabled={stops.length >= MAX_STOPS} onclick={addStop}>
 							Add stop ({stops.length}/{MAX_STOPS})
 						</button>
 					{/if}
 					{#each rows as row (row.key)}
 						<label class="row">
-							<span class="type-label">{row.label}</span>
+							<span class="type-caption">{row.label}</span>
 							{#if row.kind === 'color'}
 								<input
 									class="swatch"
@@ -236,7 +236,7 @@
 									value={params[row.key] as string}
 									oninput={(e) => set(row.key, e.currentTarget.value)}
 								/>
-								<span class="val type-label type-tabular">{params[row.key]}</span>
+								<span class="val type-caption type-tabular">{params[row.key]}</span>
 							{:else if row.kind === 'toggle'}
 								<input
 									class="check"
@@ -244,7 +244,7 @@
 									checked={(params[row.key] as number) > 0.5}
 									onchange={(e) => set(row.key, e.currentTarget.checked ? 1 : 0)}
 								/>
-								<span class="val type-label type-tabular">{(params[row.key] as number) > 0.5 ? 'On' : 'Off'}</span>
+								<span class="val type-caption type-tabular">{(params[row.key] as number) > 0.5 ? 'On' : 'Off'}</span>
 							{:else}
 								<input
 									type="range"
@@ -254,12 +254,12 @@
 									value={params[row.key]}
 									oninput={(e) => set(row.key, +e.currentTarget.value)}
 								/>
-								<span class="val type-label type-tabular">{fmt(params[row.key] as number, row.step ?? 0.01)}</span>
+								<span class="val type-caption type-tabular">{fmt(params[row.key] as number, row.step ?? 0.01)}</span>
 							{/if}
 						</label>
 					{/each}
 				{/each}
-				<button class="reset type-label" onclick={reset}>Reset</button>
+				<button class="reset type-caption" onclick={reset}>Reset</button>
 			</div>
 		{/if}
 

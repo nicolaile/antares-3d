@@ -5,8 +5,11 @@
 	import R1Microreactor from '$lib/sections/R1Microreactor.svelte';
 	import OperatingModel from '$lib/sections/OperatingModel.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
-	import { hero, mission, r1, operating } from '$lib/content/home';
-	import { footer, menu } from '$lib/content/site';
+	import Capabilities from '$lib/modules/Capabilities.svelte';
+	import PosterCard from '$lib/modules/PosterCard.svelte';
+	import FeatureCards from '$lib/modules/FeatureCards.svelte';
+	import { hero, mission, r1, operating, capabilities, graphite, progress } from '$lib/content/home';
+	import { footer } from '$lib/content/site';
 </script>
 
 <svelte:head>
@@ -19,12 +22,15 @@
 
 <Grid visible={false} />
 
-<Hero {...hero} updates={menu.updates} />
+<Hero {...hero} />
 
 <main class="page">
 	<MissionIntro {...mission} />
 	<R1Microreactor {...r1} />
+	<Capabilities {...capabilities} />
+	<FeatureCards {...graphite} />
 	<OperatingModel {...operating} />
+	<PosterCard {...progress} />
 </main>
 
 <Footer {...footer} />

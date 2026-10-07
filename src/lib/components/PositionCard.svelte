@@ -19,7 +19,7 @@
 </script>
 
 <a class="card" {href}>
-	<p class="head type-small">
+	<p class="head type-body-default">
 		{label}
 		<span class="department">{department}</span>
 	</p>
@@ -41,7 +41,7 @@
 		text-decoration: none;
 	}
 	.card:hover {
-		background: var(--grey-200);
+		background: var(--grey-150);
 	}
 	.card:focus-visible {
 		outline: 1px solid var(--grey-950);

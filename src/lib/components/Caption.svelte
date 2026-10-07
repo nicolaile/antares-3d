@@ -7,8 +7,8 @@
 	let { label, text }: { label?: string; text: string } = $props();
 </script>
 
-<p class="caption type-body">
-	{#if label}<span class="label type-label-large">{label}</span>{/if}{text}
+<p class="caption type-body-large">
+	{#if label}<span class="label type-caption">{label}</span>{/if}{text}
 </p>
 
 <style>

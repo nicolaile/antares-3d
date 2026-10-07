@@ -17,7 +17,8 @@
 		sizes = '100vw',
 		fit = 'cover',
 		surface = false,
-		loading = 'lazy'
+		loading = 'lazy',
+		priority = false
 	}: {
 		src?: Picture;
 		alt?: string;
@@ -29,12 +30,14 @@
 		/** Grey panel behind the image, for cut-outs and placeholders. */
 		surface?: boolean;
 		loading?: 'lazy' | 'eager';
+		/** The first thing on screen (a hero): fetched ahead of the page's other images. */
+		priority?: boolean;
 	} = $props();
 </script>
 
 <div class="picture" class:surface class:contain={fit === 'contain'} style:aspect-ratio={ratio}>
 	{#if src}
-		<enhanced:img {src} {alt} {sizes} {loading} />
+		<enhanced:img {src} {alt} {sizes} {loading} fetchpriority={priority ? 'high' : undefined} />
 	{/if}
 </div>
 

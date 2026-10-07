@@ -9,6 +9,18 @@
 				"dev"
 			],
 			"autoPort": true
+		},
+		{
+			"name": "antares-prod",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [
+				"run",
+				"preview",
+				"--",
+				"--port",
+				"4173"
+			],
+			"port": 4173
 		}
 	]
 }

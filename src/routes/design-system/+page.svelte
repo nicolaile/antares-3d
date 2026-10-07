@@ -52,53 +52,53 @@
 
 <div class="page">
 	<header class="intro">
-		<p class="type-label eyebrow">Antares — Design System</p>
-		<h1 class="type-h1">Design System</h1>
-		<p class="type-paragraph lede">
+		<p class="type-caption eyebrow">Antares — Design System</p>
+		<h1 class="type-display">Design System</h1>
+		<p class="type-body-large lede">
 			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
 			Everything on the site is built from what's below. This page reads the system's own stylesheets, so it's
 			always current.
 		</p>
-		<p class="type-label now">
+		<p class="type-caption now">
 			<span>Viewport</span>
 			<span class="type-tabular">{viewport.width || '—'}px · {viewport.breakpoint}</span>
 		</p>
 	</header>
 
 	<section>
-		<h2 class="type-label section-title">Colour</h2>
+		<h2 class="type-caption section-title">Colour</h2>
 		<ul class="palette">
 			{#each SCALE as color (color.token)}
 				<li class="color">
 					<div class="chip" style:background="var({color.token})"></div>
-					<h3 class="type-h5 type-tabular">{color.family === 'accent' ? 'Accent' : color.family === 'slate' ? `Slate ${color.step}` : color.step}</h3>
-					<p class="type-label type-tabular">{color.hex}</p>
-					<code class="type-body class">{color.token}</code>
-					<p class="type-body usage">{color.usage}</p>
+					<h3 class="type-h3 type-tabular">{color.family === 'accent' ? 'Accent' : color.family === 'slate' ? `Slate ${color.step}` : color.step}</h3>
+					<p class="type-caption type-tabular">{color.hex}</p>
+					<code class="type-body-large class">{color.token}</code>
+					<p class="type-body-large usage">{color.usage}</p>
 				</li>
 			{/each}
 		</ul>
 	</section>
 
 	<section>
-		<h2 class="type-label section-title">Spacing</h2>
-		<p class="type-body usage">
+		<h2 class="type-caption section-title">Spacing</h2>
+		<p class="type-body-large usage">
 			Horizontal placement is whole grid columns. These cover the rest: gaps between stacked blocks,
 			padding, and space between sections. Named by px at 1440.
 		</p>
 		<ul class="spacing">
 			{#each SPACING as s (s.token)}
 				<li class="space">
-					<code class="type-body class">{s.token}</code>
+					<code class="type-body-large class">{s.token}</code>
 					<span class="bar" style:width="var({s.token})"></span>
-					<p class="type-body usage">{s.usage}</p>
+					<p class="type-body-large usage">{s.usage}</p>
 				</li>
 			{/each}
 		</ul>
 	</section>
 
 	<section>
-		<h2 class="type-label section-title">Typefaces</h2>
+		<h2 class="type-caption section-title">Typefaces</h2>
 		<div class="faces">
 			{#each TYPEFACES as face (face.name + face.weight)}
 				<article class="face">
@@ -108,8 +108,8 @@
 						ABCDEFGHIJKLMNOPQRSTUVWXYZ<br />abcdefghijklmnopqrstuvwxyz<br />0123456789 &amp;@—.,:;!?
 					</p>
 					<div class="face-meta">
-						<h3 class="type-h5">{face.name} {WEIGHT_NAMES[face.weight] ?? face.weight}</h3>
-						<dl class="type-label specs">
+						<h3 class="type-h3">{face.name} {WEIGHT_NAMES[face.weight] ?? face.weight}</h3>
+						<dl class="type-caption specs">
 							<dt>Token</dt>
 							<dd>{face.token}</dd>
 							<dt>Weight</dt>
@@ -125,10 +125,10 @@
 
 	<section>
 		<div class="section-head">
-			<h2 class="type-label section-title">Scale</h2>
+			<h2 class="type-caption section-title">Scale</h2>
 			<label class="sample-input">
-				<span class="type-label">Sample text</span>
-				<input class="type-body" bind:value={sample} placeholder={DEFAULT_SAMPLE} />
+				<span class="type-caption">Sample text</span>
+				<input class="type-body-large" bind:value={sample} placeholder={DEFAULT_SAMPLE} />
 			</label>
 		</div>
 
@@ -136,10 +136,10 @@
 			{#each TYPE_STYLES as style (style.name)}
 				<li class="style">
 					<div class="style-meta">
-						<h3 class="type-body">{style.title}</h3>
-						<p class="type-body usage">{style.usage}</p>
-						<code class="type-body class">.{style.className}</code>
-						<dl class="type-label specs type-tabular">
+						<h3 class="type-body-large">{style.title}</h3>
+						<p class="type-body-large usage">{style.usage}</p>
+						<code class="type-body-large class">.{style.className}</code>
+						<dl class="type-caption specs type-tabular">
 							{#each BREAKPOINTS as bp (bp.key)}
 								<dt>{bp.label}</dt>
 								<dd>{style.size[bp.key]}px</dd>
@@ -171,22 +171,22 @@
 	</section>
 
 	<section>
-		<h2 class="type-label section-title">Modifiers</h2>
+		<h2 class="type-caption section-title">Modifiers</h2>
 		<ul class="modifiers">
 			{#each TYPE_MODIFIERS as mod (mod.name)}
 				<li class="modifier">
-					<code class="type-body class">.{mod.className}</code>
-					<p class="type-body">{mod.title}</p>
-					<p class="type-body usage">{mod.usage}</p>
-					<p class="type-h3 {mod.className}">0123456789</p>
+					<code class="type-body-large class">.{mod.className}</code>
+					<p class="type-body-large">{mod.title}</p>
+					<p class="type-body-large usage">{mod.usage}</p>
+					<p class="type-h2 {mod.className}">0123456789</p>
 				</li>
 			{/each}
 		</ul>
 	</section>
 
 	<section>
-		<h2 class="type-label section-title">Rules</h2>
-		<ol class="rules type-paragraph">
+		<h2 class="type-caption section-title">Rules</h2>
+		<ol class="rules type-body-large">
 			<li>Text gets its type from exactly one style class. Modifiers can be added on top.</li>
 			<li>
 				Components never set <code>font-size</code>, <code>line-height</code>, <code>letter-spacing</code>,
@@ -198,7 +198,7 @@
 			</li>
 			<li><code>npm run check</code> fails on any type declared outside the system.</li>
 		</ol>
-		<p class="type-label ratio type-tabular">Sizes · {sizes.join(' · ')}</p>
+		<p class="type-caption ratio type-tabular">Sizes · {sizes.join(' · ')}</p>
 	</section>
 </div>
 

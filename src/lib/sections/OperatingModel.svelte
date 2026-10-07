@@ -1,8 +1,8 @@
 <!--
 	@component
-	A labelled row of points: the label on columns 1–3, then up to three
-	points of three columns each (4–6, 7–9, 10–12), each a title over a
-	short paragraph. Stacks to two columns on tablet and one on phones.
+	A labelled set of points: the label on its own line, then up to three
+	points under it, three columns each (4–6, 7–9, 10–12), each a title over
+	a short paragraph. Stacks to two columns on tablet and one on phones.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -20,13 +20,13 @@
 	} = $props();
 </script>
 
-<Row as="section" gap={40} align="start">
-	<Cell span={3} tablet={{ span: 12 }}>
-		<h2 class="label type-body">{label}</h2>
+<Row as="section" gap={48} align="start">
+	<Cell span={12}>
+		<h2 class="label type-h4">{label}</h2>
 	</Cell>
 	{#each points.slice(0, 3) as point, i (i)}
 		<Cell start={START[i]} span={3} tablet={{ start: i % 2 ? 7 : 1, span: 6 }}>
-			<div class="point type-body">
+			<div class="point type-body-default">
 				<h3 class="title">{point.title}</h3>
 				<p class="text">{point.text}</p>
 			</div>

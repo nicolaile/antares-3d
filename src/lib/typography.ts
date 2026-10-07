@@ -17,7 +17,7 @@ export const BREAKPOINTS = [
 export type Breakpoint = (typeof BREAKPOINTS)[number]['key'];
 
 export type TypeStyle = {
-	/** Class suffix: `h1` for `.type-h1`. */
+	/** Class suffix: `display` for `.type-display`. */
 	name: string;
 	className: string;
 	title: string;

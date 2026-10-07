@@ -2,6 +2,7 @@ import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { defineConfig } from 'vite';
+import { cadTags } from './scripts/vite-cad-tags.js';
 
 export default defineConfig({
 	server: {
@@ -19,6 +20,8 @@ export default defineConfig({
 		noExternal: ['gsap']
 	},
 	plugins: [
+		// Dev only: lets the CAD tagging tool (/cad/tag) save into the repo.
+		cadTags(),
 		// Must run before sveltekit(): rewrites <enhanced:img> into a <picture>
 		// with WebP/AVIF sources at build time.
 		enhancedImages(),

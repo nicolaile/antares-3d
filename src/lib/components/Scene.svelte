@@ -135,9 +135,15 @@
 		initScroll();
 
 		// Off-screen, the page is still scrolling on the same ticker; skip the
-		// frame entirely rather than rendering a canvas nobody can see.
+		// frame entirely rather than rendering a canvas nobody can see. A
+		// sliver at the screen's edge counts as off: under a fifth of the
+		// stage in view, it holds its last frame, and turns on from there
+		// when it's back.
+		const IN_VIEW = 0.2;
 		let visible = true;
-		const io = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
+		const io = new IntersectionObserver(([entry]) => (visible = entry.intersectionRatio >= IN_VIEW), {
+			threshold: [0, IN_VIEW]
+		});
 		io.observe(host);
 
 		let unmounted = false;

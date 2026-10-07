@@ -261,6 +261,16 @@ pre {
 	text-transform: uppercase;
 }
 
+/* Running text never ends on a lone word: the browser evens out the last
+   lines instead, at any width. The longhand, so a line held on one
+   (white-space: nowrap) stays held. */
+.type-body-large,
+.type-body-default,
+.type-caption,
+.type-annotation {
+	text-wrap-style: pretty;
+}
+
 /* -------------------------------- Modifiers -------------------------------- */
 /* Combine with any style above. They change glyph features, never size. */
 

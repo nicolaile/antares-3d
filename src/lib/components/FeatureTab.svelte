@@ -30,6 +30,34 @@
 	let tab: HTMLLIElement;
 	let copyEl: HTMLSpanElement;
 	let tl: gsap.core.Timeline | null = null;
+
+	/** A width variable in px, resolved inside the strip. */
+	function px(name: string) {
+		const probe = document.createElement('span');
+		probe.style.cssText = `position:absolute;visibility:hidden;width:var(${name})`;
+		tab.appendChild(probe);
+		const w = probe.getBoundingClientRect().width;
+		probe.remove();
+		return w;
+	}
+
+	/**
+	 * Hovered, a closed tab pushes out just far enough to show its title
+	 * beside the badge, and draws back in when the pointer leaves.
+	 */
+	function peek(show: boolean) {
+		if (open || prefersReducedMotion()) return;
+		tl?.kill();
+		const title = copyEl.firstElementChild as HTMLElement;
+		const to = show
+			? copyEl.getBoundingClientRect().left - tab.getBoundingClientRect().left + title.offsetWidth + parseFloat(getComputedStyle(copyEl.parentElement!).paddingLeft) * 2.5
+			: px('--closed-width');
+		tl = gsap
+			.timeline({ onComplete: () => { if (!show) gsap.set(tab, { clearProps: 'width' }); } })
+			.to(tab, show ? { width: to, duration: 0.45, ease: 'expo.out' } : { width: to, duration: 0.4, ease: 'power3.inOut' }, 0)
+			.to(copyEl, show ? { autoAlpha: 1, duration: 0.3, ease: 'sine.out' } : { autoAlpha: 0, duration: 0.2, ease: 'sine.in' }, show ? 0.08 : 0);
+	}
+
 	/** The state last animated to. */
 	let target = untrack(() => open);
 
@@ -53,15 +81,6 @@
 		target = next;
 		tl?.kill();
 
-		/** A width variable in px, resolved inside the strip. */
-		const px = (name: string) => {
-			const probe = document.createElement('span');
-			probe.style.cssText = `position:absolute;visibility:hidden;width:var(${name})`;
-			tab.appendChild(probe);
-			const w = probe.getBoundingClientRect().width;
-			probe.remove();
-			return w;
-		};
 		if (prefersReducedMotion()) {
 			gsap.set(tab, { clearProps: 'width' });
 			gsap.set(copyEl, { autoAlpha: next ? 1 : 0 });
@@ -72,7 +91,8 @@
 			.timeline({ onComplete: () => gsap.set(tab, { clearProps: 'width' }) })
 			.fromTo(tab, { width: from }, { width: to, ...WIDTH }, 0);
 		// The copy follows the width in, and leaves before it narrows.
-		if (next) tl.fromTo(copyEl, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, ease: 'power2.out' }, WIDTH.duration * 0.45);
+		// Already peeking from a hover, the title stays put and carries on.
+		if (next) tl.to(copyEl, { autoAlpha: 1, duration: 0.4, ease: 'power2.out' }, gsap.getProperty(copyEl, 'opacity') ? 0 : WIDTH.duration * 0.45);
 		else tl.to(copyEl, { autoAlpha: 0, duration: 0.15, ease: 'power2.in' }, 0);
 
 		return () => tl?.kill();
@@ -80,7 +100,10 @@
 </script>
 
 <li class="tab" class:open bind:this={tab}>
-	<button type="button" class="face" aria-expanded={open} onclick={onselect}>
+	<button type="button" class="face" aria-expanded={open} onclick={onselect}
+		onpointerenter={() => peek(true)}
+		onpointerleave={() => peek(false)}
+	>
 		<span class="number type-annotation type-tabular">{number}</span>
 		<span class="copy" bind:this={copyEl} style:visibility={untrack(() => (open ? null : 'hidden'))}>
 			<span class="title type-body-default">{title}</span>
@@ -104,6 +127,10 @@
 	.tab.open {
 		width: var(--open-width);
 	}
+	/* A hovered closed tab peeks its title only, not the description. */
+	.tab:not(.open) .text {
+		display: none;
+	}
 
 	/* The badge sits in the top-left corner, as far in from the hairline
 	   as from the strip's top and bottom (8px at 1440), open or closed; the
@@ -123,9 +150,6 @@
 		color: var(--grey-0);
 		text-align: left;
 		cursor: pointer;
-	}
-	.tab:not(.open) .face:hover {
-		color: var(--grey-400);
 	}
 	.face:focus-visible {
 		outline: 1px solid var(--grey-0);
@@ -166,4 +190,5 @@
 		color: var(--grey-400);
 		white-space: normal;
 	}
+
 </style>

@@ -19,7 +19,7 @@
 </script>
 
 <a class="card" {href}>
-	<p class="head type-small">
+	<p class="head type-body-default">
 		{label}
 		<span class="department">{department}</span>
 	</p>

@@ -13,9 +13,11 @@ export const footer = {
 	/** Each entry is one line. */
 	statement: ['Mission-critical energy,', 'engineered for Earth and beyond.'],
 	aside:
-		'Join us and help turn breakthrough nuclear technology into reliable power for critical missions on Earth, in space, and underwater.',
+		'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
+	/** The call to action under the aside. */
+	link: { label: 'Join our mission', href: '/careers' } satisfies Link,
 	nav: [
-		{ label: 'Missions', href: '#' },
+		{ label: 'Missions', href: '/missions' },
 		{ label: 'Company', href: '/company' },
 		{ label: 'Progress', href: '#' },
 		{ label: 'Updates', href: '/updates' },
@@ -30,8 +32,8 @@ export const footer = {
 	legal: {
 		owner: 'Antares Nuclear, Inc.',
 		links: [
-			{ label: 'Terms', href: '#' },
-			{ label: 'Privacy Policy', href: '#' }
+			{ label: 'Terms', href: '/terms' },
+			{ label: 'Privacy Policy', href: '/privacy' }
 		] satisfies Link[]
 	}
 };
@@ -47,7 +49,7 @@ export type Update = {
 export const menu = {
 	links: [
 		{ label: 'Home', href: '/' },
-		{ label: 'Missions', href: '#' },
+		{ label: 'Missions', href: '/missions' },
 		{ label: 'Company', href: '/company' },
 		{ label: 'Progress', href: '#' },
 		{ label: 'Updates', href: '/updates' }

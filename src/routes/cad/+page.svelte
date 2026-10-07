@@ -179,14 +179,14 @@
 		</div>
 	{/if}
 
-	<p class="type-body hint" bind:this={hint} aria-live="polite">Press H to show the controls</p>
+	<p class="type-body-default hint" bind:this={hint} aria-live="polite">Press H to show the controls</p>
 
 	<aside class="panel" bind:this={panel} aria-hidden={!controls} inert={!controls}>
 		<p class="type-caption heading">CAD test</p>
 
 		<div class="models">
 			{#each MODELS as m (m.id)}
-				<button class="type-body" class:active={current === m.id} onclick={() => open(m.id)}>{m.name}</button>
+				<button class="type-body-default" class:active={current === m.id} onclick={() => open(m.id)}>{m.name}</button>
 			{/each}
 		</div>
 
@@ -204,44 +204,44 @@
 		</dl>
 
 		<div class="row">
-			<label class="type-body"><input type="checkbox" bind:checked={clay} /> Clay</label>
-			<label class="type-body"><input type="checkbox" bind:checked={wireframe} /> Wireframe</label>
-			<label class="type-body"><input type="checkbox" bind:checked={showLabels} /> Labels</label>
-			<label class="type-body"><input type="checkbox" bind:checked={lines} /> Line drawing</label>
+			<label class="type-body-default"><input type="checkbox" bind:checked={clay} /> Clay</label>
+			<label class="type-body-default"><input type="checkbox" bind:checked={wireframe} /> Wireframe</label>
+			<label class="type-body-default"><input type="checkbox" bind:checked={showLabels} /> Labels</label>
+			<label class="type-body-default"><input type="checkbox" bind:checked={lines} /> Line drawing</label>
 		</div>
 		{#if lines}
-			<label class="type-body weight">
+			<label class="type-body-default weight">
 				Line weight
 				<input type="range" min="0.25" max="3" step="0.25" bind:value={lineWeight} aria-label="Line weight" />
 			</label>
 		{/if}
 
 		<div class="row">
-			<span class="type-body">Section</span>
+			<span class="type-body-default">Section</span>
 			{#each ['x', 'y', 'z'] as const as a (a)}
-				<button class="type-body" class:active={axis === a} onclick={() => (axis = a)}>{a.toUpperCase()}</button>
+				<button class="type-body-default" class:active={axis === a} onclick={() => (axis = a)}>{a.toUpperCase()}</button>
 			{/each}
 		</div>
 		<input type="range" min="0" max="1" step="0.001" bind:value={section} aria-label="Section position" />
 
 		<div class="row">
-			<label class="type-body colour">
+			<label class="type-body-default colour">
 				Background
 				<input type="color" bind:value={backgroundPick} oninput={() => (background = backgroundPick)} />
 			</label>
-			<button class="type-body" disabled={background === null} onclick={() => (background = null)}>Reset</button>
+			<button class="type-body-default" disabled={background === null} onclick={() => (background = null)}>Reset</button>
 		</div>
 		<div class="row">
-			<label class="type-body colour">
+			<label class="type-body-default colour">
 				Model
 				<input type="color" bind:value={paintPick} oninput={() => (paint = paintPick)} />
 			</label>
-			<button class="type-body" disabled={paint === null} onclick={() => (paint = null)}>Reset</button>
+			<button class="type-body-default" disabled={paint === null} onclick={() => (paint = null)}>Reset</button>
 		</div>
 
 		<div class="row">
-			<button class="type-body" onclick={() => viewer?.frameModel()}>Reset view</button>
-			<button class="type-body" onclick={() => (controls = false)}>Hide controls (H)</button>
+			<button class="type-body-default" onclick={() => viewer?.frameModel()}>Reset view</button>
+			<button class="type-body-default" onclick={() => (controls = false)}>Hide controls (H)</button>
 		</div>
 	</aside>
 </main>

@@ -2,7 +2,7 @@
  * Spacing system — the only place spacing is defined.
  *
  * An 8px scale: every step is a multiple of 8 at the 1440 design width,
- * with 4 as the one half-step for hairline offsets. Horizontal placement
+ * with 4 as a half-step for hairline offsets and 20 for card padding. Horizontal placement
  * comes from the grid (columns, --grid-gutter, --grid-margin, also 16px);
  * these tokens cover everything else: gaps between stacked blocks, padding
  * inside cards and panels, space between sections.
@@ -24,6 +24,8 @@
 	--space-8: calc(var(--size-font) * 0.5);
 	/** Card and panel padding; caption under media. Matches the gutter. */
 	--space-16: calc(var(--size-font) * 1);
+	/** Off-scale: padding inside a content card, like the press kit. */
+	--space-20: calc(var(--size-font) * 1.25);
 	/** Panel insets, label to content. */
 	--space-24: calc(var(--size-font) * 1.5);
 	/** Between a hero's intro and the image below it. */

@@ -24,6 +24,13 @@ export interface CadStats {
 
 export type SectionAxis = 'x' | 'y' | 'z';
 
+/** How long the view must be still before the line drawing's final frame, ms. */
+const SETTLE_MS = 150;
+/** How long the final frame takes to fade in over the draft, ms. */
+const CROSSFADE_MS = 250;
+/** Web mode: frames in motion slower than this, on average, lower the draft's quality, ms (about 42 fps). */
+const SLOW_FRAME_MS = 24;
+
 /**
  * Section caps. A cut leaves every solid open, and looking into hollow
  * shells reads as missing geometry rather than a cut. Through the opening
@@ -92,6 +99,7 @@ export class CadViewer {
 	protected plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0);
 	private axis: SectionAxis = 'x';
 	private sectionAt = 1;
+	private sectionFromMax = false;
 	private resizeObserver: ResizeObserver;
 	protected dirty = true;
 	private tick = () => this.frame();
@@ -109,24 +117,41 @@ export class CadViewer {
 	private anchorShown: boolean[] = [];
 	/** A shown label hides once less than `hide` of its patch is clear, and a hidden one shows once more than `show` is. */
 	protected anchorThresholds = { hide: 0.25, show: 0.6 };
+	/** A readback for the test is in flight. */
+	private anchorReading = false;
 	private anchorTest = { due: false, last: 0 };
 	private distanceTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 	private distanceMaterial = distanceMaterial();
 	/** The line drawing (`setLines`): how far in (0..1), and the drawing pass itself, made on first use. */
 	private lines = { mix: 0, on: false, drawing: null as LineDrawing | null, ink: '#111111', paper: '#ffffff', opacity: 1, weight: 0.5 };
 
-	constructor(protected host: HTMLElement) {
-		this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	/**
+	 * `web` is the site's web-optimized mode (IsoDrawing, on the landing).
+	 * The CAD test bench (/cad) leaves it off: it's the source of truth for
+	 * detail and look, drawn at full quality every frame. In web mode the
+	 * viewer only ever shows the line drawing, so it skips the shaded
+	 * model's lighting and the canvas's multisampling; draws a draft while
+	 * anything moves, crossfading to the full-quality frame once still (see
+	 * `frame`); and reads the labels' visibility back without stalling.
+	 */
+	constructor(
+		protected host: HTMLElement,
+		{ web = false }: { web?: boolean } = {}
+	) {
+		this.web = web;
+		this.renderer = new THREE.WebGLRenderer({ antialias: !web, alpha: true });
 		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 		this.renderer.toneMapping = THREE.NeutralToneMapping;
 		host.appendChild(this.renderer.domElement);
 
-		const pmrem = new THREE.PMREMGenerator(this.renderer);
-		this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-		pmrem.dispose();
-		const key = new THREE.DirectionalLight(0xffffff, 1.2);
-		key.position.set(1, 2, 1.5);
-		this.scene.add(key);
+		if (!web) {
+			const pmrem = new THREE.PMREMGenerator(this.renderer);
+			this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+			pmrem.dispose();
+			const key = new THREE.DirectionalLight(0xffffff, 1.2);
+			key.position.set(1, 2, 1.5);
+			this.scene.add(key);
+		}
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		this.controls.enableDamping = true;
@@ -240,7 +265,7 @@ export class CadViewer {
 		this.model = root;
 		this.scene.add(root);
 		this.box.setFromObject(root);
-		this.setSection(this.axis, this.sectionAt);
+		this.setSection(this.axis, this.sectionAt, this.sectionFromMax);
 		this.frameModel(false);
 
 		const size = this.box.getSize(new THREE.Vector3());
@@ -309,16 +334,21 @@ export class CadViewer {
 		this.dirty = true;
 	}
 
-	/** Cuts the model along `axis`; `at` runs 0..1 across its bounds, and 1 shows everything. */
-	setSection(axis: SectionAxis, at: number) {
+	/**
+	 * Cuts the model along `axis`; `at` runs 0..1 across its bounds, and 1
+	 * shows everything. It keeps the low end of the axis, growing towards
+	 * the high; `fromMax` keeps the high end instead, growing towards the low.
+	 */
+	setSection(axis: SectionAxis, at: number, fromMax = false) {
 		this.axis = axis;
 		this.sectionAt = at;
-		const normal = new THREE.Vector3(axis === 'x' ? -1 : 0, axis === 'y' ? -1 : 0, axis === 'z' ? -1 : 0);
-		const min = this.box.min[axis];
-		const max = this.box.max[axis];
+		this.sectionFromMax = fromMax;
+		const sign = fromMax ? 1 : -1;
+		const normal = new THREE.Vector3(axis === 'x' ? sign : 0, axis === 'y' ? sign : 0, axis === 'z' ? sign : 0);
+		const [start, end] = fromMax ? [this.box.max[axis], this.box.min[axis]] : [this.box.min[axis], this.box.max[axis]];
 		// Pad past the bounds at 1 so nothing flickers on the edge.
-		const cut = at >= 1 ? max + (max - min) : THREE.MathUtils.lerp(min, max, at);
-		this.plane.set(normal, cut);
+		const cut = at >= 1 ? end + (end - start) : THREE.MathUtils.lerp(start, end, at);
+		this.plane.set(normal, -sign * cut);
 		this.renderer.clippingPlanes = at >= 1 ? [] : [this.plane];
 		CAP.capOn.value = at >= 1 ? 0 : 1;
 		this.dirty = true;
@@ -340,7 +370,7 @@ export class CadViewer {
 	setLines(on: boolean, animate = true) {
 		if (on === this.lines.on) return;
 		this.lines.on = on;
-		this.lines.drawing ??= new LineDrawing(this.renderer);
+		this.lines.drawing ??= new LineDrawing(this.renderer, { fast: this.web });
 		this.applyLineStyle();
 		// At once, lens and all, leaving the camera where it is.
 		if (!animate) {
@@ -391,6 +421,11 @@ export class CadViewer {
 		});
 	}
 
+	/** Compiles the line drawing's programs, and the labels' visibility pass, ahead of their first frame. */
+	protected async precompile() {
+		await this.lines.drawing?.precompile(this.camera, this.plane, [this.distanceMaterial]);
+	}
+
 	/** The drawing's ink and paper (any CSS colour), the ink's opacity over the paper, and its line weight in CSS pixels. */
 	setLineStyle(style: { ink?: string; paper?: string; opacity?: number; weight?: number }) {
 		Object.assign(this.lines, style);
@@ -428,36 +463,122 @@ export class CadViewer {
 		this.dirty = true;
 	}
 
+	/**
+	 * Off, the viewer does no work at all, not even its controls: for when
+	 * it's out of sight. Back on, it draws afresh.
+	 */
+	get active() {
+		return this.isActive;
+	}
+	set active(on: boolean) {
+		if (on && !this.isActive) this.dirty = true;
+		this.isActive = on;
+	}
+	private isActive = true;
+	/**
+	 * In web mode, the line drawing's quality. Frames in motion are drafts,
+	 * at full quality for as long as the device keeps up: while things move,
+	 * a running average of the frame interval is kept, and if it slips past
+	 * SLOW_FRAME_MS the draft's supersampling steps down (2 → 1.5 → 1), for
+	 * good. Once a lowered draft has been still for SETTLE_MS, the final
+	 * frame is crossfaded in over it (CROSSFADE_MS), so the sharpening reads
+	 * as the drawing settling rather than a pop; each crossfade frame only
+	 * blends the two drawings already made. At full quality there's nothing
+	 * to settle.
+	 */
+	private settle = { pending: false, at: 0 };
+	private pace = { last: 0, average: 0, frames: 0 };
+	private readonly web: boolean;
+	private crossfade: { from: number } | null = null;
+	private static fadeEase = gsap.parseEase('power1.out');
+
 	private frame() {
+		if (!this.isActive) return;
 		this.controls.update();
-		if (this.dirty) {
-			this.dirty = false;
-			// Clip planes follow the camera out to the long lens's distance, near closed in for depth precision.
-			const r = this.box.getBoundingSphere(new THREE.Sphere()).radius || 1;
-			const distance = this.camera.position.distanceTo(this.controls.target);
-			const near = Math.max(r / 100, distance - r * 2);
-			const far = Math.max(r * 100, distance + r * 4);
-			if (Math.abs(near - this.camera.near) > r / 1000 || far !== this.camera.far) {
-				this.camera.near = near;
-				this.camera.far = far;
-				this.camera.updateProjectionMatrix();
+		const now = performance.now();
+		const drawing = this.lines.drawing;
+		const drawn = drawing && this.lines.mix > 0;
+		// Full quality, every frame (/cad).
+		if (!this.web) {
+			if (this.dirty) {
+				this.dirty = false;
+				this.fitClip();
+				if (this.lines.mix < 1) this.renderer.render(this.scene, this.camera);
+				else this.renderer.clear();
+				if (drawn) {
+					drawing.amount = this.lines.mix;
+					drawing.render(this.scene, this.camera, 'final');
+				}
+				this.anchorTest.due = true;
 			}
-			const drawing = this.lines.drawing;
+		} else if (this.dirty) {
+			this.dirty = false;
+			this.crossfade = null;
+			if (drawing) this.keepPace(drawing, now);
+			this.fitClip();
 			if (this.lines.mix < 1) this.renderer.render(this.scene, this.camera);
 			else this.renderer.clear();
-			if (drawing && this.lines.mix > 0) {
+			if (drawn) {
 				drawing.amount = this.lines.mix;
-				drawing.render(this.scene, this.camera);
+				drawing.prepare(this.scene, this.camera, 'draft');
+				drawing.composite('draft');
 			}
+			// A full-quality draft is already the final frame.
+			this.settle = { pending: !!drawing && drawing.supersample.draft < drawing.supersample.final, at: now };
 			this.anchorTest.due = true;
+		} else if (drawn && this.settle.pending && now - this.settle.at > SETTLE_MS) {
+			this.settle.pending = false;
+			drawing.prepare(this.scene, this.camera, 'final');
+			// While the shaded model still shows through, no crossfade: just the final frame.
+			if (this.lines.mix < 1) {
+				this.renderer.render(this.scene, this.camera);
+				drawing.composite('final');
+			} else this.crossfade = { from: now };
 		}
-		const now = performance.now();
+		if (drawn && this.crossfade) {
+			const k = CadViewer.fadeEase(Math.min(1, (now - this.crossfade.from) / CROSSFADE_MS));
+			this.renderer.clear();
+			if (k < 1) drawing.composite('draft');
+			drawing.composite('final', k);
+			if (k >= 1) this.crossfade = null;
+		}
 		if (this.anchorTest.due && now - this.anchorTest.last > 100) {
 			this.anchorTest.due = false;
 			this.anchorTest.last = now;
 			this.testAnchors();
 		}
 		this.onFrame?.();
+	}
+
+	/** Web mode: lowers the draft's supersampling if frames in motion arrive too slowly (see `settle`). */
+	private keepPace(drawing: LineDrawing, now: number) {
+		const gap = now - this.pace.last;
+		this.pace.last = now;
+		// Only consecutive frames of motion count; a pause starts afresh.
+		if (gap > 100) {
+			this.pace.frames = 0;
+			return;
+		}
+		this.pace.average = this.pace.frames ? this.pace.average * 0.9 + gap * 0.1 : gap;
+		this.pace.frames++;
+		const draft = drawing.supersample.draft;
+		if (this.pace.frames > 20 && this.pace.average > SLOW_FRAME_MS && draft > 1) {
+			drawing.supersample.draft = draft > 1.5 ? 1.5 : 1;
+			this.pace.frames = 0;
+		}
+	}
+
+	/** Clip planes follow the camera out to the long lens's distance, near closed in for depth precision. */
+	private fitClip() {
+		const r = this.box.getBoundingSphere(new THREE.Sphere()).radius || 1;
+		const distance = this.camera.position.distanceTo(this.controls.target);
+		const near = Math.max(r / 100, distance - r * 2);
+		const far = Math.max(r * 100, distance + r * 4);
+		if (Math.abs(near - this.camera.near) > r / 1000 || far !== this.camera.far) {
+			this.camera.near = near;
+			this.camera.far = far;
+			this.camera.updateProjectionMatrix();
+		}
 	}
 
 	/** Screen position (CSS pixels, canvas-relative) of a world point, or null behind the camera. */
@@ -492,8 +613,8 @@ export class CadViewer {
 	 * once most is clear, so one near the edge of whatever's in front of it
 	 * holds steady instead of blinking as samples cross the edge.
 	 */
-	private testAnchors() {
-		if (!this.anchors.length || !this.model) return;
+	private async testAnchors() {
+		if (!this.anchors.length || !this.model || this.anchorReading) return;
 		const w = Math.max(1, Math.round(this.view.width / 4));
 		const h = Math.max(1, Math.round(this.view.height / 4));
 		if (this.distanceTarget.width !== w || this.distanceTarget.height !== h) this.distanceTarget.setSize(w, h);
@@ -504,39 +625,71 @@ export class CadViewer {
 		this.renderer.clear();
 		this.renderer.render(this.scene, this.camera);
 		this.scene.overrideMaterial = null;
-		const px = new Float32Array(25 * 4);
-		const view = new THREE.Vector3();
-		const planes = this.renderer.clippingPlanes;
-		// A sample's width one unit away.
-		const sample = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / h;
-		this.anchorShown = this.anchors.map((p, i) => {
-			const clear = this.anchorClear(p, w, h, sample, px, planes, view);
-			const { hide, show } = this.anchorThresholds;
-			return this.anchorShown[i] ? clear > hide : clear > show;
-		});
 		this.renderer.setRenderTarget(null);
 		this.renderer.setClearAlpha(clear);
+
+		const view = new THREE.Vector3();
+		// A sample's width one unit away.
+		const sample = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / h;
+		const { hide, show } = this.anchorThresholds;
+		const judge = (camera: THREE.PerspectiveCamera, planes: THREE.Plane[], patch: (x: number, y: number) => Float32Array) =>
+			(this.anchorShown = this.anchors.map((p, i) => {
+				const clear = this.anchorClear(p, camera, planes, w, h, sample, view, patch);
+				return this.anchorShown[i] ? clear > hide : clear > show;
+			}));
+
+		if (!this.web) {
+			// Each anchor's 5×5 patch, read as it's needed.
+			const px = new Float32Array(25 * 4);
+			judge(this.camera, this.renderer.clippingPlanes, (x, y) => {
+				this.renderer.readRenderTargetPixels(this.distanceTarget, x, y, 5, 5, px);
+				return px;
+			});
+			return;
+		}
+
+		// Web: the whole (quarter-size) buffer read back without stalling the
+		// GPU, then judged against the view as it was when drawn, as it may
+		// have moved on by the time the pixels land.
+		const camera = this.camera.clone();
+		const planes = this.renderer.clippingPlanes.map((plane) => plane.clone());
+		const all = new Float32Array(w * h * 4);
+		this.anchorReading = true;
+		try {
+			await this.renderer.readRenderTargetPixelsAsync(this.distanceTarget, 0, 0, w, h, all);
+		} catch {
+			// Not every implementation reads float targets asynchronously.
+			this.renderer.readRenderTargetPixels(this.distanceTarget, 0, 0, w, h, all);
+		} finally {
+			this.anchorReading = false;
+		}
+		const px = new Float32Array(25 * 4);
+		judge(camera, planes, (x, y) => {
+			for (let row = 0; row < 5; row++) px.set(all.subarray(((y + row) * w + x) * 4, ((y + row) * w + x + 5) * 4), row * 20);
+			return px;
+		});
 	}
 
-	/** The share of the samples round anchor `p` with nothing in front of it, 0..1. */
+	/** The share of the samples round anchor `p` with nothing in front of it, 0..1; `patch` gives the 5×5 samples at a corner. */
 	private anchorClear(
 		p: THREE.Vector3,
+		camera: THREE.PerspectiveCamera,
+		planes: THREE.Plane[],
 		w: number,
 		h: number,
 		sample: number,
-		px: Float32Array,
-		planes: THREE.Plane[],
-		view: THREE.Vector3
+		view: THREE.Vector3,
+		patch: (x: number, y: number) => Float32Array
 	) {
 		// On the side the section cut removes: its part isn't there.
 		if (planes.some((plane) => plane.distanceToPoint(p) < 0)) return 0;
-		view.copy(p).applyMatrix4(this.camera.matrixWorldInverse);
-		const ndc = p.clone().project(this.camera);
+		view.copy(p).applyMatrix4(camera.matrixWorldInverse);
+		const ndc = p.clone().project(camera);
 		if (view.z >= 0 || Math.abs(ndc.x) > 1 || Math.abs(ndc.y) > 1) return 0;
 		if (w < 5 || h < 5) return 1;
 		const x = THREE.MathUtils.clamp(Math.floor(((ndc.x + 1) / 2) * w) - 2, 0, w - 5);
 		const y = THREE.MathUtils.clamp(Math.floor(((ndc.y + 1) / 2) * h) - 2, 0, h - 5);
-		this.renderer.readRenderTargetPixels(this.distanceTarget, x, y, 5, 5, px);
+		const px = patch(x, y);
 		const distance = -view.z;
 		const reach = distance - 0.03 - distance * sample;
 		let clear = 0;

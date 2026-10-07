@@ -1,0 +1,357 @@
+[
+	{
+		"name": "m0-01-void-drive-units",
+		"model": "mark-0",
+		"look": "void",
+		"camera": {
+			"azimuth": 35,
+			"elevation": 15,
+			"lens": 100,
+			"zoom": 4,
+			"focus": [
+				0.5,
+				0.5,
+				0.88
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-02-void-drive-units-high",
+		"model": "mark-0",
+		"look": "void",
+		"camera": {
+			"azimuth": 80,
+			"elevation": 35,
+			"lens": 135,
+			"zoom": 5,
+			"focus": [
+				0.5,
+				0.5,
+				0.9
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "m0-03-void-vessel",
+		"model": "mark-0",
+		"look": "void",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 5,
+			"lens": 85,
+			"zoom": 1.2
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-04-void-from-above",
+		"model": "mark-0",
+		"look": "void",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 89,
+			"lens": 50,
+			"zoom": 1.6
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "m0-05-void-rim-handles",
+		"model": "mark-0",
+		"look": "void",
+		"camera": {
+			"azimuth": 20,
+			"elevation": 10,
+			"lens": 135,
+			"zoom": 6,
+			"focus": [
+				0.97,
+				0.67,
+				0.84
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "m0-06-studio-hero",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 12,
+			"lens": 85,
+			"zoom": 1.5
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-07-studio-low",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 30,
+			"elevation": -8,
+			"lens": 50,
+			"zoom": 1.4
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-08-studio-three-quarter-high",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 45,
+			"elevation": 40,
+			"lens": 85,
+			"zoom": 1.5
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "pcs-01-void-vessel",
+		"model": "power-conversion-system",
+		"look": "void",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 25,
+			"lens": 100,
+			"zoom": 3,
+			"focus": [
+				0.25,
+				0.3,
+				0.8
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "pcs-02-void-pipework",
+		"model": "power-conversion-system",
+		"look": "void",
+		"camera": {
+			"azimuth": -30,
+			"elevation": 20,
+			"lens": 100,
+			"zoom": 3,
+			"focus": [
+				0.6,
+				0.6,
+				0.7
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "pcs-03-void-tank",
+		"model": "power-conversion-system",
+		"look": "void",
+		"camera": {
+			"azimuth": 45,
+			"elevation": 15,
+			"lens": 85,
+			"zoom": 2.5,
+			"focus": [
+				0.7,
+				0.5,
+				0.35
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "pcs-04-studio-iso",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 45,
+			"elevation": 25,
+			"lens": 50,
+			"zoom": 1.3
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "pcs-05-studio-side",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 5,
+			"lens": 85,
+			"zoom": 1.3
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "pcs-06-studio-back",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 225,
+			"elevation": 30,
+			"lens": 50,
+			"zoom": 1.3
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "sn-01-studio-three-quarter",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"azimuth": -60,
+			"elevation": 20,
+			"lens": 50,
+			"zoom": 2.2,
+			"roll": -20
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "sn-02-studio-reactor-end",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"azimuth": -40,
+			"elevation": 15,
+			"lens": 85,
+			"zoom": 5,
+			"focus": [
+				0.06,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "sn-03-void-reactor-end",
+		"model": "space-nuclear",
+		"look": "void",
+		"camera": {
+			"azimuth": -40,
+			"elevation": 12,
+			"lens": 85,
+			"zoom": 5,
+			"focus": [
+				0.06,
+				0.5,
+				0.5
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "sn-04-void-radiator",
+		"model": "space-nuclear",
+		"look": "void",
+		"camera": {
+			"azimuth": -100,
+			"elevation": 30,
+			"lens": 85,
+			"zoom": 3,
+			"focus": [
+				0.3,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "sn-05-void-tank-end",
+		"model": "space-nuclear",
+		"look": "void",
+		"camera": {
+			"azimuth": -120,
+			"elevation": 20,
+			"lens": 85,
+			"zoom": 5,
+			"focus": [
+				0.95,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "sn-06-studio-plan",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -90,
+			"elevation": 90,
+			"margin": 1.05
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	}
+]

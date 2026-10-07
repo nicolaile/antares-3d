@@ -46,7 +46,7 @@
 
 <Grid visible={false} />
 
-<main class="error">
+<main class="error" data-tone="dark">
 	<StarField {...error.star} href={error.home.href} home={error.home.label} {onwarp} />
 
 	<Row>

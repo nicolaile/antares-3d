@@ -1,5 +1,26 @@
+<script lang="ts" module>
+	/**
+	 * The stages on a page put their models together one at a time, in the
+	 * order they start (those that start out of sight, `later`, after the
+	 * rest): each is seconds of downloading and a long run of work on the
+	 * main thread, and two at once only made both late and the page stutter.
+	 */
+	let queue: Promise<unknown> = Promise.resolve();
+	function inTurn(later: boolean): Promise<() => void> {
+		return (async () => {
+			// Out of sight: let the stages in view take their place first.
+			if (later) await new Promise((r) => setTimeout(r, 0));
+			const before = queue;
+			let done!: () => void;
+			queue = new Promise<void>((r) => (done = r));
+			await before;
+			return done;
+		})();
+	}
+</script>
+
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
 	// Types only: three.js itself loads on demand, as its own chunk (see start()).
 	import type { ModelViewer, RenderParams } from '$lib/three/ModelViewer';
@@ -9,15 +30,31 @@
 
 	let {
 		src = '/models/cylinder.glb',
+		groups = undefined,
+		explode = undefined,
+		carve = undefined,
+		sections = undefined,
 		shot,
 		paused = false,
+		later = false,
 		onready = undefined
 	}: {
-		src?: string;
+		/** The model: one .glb, or several that make it up between them (ModelViewer's `url`). */
+		src?: string | string[];
+		/** The model's groups, kept apart so each can be dimmed or cut open (ModelViewer's `groups`). */
+		groups?: string[];
+		/** Groups split into pieces that move apart (ModelViewer's `explode`). */
+		explode?: Record<string, { fold?: number; phase?: number; layers?: boolean; columns?: boolean }>;
+		/** Parts carved into groups of their own (ModelViewer's `carve`). */
+		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		/** Groups cut in half-section (ModelViewer's `sections`). */
+		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Where the camera is. Changing it glides the camera to the new shot. */
 		shot: Shot;
 		/** Stops the slow turn. The model holds the angle it reached. */
 		paused?: boolean;
+		/** Out of sight to begin with: its model loads after those in view (read once, at the start). */
+		later?: boolean;
 		/** Fires once the model is in the scene, for the render controls. */
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
@@ -57,12 +94,13 @@
 		const r = v.radius;
 		const [x, y, z] = next.pos;
 		const [tx, ty, tz] = next.target;
-		const duration = instant || prefersReducedMotion() ? 0 : 1.6;
+		const duration = instant || next.snap || prefersReducedMotion() ? 0 : 1.6;
+		const delay = instant || next.snap ? 0 : (next.after ?? 0);
 		const ease = 'power2.inOut';
-		gsap.to(v.camera.position, { x: x * r, y: y * r, z: z * r, duration, ease, overwrite: true });
-		gsap.to(v.target, { x: tx * r, y: ty * r, z: tz * r, duration, ease, overwrite: true });
-		gsap.to(v.scrollRotation, { y: next.spin, duration, ease, overwrite: true });
-		gsap.to(v, { fov: next.fov ?? 38, duration, ease, overwrite: true });
+		gsap.to(v.camera.position, { x: x * r, y: y * r, z: z * r, duration, delay, ease, overwrite: true });
+		gsap.to(v.target, { x: tx * r, y: ty * r, z: tz * r, duration, delay, ease, overwrite: true });
+		gsap.to(v.scrollRotation, { y: next.spin, z: next.lean ?? 0, duration, delay, ease, overwrite: true });
+		gsap.to(v, { fov: next.fov ?? 38, duration, delay, ease, overwrite: true });
 	}
 
 	// Re-frame whenever the shot changes after load. The first framing is
@@ -90,12 +128,20 @@
 
 		/** Builds a viewer and wires it up; `stop` tears exactly this one down. */
 		async function start() {
-			const { ModelViewer } = await import('$lib/three/ModelViewer');
-			if (unmounted) return;
+			const done = await inTurn(untrack(() => later));
+			const { ModelViewer } = await import('$lib/three/ModelViewer').catch((e) => {
+				done();
+				throw e;
+			});
+			if (unmounted) return done();
 			let v: ModelViewer;
 			try {
 				v = new ModelViewer(host, {
 					url: src,
+					groups,
+					explode,
+					carve,
+					sections,
 					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
 					hdr: '/hdr/studio_small_09_512.hdr',
 					// Phones: GPUs pay per pixel, so fewer of them, and occlusion at half size.
@@ -164,7 +210,7 @@
 				});
 			} catch {
 				failed = true;
-				return;
+				return done();
 			}
 			let offTick = () => {};
 			let resetTween: gsap.core.Tween | null = null;
@@ -198,6 +244,8 @@
 			// __viewer.userRotation.x = 0.5 to watch the reset run.
 			if (import.meta.env.DEV) {
 				(window as unknown as Record<string, unknown>).__viewer = v;
+				// Every viewer on the page, when there's more than one (the CAD stages).
+				(((window as unknown as Record<string, unknown>).__viewers ??= []) as ModelViewer[]).push(v);
 			}
 
 			// Driven by the viewer's own drag-end event, which fires wherever the
@@ -206,35 +254,44 @@
 			canvas.addEventListener('pointerdown', cancelReset);
 			const offDragEnd = v.onDragEnd(releaseDrag);
 
-			v.load().then(() => {
-				// The final look, after the studio preset has had its say. Before
-				// `onready`, so the controls panel reads these as its baseline.
-				for (const [k, value] of Object.entries(LOOK)) {
-					v.setParam(k as keyof RenderParams, value as number | string);
-				}
-				frame(v, shot, true);
-				v.spinning = !paused;
-				viewer = v;
-				loaded = true;
-				onready?.(v);
-				offTick = onTick(() => {
-					if (visible) v.render();
-				});
+			v.load()
+				.then(async () => {
+					// The final look, after the studio preset has had its say. Before
+					// `onready`, so the controls panel reads these as its baseline.
+					for (const [k, value] of Object.entries(LOOK)) {
+						v.setParam(k as keyof RenderParams, value as number | string);
+					}
+					frame(v, shot, true);
+					// Every shader, buffer and blend drawn once, out of sight, so the
+					// first frames seen (and the first see-through fade) don't stall.
+					await v.warmUp();
+					if (unmounted) return;
+					v.spinning = !paused;
+					viewer = v;
+					loaded = true;
+					onready?.(v);
+					offTick = onTick(() => {
+						if (visible) v.render();
+					});
 
-				// Reveal: the poster already shows this exact frame, so the live
-				// canvas simply crossfades in over it — any motion here would
-				// double the image. The poster drops once the canvas is opaque.
-				reveal = gsap.timeline({ onComplete: () => (posterShown = false) });
-				reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.3 : 0.6, ease: 'power1.out' }, 0);
-			}).catch(() => {
-				// The model or lighting didn't arrive: the poster is the model.
-				failed = true;
-			});
+					// Reveal: the poster already shows this exact frame, so the live
+					// canvas simply crossfades in over it — any motion here would
+					// double the image. The poster drops once the canvas is opaque.
+					reveal = gsap.timeline({ onComplete: () => (posterShown = false) });
+					reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.3 : 0.6, ease: 'power1.out' }, 0);
+				})
+				.catch(() => {
+					// The model or lighting didn't arrive: the poster is the model.
+					failed = true;
+				})
+				.finally(done);
 
 			// The GPU dropped the context: show the poster, then try a fresh
 			// viewer with a fresh canvas. Twice at most — a device that keeps
 			// losing it is better off with the still.
 			const offLost = v.onContextLost(() => {
+				// Its turn is over: a load cut short by the loss mustn't hold up the others.
+				done();
 				stop?.();
 				stop = null;
 				posterShown = true;

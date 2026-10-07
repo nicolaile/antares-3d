@@ -1,6 +1,7 @@
 import {
 	COOL,
 	DOT_RGB,
+	HOT_HEAD,
 	RAMPS,
 	dotFlares,
 	period,
@@ -116,7 +117,7 @@ uniform sampler2D uNearest, uSecond;
 uniform vec2 uRes, uView, uOrigin;
 uniform float uReach, uArcMax, uHead, uPeriod, uTail, uTime, uSpeed;
 uniform float uCore, uGlow, uGlowAmount, uAmbient, uFlicker, uPx;
-uniform float uFill, uWall, uSparks, uTempAmount, uBore, uCut;
+uniform float uFill, uWall, uSparks, uTempAmount, uAgitation, uContrast, uCoolLevel, uBore, uCut;
 uniform vec4 uRamp[4];     // rgb, alpha
 uniform float uRampX[4];
 uniform vec3 uCool;
@@ -171,6 +172,11 @@ vec4 heat(float arc, float sd, bool pipe) {
 	float d = mod(uHead - arc, uPeriod);      // behind the nearest head
 	float ahead = uPeriod - d;                // before the next one
 	float temp = mix(1.0, temperature(arc), uTempAmount);
+	// Contrast: hot or cold, the in-between only where the gas changes.
+	temp = mix(temp, smoothstep(0.3, 0.7, temp), uContrast);
+	// Agitation: how much of the flow's turbulence, sparks and bloom the heat
+	// here keeps. Cooled gas runs calm and crisp.
+	float agit = mix(1.0, temp, uAgitation);
 	// No pulse anywhere near: only the idle warmth, without the noise.
 	if (d >= uTail && ahead > 70.0) {
 		if (!pipe) return vec4(0.0);
@@ -188,27 +194,27 @@ vec4 heat(float arc, float sd, bool pipe) {
 	// pipe, calm at the head so the spark stays clean.
 	float along = arc - uTime * uSpeed * 1.25;
 	float n = noise2(vec2(along * 0.045, sd * 0.2)) * 0.65 + noise2(vec2(along * 0.012, sd * 0.07 + 3.1)) * 0.35;
-	float Im = I * mix(1.0, 0.55 + 0.9 * n, uFlicker * (1.0 - head));
+	float Im = I * mix(1.0, 0.55 + 0.9 * n, uFlicker * agit * (1.0 - head));
 
 	// Halo, under everything.
-	float sigma = max(uGlow * 0.5, 0.5);
+	float sigma = max(uGlow * 0.5 * mix(0.55, 1.0, agit), 0.5);
 	vec4 h = ramp(max(Im, head * 0.9) * 0.75);
-	vec4 col = paint(tint(h.rgb, temp), h.a * exp(-dist * dist / (2.0 * sigma * sigma)) * uGlowAmount);
+	vec4 col = paint(tint(h.rgb, temp), h.a * exp(-dist * dist / (2.0 * sigma * sigma)) * uGlowAmount * mix(0.4, 1.0, agit));
 
 	if (pipe) {
 		// The body of the pulse leads with a soft bloom rather than the core's
 		// crisp edge, so the fill never marches up the pipe as a square block.
 		float soft = max(trail, exp(-ahead * ahead / 450.0));
-		float Is = soft * mix(1.0, 0.55 + 0.9 * n, uFlicker * (1.0 - head));
+		float Is = soft * mix(1.0, 0.55 + 0.9 * n, uFlicker * agit * (1.0 - head));
 		// Light thrown on the walls as the energy passes inside them.
-		float wall = exp(-pow((dist - uBore - 1.0) / 1.6, 2.0)) * uWall * soft;
+		float wall = exp(-pow((dist - uBore - 1.0) / 1.6, 2.0)) * uWall * mix(0.35, 1.0, agit) * soft;
 		col = over(paint(tint(ramp(0.85).rgb, temp), wall * 0.8), col);
 		// The bore, filled: idle warmth always, the pulse's own glow on top.
 		float bore = 1.0 - smoothstep(uBore - 1.2, uBore + uPx, dist);
 		float centre = 1.0 - 0.35 * dist / uBore;
 		col = over(paint(tint(ramp(0.6).rgb, temp), uAmbient * temp * bore * 0.5), col);
 		vec4 f = ramp(0.35 + 0.5 * Is);
-		col = over(paint(tint(f.rgb, temp), uFill * Is * bore * centre), col);
+		col = over(paint(tint(f.rgb, temp), uFill * mix(0.45, 1.0, agit) * Is * bore * centre), col);
 		// Sparks: one cell every 28 units, drifting faster than the pulse.
 		float s = arc - uTime * uSpeed * 1.6;
 		float ci = floor(s / 28.0);
@@ -217,7 +223,7 @@ vec4 heat(float arc, float sd, bool pipe) {
 		float oa = 6.0 + hash(ci * 1.37) * 16.0;
 		float oc = (hash(ci * 2.91) - 0.5) * 1.5 * uBore;
 		float dd2 = (fr - oa) * (fr - oa) + (sd - oc) * (sd - oc);
-		float spark = exp(-dd2 / 5.0) * live * (0.5 + 0.5 * hash(ci * 5.3)) * smoothstep(0.02, 0.3, I) * uSparks;
+		float spark = exp(-dd2 / 5.0) * live * (0.5 + 0.5 * hash(ci * 5.3)) * smoothstep(0.02, 0.3, I) * uSparks * agit * agit;
 		col = over(paint(tint(ramp(1.0).rgb, temp), spark * bore), col);
 	}
 
@@ -228,7 +234,8 @@ vec4 heat(float arc, float sd, bool pipe) {
 	float core = 1.0 - smoothstep(halfw * 0.45, halfw + uPx, dist);
 	vec4 c = ramp(Im);
 	vec3 rgb = mix(tint(c.rgb, temp), tint(ramp(1.0).rgb, temp), head * 0.7);
-	return over(paint(rgb, max(c.a, head) * core), col);
+	// Cooled gas burns lower: dimmed by its coolness (premultiplied, so scaling dims).
+	return over(paint(rgb, max(c.a, head) * core), col) * mix(uCoolLevel, 1.0, temp);
 }
 
 vec4 shade(vec4 f) {
@@ -359,7 +366,7 @@ export class FlowMapEnergy {
 		for (const name of [
 			'uNearest', 'uSecond', 'uRes', 'uView', 'uOrigin', 'uReach', 'uArcMax', 'uHead', 'uPeriod', 'uTail', 'uTime',
 			'uSpeed', 'uCore', 'uGlow', 'uGlowAmount', 'uAmbient', 'uFlicker', 'uPx', 'uFill', 'uWall', 'uSparks',
-			'uTempAmount', 'uBore', 'uCut', 'uRamp', 'uRampX', 'uCool', 'uRoutes', 'uRouteCount', 'uDots', 'uDotRgb'
+			'uTempAmount', 'uAgitation', 'uContrast', 'uCoolLevel', 'uBore', 'uCut', 'uRamp', 'uRampX', 'uCool', 'uRoutes', 'uRouteCount', 'uDots', 'uDotRgb'
 		]) {
 			this.u[name] = gl.getUniformLocation(this.shade, name);
 		}
@@ -466,6 +473,9 @@ export class FlowMapEnergy {
 		gl.uniform1f(u.uWall, p.wallLight);
 		gl.uniform1f(u.uSparks, p.sparks);
 		gl.uniform1f(u.uTempAmount, p.temperature);
+		gl.uniform1f(u.uAgitation, p.agitation ?? 0);
+		gl.uniform1f(u.uContrast, p.contrast ?? 0);
+		gl.uniform1f(u.uCoolLevel, p.coolLevel ?? 1);
 		gl.uniform1f(u.uBore, BORE);
 		// The widest anything reaches from a centreline: halo, walls, or the
 		// head-widened core.
@@ -481,6 +491,13 @@ export class FlowMapEnergy {
 			this.rampBuf[i * 4 + 3] = s.a;
 			this.rampXBuf[i] = s.x;
 		});
+		// The head (the ramp's top), warmed on the hot side: the shader cools
+		// it back to COOL where the gas has given its heat up.
+		if (theme === 'dark') {
+			const w = p.headWarmth ?? 0;
+			const top = ramp[ramp.length - 1].rgb;
+			for (let k = 0; k < 3; k++) this.rampBuf[(ramp.length - 1) * 4 + k] = (top[k] + (HOT_HEAD[k] - top[k]) * w) / 255;
+		}
 		gl.uniform4fv(u.uRamp, this.rampBuf);
 		gl.uniform1fv(u.uRampX, this.rampXBuf);
 		const cool = COOL[theme];

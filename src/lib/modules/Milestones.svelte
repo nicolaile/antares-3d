@@ -17,7 +17,7 @@
 	} = $props();
 </script>
 
-<div class="milestones" class:titled={title} class:quiet class:type-body={!quiet} class:type-small={quiet}>
+<div class="milestones" class:titled={title} class:quiet class:type-body-large={!quiet} class:type-body-default={quiet}>
 	{#if title}<p class="title">{title}</p>{/if}
 	<dl class="list">
 		{#each items as item (item.label)}

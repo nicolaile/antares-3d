@@ -1,0 +1,144 @@
+[
+	{
+		"name": "orbit-01-sn-over-earth",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -60,
+			"elevation": 14,
+			"lens": 35,
+			"zoom": 0.35,
+			"roll": -10
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "orbit-02-sn-landscape",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -75,
+			"elevation": 16,
+			"lens": 50,
+			"zoom": 2.2,
+			"roll": 8
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "orbit-03-sn-tank-end",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -40,
+			"elevation": 24,
+			"lens": 85,
+			"zoom": 3,
+			"focus": [
+				0.06,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "orbit-04-sn-backlit",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -70,
+			"elevation": 25,
+			"lens": 35,
+			"zoom": 0.5
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"sun_azimuth": 160,
+			"sun_elevation": 5
+		}
+	},
+	{
+		"name": "orbit-05-sn-looking-down",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -50,
+			"elevation": 45,
+			"lens": 35,
+			"zoom": 0.6
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "orbit-06-sn-truss-over-earth",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -80,
+			"elevation": 25,
+			"lens": 85,
+			"zoom": 3,
+			"focus": [
+				0.32,
+				0.478,
+				0.5
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "orbit-07-sn-reactor-looking-down",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -30,
+			"elevation": 32,
+			"lens": 50,
+			"zoom": 2.5,
+			"focus": [
+				0.08,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "orbit-08-sn-tiny-over-limb",
+		"model": "space-nuclear",
+		"look": "orbit",
+		"camera": {
+			"azimuth": -60,
+			"elevation": 18,
+			"lens": 24,
+			"zoom": 0.25
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	}
+]

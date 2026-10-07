@@ -1,0 +1,308 @@
+[
+	{
+		"name": "m0-full-01-hero",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 10,
+			"lens": 85,
+			"zoom": 1.45,
+			"dof": 5.6,
+			"focus_shift": 1.1
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-full-02-high-three-quarter",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 75,
+			"elevation": 25,
+			"lens": 135,
+			"zoom": 1.35,
+			"dof": 5.6,
+			"focus_shift": 1.1
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "st-15-m0-drive-motor-macro",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 90,
+			"elevation": 20,
+			"lens": 135,
+			"zoom": 9,
+			"focus": [
+				0.5,
+				0.83,
+				0.92
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "st-16-m0-drive-connectors",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 60,
+			"elevation": 40,
+			"lens": 135,
+			"zoom": 12,
+			"focus": [
+				0.5,
+				0.83,
+				0.97
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "st-17-m0-rim-handles-low",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": -10,
+			"lens": 100,
+			"zoom": 7,
+			"focus": [
+				0.99,
+				0.5,
+				0.83
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-18-m0-cable-tray",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 15,
+			"elevation": 15,
+			"lens": 135,
+			"zoom": 8,
+			"focus": [
+				0.97,
+				0.6,
+				0.82
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-19-m0-base-flange",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 45,
+			"elevation": 5,
+			"lens": 135,
+			"zoom": 9,
+			"focus": [
+				0.85,
+				0.85,
+				0.02
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-20-m0-top-deck",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 200,
+			"elevation": 55,
+			"lens": 100,
+			"zoom": 6,
+			"focus": [
+				0.5,
+				0.5,
+				0.86
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "st-21-m0-skyline-backlit",
+		"model": "mark-0",
+		"look": "studio",
+		"camera": {
+			"azimuth": 210,
+			"elevation": 0,
+			"lens": 200,
+			"zoom": 5,
+			"focus": [
+				0.5,
+				0.5,
+				0.92
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-22-pcs-valve-cluster",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": -30,
+			"elevation": 25,
+			"lens": 135,
+			"zoom": 6,
+			"focus": [
+				0.55,
+				0.6,
+				0.8
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "st-23-pcs-vessel-dome",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 60,
+			"lens": 135,
+			"zoom": 6,
+			"focus": [
+				0.25,
+				0.3,
+				0.97
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "st-24-pcs-flange-bolts",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 10,
+			"lens": 200,
+			"zoom": 6,
+			"focus": [
+				0.25,
+				0.3,
+				0.6
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-25-sn-radiator-fins",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"azimuth": -95,
+			"elevation": 10,
+			"lens": 200,
+			"zoom": 10,
+			"focus": [
+				0.7,
+				0.5,
+				0.5
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "st-26-sn-shield-cone-edge",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"azimuth": -10,
+			"elevation": 15,
+			"lens": 135,
+			"zoom": 12,
+			"focus": [
+				0.96,
+				0.5,
+				0.6
+			],
+			"dof": 2.0
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "st-27-sn-tank-pair",
+		"model": "space-nuclear",
+		"look": "studio",
+		"camera": {
+			"azimuth": -150,
+			"elevation": 15,
+			"lens": 135,
+			"zoom": 9,
+			"focus": [
+				0.1,
+				0.2,
+				0.5
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	}
+]

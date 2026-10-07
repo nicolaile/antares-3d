@@ -4,6 +4,7 @@
  */
 import type { Link } from './site';
 import { operating } from './home';
+import { company } from './company';
 // The hero runs the grid's full width (1408px at 1440); the founder band
 // runs edge to edge (1440px). Sources at two and one times that, and half.
 import heroImage from '$lib/assets/images/career/career-hero.jpg?w=2816;1408;704&enhanced';
@@ -44,5 +45,11 @@ export const careers = {
 			alt: 'Black-and-white portrait of Jordan Bramble in a cap and dark T-shirt'
 		}
 	},
-	why: { ...operating, label: 'Why Antares' }
+	why: { ...operating, label: 'Why Antares' },
+	/** The Company slideshow's photos for now, without their captions or count. */
+	life: {
+		title: 'Life at Antares',
+		slides: company.slideshow.slides.map(({ image }) => ({ image })),
+		count: false
+	}
 };

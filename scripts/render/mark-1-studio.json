@@ -1,0 +1,187 @@
+[
+	{
+		"name": "m1-01-three-quarter",
+		"model": "mark-1",
+		"look": "studio",
+		"camera": {
+			"azimuth": 315,
+			"elevation": 10,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.12,
+			"dof": 8,
+			"rig_zoom": 1.45
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"rig": "studio-c",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"gloss": 1.25,
+			"contrast_curve": 0.25,
+			"black_point": 0.01,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"post": {
+			"bloom": 0.0,
+			"fringe": 0.0,
+			"grain": 0.006,
+			"sharpen": 0.35,
+			"vignette": 0.12
+		},
+		"samples": 128
+	},
+	{
+		"name": "m1-02-side",
+		"model": "mark-1",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 6,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.12,
+			"dof": 8,
+			"rig_zoom": 1.45
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"rig": "studio-c",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"gloss": 1.25,
+			"contrast_curve": 0.25,
+			"black_point": 0.01,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"post": {
+			"bloom": 0.0,
+			"fringe": 0.0,
+			"grain": 0.006,
+			"sharpen": 0.35,
+			"vignette": 0.12
+		},
+		"samples": 128
+	},
+	{
+		"name": "m1-03-portrait",
+		"model": "mark-1",
+		"look": "studio",
+		"camera": {
+			"azimuth": 330,
+			"elevation": 12,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08,
+			"dof": 8,
+			"rig_zoom": 1.45
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"rig": "studio-c",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"gloss": 1.25,
+			"contrast_curve": 0.25,
+			"black_point": 0.01,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"post": {
+			"bloom": 0.0,
+			"fringe": 0.0,
+			"grain": 0.006,
+			"sharpen": 0.35,
+			"vignette": 0.12
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-studio-01-three-quarter",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 35,
+			"elevation": 8,
+			"lens": 135,
+			"fit": "box",
+			"margin": 1.15,
+			"dof": 8,
+			"rig_zoom": 1.45
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"rig": "studio-c",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"gloss": 1.25,
+			"contrast_curve": 0.25,
+			"black_point": 0.01,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"post": {
+			"bloom": 0.0,
+			"fringe": 0.0,
+			"grain": 0.006,
+			"sharpen": 0.35,
+			"vignette": 0.12
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-studio-02-side",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 4,
+			"lens": 135,
+			"fit": "box",
+			"margin": 1.15,
+			"dof": 8,
+			"rig_zoom": 1.45
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"rig": "studio-c",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"gloss": 1.25,
+			"contrast_curve": 0.25,
+			"black_point": 0.01,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"post": {
+			"bloom": 0.0,
+			"fringe": 0.0,
+			"grain": 0.006,
+			"sharpen": 0.35,
+			"vignette": 0.12
+		},
+		"samples": 128
+	}
+]

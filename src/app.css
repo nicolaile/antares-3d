@@ -60,6 +60,9 @@
 	/* Inside the position cards, all round: 20px at 1440, the page margin's
 	   width rather than a step on the 8px spacing scale. */
 	--card-padding: calc(var(--size-font) * 1.25);
+	/* The wordmark at rest in the top-left corner: 12px tall at 1440. Home's
+	   hero shrinks to it; BrandMark holds it on every other page. */
+	--wordmark-rest: calc(var(--size-font) * 0.75);
 	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);
 }

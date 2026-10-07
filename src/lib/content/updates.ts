@@ -14,6 +14,8 @@ import type { Link } from './site';
 import news01 from '$lib/assets/images/updates/news-example-01.jpg?w=1368;912;456&enhanced';
 import news02 from '$lib/assets/images/updates/news-example-02.jpg?w=1368;912;456&enhanced';
 import news03 from '$lib/assets/images/updates/news-example-03.jpg?w=1368;912;456&enhanced';
+// Three columns (340px at 1440) on the press-kit card.
+import pressKitImage from '$lib/assets/images/article/article-thumbnail.jpg?w=1020;680;340&enhanced';
 
 /** One item in the updates grid. */
 export type UpdateItem = Link & { date: string; image?: { src: Picture; alt: string } };
@@ -74,7 +76,8 @@ export const updates = {
 	pageSize: 12,
 	pressKit: {
 		title: 'Download Press Kit',
-		size: 'Filesize 38 MB',
+		size: '38 MB',
+		image: { src: pressKitImage, alt: '' },
 		href: '#'
 	}
 };

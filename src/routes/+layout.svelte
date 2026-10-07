@@ -6,6 +6,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import Menu from '$lib/modules/Menu.svelte';
+	import BrandMark from '$lib/modules/BrandMark.svelte';
 	import { menu } from '$lib/content/site';
 	let { children } = $props();
 
@@ -37,5 +38,8 @@
 </svelte:head>
 
 <Menu {...menu} current={page.url.pathname} />
+
+<!-- Home's hero carries its own wordmark into this corner. -->
+{#if page.url.pathname !== '/'}<BrandMark />{/if}
 
 {@render children?.()}

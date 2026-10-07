@@ -2,32 +2,43 @@
 	@component
 	Tuning panel for the energy diagram: the flow, the glow, the stage and
 	the line weight. Same look as the model's render controls; the diagram
-	places it in its own corner.
+	places it in its own corner. For the energy along the CAD's pipes
+	(EnergyTrails), given `trail` instead of the line settings: the same
+	flow and glow, and what the trails add in 3D.
 -->
 <script lang="ts">
 	import {
 		DEFAULT_LINE_WEIGHT,
 		DEFAULT_PARAMS,
 		DEFAULT_TONES,
+		DEFAULT_TRAIL_LOOK,
+		DEFAULT_TRAIL_PARAMS,
 		TIERS,
 		cloneTones,
 		type EnergyParams,
 		type LineTone,
-		type Tier
+		type Tier,
+		type TrailLook
 	} from '$lib/energy/energy';
 
 	let {
 		params = $bindable(),
 		lineWeight = $bindable(),
 		tones = $bindable(),
+		trail = $bindable(),
+		defaults = undefined,
 		ink = '',
 		dark = $bindable(false)
 	}: {
 		params: EnergyParams;
-		/** Multiplier on every line tier's weight. */
-		lineWeight: number;
-		/** Colour and opacity per line tier. */
-		tones: Record<Tier, LineTone>;
+		/** Multiplier on every line tier's weight (the diagram). */
+		lineWeight?: number;
+		/** Colour and opacity per line tier (the diagram). */
+		tones?: Record<Tier, LineTone>;
+		/** What the trails along the CAD's pipes add in 3D: given, the panel is theirs. */
+		trail?: TrailLook;
+		/** What Reset goes back to, if not the defaults (a model's own trail settings). */
+		defaults?: { params: EnergyParams; trail?: TrailLook };
 		/** The ink the tiers follow when they have no colour of their own. */
 		ink?: string;
 		/** Dark stage for the diagram. */
@@ -35,6 +46,29 @@
 	} = $props();
 
 	type Row = { key: keyof EnergyParams; label: string; min: number; max: number; step: number };
+	type TrailRow = { key: keyof TrailLook; label: string; min: number; max: number; step: number };
+	type TrailNumber = { [K in keyof TrailLook]: TrailLook[K] extends number ? K : never }[keyof TrailLook];
+	type TrailColour = { [K in keyof TrailLook]: TrailLook[K] extends string ? K : never }[keyof TrailLook];
+	/**
+	 * The trails space their pulses by distance, not by how many share a
+	 * loop, and pick their head's colour outright.
+	 */
+	const shown = (row: Row) => !(trail && (row.key === 'pulses' || row.key === 'headWarmth'));
+	const TRAIL_ROWS: (TrailRow & { key: TrailNumber })[] = [
+		{ key: 'brightness', label: 'Brightness', min: 0, max: 3, step: 0.05 },
+		{ key: 'bloom', label: 'Bloom', min: 0, max: 3, step: 0.05 },
+		{ key: 'reach', label: 'Bloom reach', min: 1, max: 8, step: 1 },
+		{ key: 'spacing', label: 'Spacing', min: 200, max: 3000, step: 10 }
+	];
+	const TRAIL_COLOURS: { key: TrailColour; label: string }[] = [
+		{ key: 'tail', label: 'Tail colour' },
+		{ key: 'body', label: 'Body colour' },
+		{ key: 'head', label: 'Head colour' }
+	];
+	const TRAIL_RAMP: (TrailRow & { key: TrailNumber })[] = [
+		{ key: 'tailOpacity', label: 'Tail opacity', min: 0, max: 1, step: 0.01 },
+		{ key: 'bodyFrom', label: 'Body from', min: 0.02, max: 0.99, step: 0.01 }
+	];
 	const GROUPS: { title: string; rows: Row[] }[] = [
 		{
 			title: 'Flow',
@@ -44,7 +78,11 @@
 				{ key: 'tail', label: 'Tail', min: 80, max: 2000, step: 10 },
 				{ key: 'flicker', label: 'Turbulence', min: 0, max: 1, step: 0.01 },
 				{ key: 'sparks', label: 'Sparks', min: 0, max: 1, step: 0.01 },
-				{ key: 'temperature', label: 'Temperature', min: 0, max: 1, step: 0.01 }
+				{ key: 'temperature', label: 'Temperature', min: 0, max: 1, step: 0.01 },
+				{ key: 'agitation', label: 'Cool calm', min: 0, max: 1, step: 0.01 },
+				{ key: 'headWarmth', label: 'Hot head warmth', min: 0, max: 1, step: 0.01 },
+				{ key: 'contrast', label: 'Hot/cold contrast', min: 0, max: 1, step: 0.01 },
+				{ key: 'coolLevel', label: 'Cooled brightness', min: 0.2, max: 1, step: 0.01 }
 			]
 		},
 		{
@@ -64,14 +102,19 @@
 	let copied = $state(false);
 
 	function reset() {
-		params = { ...DEFAULT_PARAMS };
-		lineWeight = DEFAULT_LINE_WEIGHT;
-		tones = cloneTones(DEFAULT_TONES);
+		params = { ...(defaults?.params ?? (trail ? DEFAULT_TRAIL_PARAMS : DEFAULT_PARAMS)) };
+		if (trail) trail = { ...(defaults?.trail ?? DEFAULT_TRAIL_LOOK) };
+		else {
+			lineWeight = DEFAULT_LINE_WEIGHT;
+			tones = cloneTones(DEFAULT_TONES);
+		}
 	}
 
 	/** The current look as code, ready to paste in as the new defaults. */
 	async function copy() {
-		const look = { ...$state.snapshot(params), lineWeight, tones: $state.snapshot(tones), dark };
+		const look = trail
+			? { ...$state.snapshot(params), trail: $state.snapshot(trail) }
+			: { ...$state.snapshot(params), lineWeight, tones: $state.snapshot(tones), dark };
 		await navigator.clipboard.writeText(JSON.stringify(look, null, '\t'));
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
@@ -86,54 +129,81 @@
 		<!-- data-lenis-prevent: the page's smooth scroll would otherwise take the wheel. -->
 		<div class="panel" data-lenis-prevent>
 			{#each GROUPS as group (group.title)}
-				<p class="group type-label">{group.title}</p>
-				{#each group.rows as row (row.key)}
+				<p class="group type-caption">{group.title}</p>
+				{#each group.rows.filter(shown) as row (row.key)}
 					<label class="row">
-						<span class="type-label">{row.label}</span>
+						<span class="type-caption">{row.label}</span>
 						<input type="range" min={row.min} max={row.max} step={row.step} bind:value={params[row.key]} />
-						<span class="val type-label type-tabular">{fmt(params[row.key], row.step)}</span>
+						<span class="val type-caption type-tabular">{fmt(params[row.key], row.step)}</span>
 					</label>
 				{/each}
 			{/each}
-			<p class="group type-label">Stage</p>
-			<label class="row">
-				<span class="type-label">Dark</span>
-				<input class="check" type="checkbox" bind:checked={dark} />
-				<span class="val type-label type-tabular">{dark ? 'On' : 'Off'}</span>
-			</label>
-			<label class="row">
-				<span class="type-label">Line weight</span>
-				<input type="range" min="0.4" max="2.5" step="0.05" bind:value={lineWeight} />
-				<span class="val type-label type-tabular">{fmt(lineWeight, 0.05)}</span>
-			</label>
-			<p class="group type-label">Lines</p>
-			{#each TIERS as tier (tier.key)}
-				{@const tone = tones[tier.key]}
-				<div class="row">
-					<span class="type-label">{tier.label}</span>
-					<input
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						aria-label="{tier.label} opacity"
-						bind:value={tone.opacity}
-					/>
-					<input
-						class="swatch"
-						type="color"
-						aria-label="{tier.label} colour"
-						value={tone.color ?? ink}
-						oninput={(e) => (tone.color = e.currentTarget.value)}
-					/>
-				</div>
-			{/each}
-			<button class="action type-label ink" onclick={() => TIERS.forEach((t) => (tones[t.key].color = null))}>
-				Follow ink
-			</button>
+			{#if trail}
+				<p class="group type-caption">Colour</p>
+				{#each TRAIL_COLOURS as row (row.key)}
+					<label class="row">
+						<span class="type-caption">{row.label}</span>
+						<input class="swatch" type="color" bind:value={trail[row.key]} />
+						<span class="val type-caption type-tabular">{trail[row.key].slice(1)}</span>
+					</label>
+				{/each}
+				{#each TRAIL_RAMP as row (row.key)}
+					<label class="row">
+						<span class="type-caption">{row.label}</span>
+						<input type="range" min={row.min} max={row.max} step={row.step} bind:value={trail[row.key]} />
+						<span class="val type-caption type-tabular">{fmt(trail[row.key], row.step)}</span>
+					</label>
+				{/each}
+				<p class="group type-caption">In 3D</p>
+				{#each TRAIL_ROWS as row (row.key)}
+					<label class="row">
+						<span class="type-caption">{row.label}</span>
+						<input type="range" min={row.min} max={row.max} step={row.step} bind:value={trail[row.key]} />
+						<span class="val type-caption type-tabular">{fmt(trail[row.key], row.step)}</span>
+					</label>
+				{/each}
+			{:else if tones && lineWeight !== undefined}
+				{@const lines = tones}
+				<p class="group type-caption">Stage</p>
+				<label class="row">
+					<span class="type-caption">Dark</span>
+					<input class="check" type="checkbox" bind:checked={dark} />
+					<span class="val type-caption type-tabular">{dark ? 'On' : 'Off'}</span>
+				</label>
+				<label class="row">
+					<span class="type-caption">Line weight</span>
+					<input type="range" min="0.4" max="2.5" step="0.05" bind:value={lineWeight} />
+					<span class="val type-caption type-tabular">{fmt(lineWeight, 0.05)}</span>
+				</label>
+				<p class="group type-caption">Lines</p>
+				{#each TIERS as tier (tier.key)}
+					{@const tone = tones[tier.key]}
+					<div class="row">
+						<span class="type-caption">{tier.label}</span>
+						<input
+							type="range"
+							min="0"
+							max="1"
+							step="0.01"
+							aria-label="{tier.label} opacity"
+							bind:value={tone.opacity}
+						/>
+						<input
+							class="swatch"
+							type="color"
+							aria-label="{tier.label} colour"
+							value={tone.color ?? ink}
+							oninput={(e) => (tone.color = e.currentTarget.value)}
+						/>
+					</div>
+				{/each}
+				<button class="action type-caption ink" onclick={() => TIERS.forEach((t) => (lines[t.key].color = null))}>
+					Follow ink
+				</button>
+			{/if}
 			<div class="actions">
-				<button class="action type-label" onclick={copy}>{copied ? 'Copied' : 'Copy values'}</button>
-				<button class="action type-label" onclick={reset}>Reset</button>
+				<button class="action type-caption" onclick={copy}>{copied ? 'Copied' : 'Copy values'}</button>
+				<button class="action type-caption" onclick={reset}>Reset</button>
 			</div>
 		</div>
 	{/if}

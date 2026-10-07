@@ -9,16 +9,37 @@
 
 	let {
 		open = false,
+		tone = 'light',
 		controls,
 		onclick
 	}: {
 		open?: boolean;
+		/** `dark` for pages on a dark background: a dark frosted fill, white dots. */
+		tone?: 'light' | 'dark';
 		/** id of the panel this button shows and hides. */
 		controls: string;
 		onclick: (e: MouseEvent) => void;
 	} = $props();
 
 	let button: HTMLButtonElement;
+
+	/**
+	 * Light to dark and back as a crossfade: the dark fill (--dark, 0 to 1)
+	 * over the light one, and the dots between near-black and white. Open,
+	 * the dots stay dark on the white whatever the tone. Colours are read
+	 * from the system's tokens, resolved, so GSAP can blend them.
+	 */
+	const FADE = { duration: 0.15, ease: 'power1.out' };
+	let first = true;
+	$effect(() => {
+		const dark = tone === 'dark';
+		const isOpen = open;
+		const token = (name: string) => getComputedStyle(button).getPropertyValue(name).trim();
+		const to = { '--dark': dark ? 1 : 0, color: token(dark && !isOpen ? '--grey-0' : '--grey-950') };
+		if (first || prefersReducedMotion()) gsap.set(button, to);
+		else gsap.to(button, { ...to, ...FADE, overwrite: 'auto' });
+		first = false;
+	});
 
 	/**
 	 * A tiny bounce on every press: a quick dip to 95%, then a spring back
@@ -110,6 +131,20 @@
 			opacity 300ms var(--ease),
 			background 300ms var(--ease);
 	}
+	/* Dark: Grey 775 under white dots, so it holds its own on a dark page
+	   the way the light one does on white. Faded in over the light fill by
+	   --dark (GSAP, above); gone while open, the white showing. */
+	.menu-button::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: var(--grey-775);
+		opacity: var(--dark, 0);
+	}
+	.open::after {
+		opacity: 0;
+	}
 	/* Open: solid white, matching the panel it opened. */
 	.open::before,
 	.open:hover::before {
@@ -122,6 +157,7 @@
 	}
 	svg {
 		position: relative;
+		z-index: 1;
 		display: block;
 		width: 100%;
 		height: 100%;

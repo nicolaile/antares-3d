@@ -1,0 +1,769 @@
+[
+	{
+		"name": "m0-01-elevation-sage",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 30,
+			"margin": 1.25
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "m0-02-elevation-slate",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 30,
+			"margin": 1.25
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "m0-03-elevation-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 30,
+			"margin": 1.25
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-04-elevation-az0-white",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 0,
+			"margin": 1.25
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "m0-05-plan-sage",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"margin": 1.15
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "m0-06-plan-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"margin": 1.15
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-07-plan-slate",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"margin": 1.15
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "m0-08-plan-core-macro",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"zoom": 2.4
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "m0-09-plan-drive-crop",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"zoom": 3.2,
+			"focus": [
+				0.5,
+				0.8,
+				0.5
+			],
+			"roll": 15
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "m0-10-underside-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": -90,
+			"margin": 1.15
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-11-drive-detail-white",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"azimuth": 35,
+			"elevation": 18,
+			"lens": 100,
+			"distance": 3.6,
+			"offset": [
+				0,
+				0,
+				1.35
+			],
+			"roll": -28
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "m0-12-drive-detail-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"azimuth": 35,
+			"elevation": 18,
+			"lens": 100,
+			"distance": 3.6,
+			"offset": [
+				0,
+				0,
+				1.35
+			],
+			"roll": -28
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-13-core-band-landscape",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 30,
+			"zoom": 2.6,
+			"focus": [
+				0.5,
+				0.5,
+				0.42
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {}
+	},
+	{
+		"name": "m0-14-top-half-landscape",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 30,
+			"zoom": 1.7,
+			"focus": [
+				0.5,
+				0.5,
+				0.78
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "m0-15-low-angle-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"azimuth": 20,
+			"elevation": -18,
+			"lens": 35,
+			"zoom": 1.15
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-16-iso-white",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 45,
+			"elevation": 35,
+			"margin": 1.2
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "m0-17-iso-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 45,
+			"elevation": 35,
+			"margin": 1.2
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "m0-18-core-dof-negative",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 8,
+			"lens": 135,
+			"zoom": 2.6,
+			"focus": [
+				0.5,
+				0.5,
+				0.45
+			],
+			"roll": -12,
+			"dof": 2.0
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		},
+		"samples": 96
+	},
+	{
+		"name": "m0-19-drive-dof-white",
+		"model": "mark-0",
+		"look": "xray",
+		"camera": {
+			"azimuth": 60,
+			"elevation": 30,
+			"lens": 135,
+			"zoom": 3.0,
+			"focus": [
+				0.5,
+				0.5,
+				0.88
+			],
+			"dof": 5.6
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		},
+		"samples": 96
+	},
+	{
+		"name": "pcs-01-elevation-sage",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 0,
+			"margin": 1.15
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "pcs-02-elevation-negative",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 0,
+			"margin": 1.15
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.6,
+			"edge": 0.35,
+			"edge_blend": 0.15,
+			"black_point": 97,
+			"gamma": 0.9
+		}
+	},
+	{
+		"name": "pcs-03-side-slate",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 90,
+			"margin": 1.15
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "pcs-04-plan-white",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"margin": 1.1
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "pcs-05-iso-sage",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 45,
+			"elevation": 30,
+			"margin": 1.1
+		},
+		"resolution": [
+			2000,
+			2000
+		]
+	},
+	{
+		"name": "pcs-06-iso-negative",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": 225,
+			"elevation": 30,
+			"margin": 1.1
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.6,
+			"edge": 0.35,
+			"edge_blend": 0.15,
+			"black_point": 97,
+			"gamma": 0.9
+		}
+	},
+	{
+		"name": "pcs-07-pipework-crop",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"azimuth": 30,
+			"elevation": 20,
+			"lens": 85,
+			"zoom": 2.2,
+			"focus": [
+				0.6,
+				0.6,
+				0.7
+			],
+			"roll": -20
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "pcs-08-low-angle-negative",
+		"model": "power-conversion-system",
+		"look": "xray",
+		"camera": {
+			"azimuth": -30,
+			"elevation": -10,
+			"lens": 35,
+			"zoom": 1.2
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.6,
+			"edge": 0.35,
+			"edge_blend": 0.15,
+			"black_point": 97,
+			"gamma": 0.9
+		}
+	},
+	{
+		"name": "sn-01-side-sage",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -90,
+			"margin": 1.05
+		},
+		"resolution": [
+			2400,
+			1350
+		]
+	},
+	{
+		"name": "sn-02-side-negative",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -90,
+			"margin": 1.05
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "sn-03-plan-slate",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"elevation": 90,
+			"margin": 1.05
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	},
+	{
+		"name": "sn-04-three-quarter-negative",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"azimuth": -60,
+			"elevation": 20,
+			"lens": 50,
+			"zoom": 3.2,
+			"roll": -25
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"paper": "#080604",
+			"ink": "#f5f5f5",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		}
+	},
+	{
+		"name": "sn-05-reactor-end-white",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -60,
+			"elevation": 15,
+			"zoom": 5,
+			"focus": [
+				0.05,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#f3f3f0",
+			"ink": "#101214",
+			"black_point": 95,
+			"gamma": 0.85
+		}
+	},
+	{
+		"name": "sn-06-reactor-end-negative",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"azimuth": -40,
+			"elevation": 12,
+			"lens": 85,
+			"zoom": 4.5,
+			"focus": [
+				0.06,
+				0.5,
+				0.5
+			],
+			"dof": 2.8
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#040608",
+			"ink": "#d6e4ea",
+			"density": 0.3,
+			"edge": 0.3,
+			"edge_blend": 0.15,
+			"black_point": 99,
+			"gamma": 1.4
+		},
+		"samples": 96
+	},
+	{
+		"name": "sn-07-tank-end-sage",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -120,
+			"elevation": 20,
+			"zoom": 5,
+			"focus": [
+				0.95,
+				0.5,
+				0.5
+			]
+		},
+		"resolution": [
+			1600,
+			2000
+		]
+	},
+	{
+		"name": "sn-08-radiator-crop-slate",
+		"model": "space-nuclear",
+		"look": "xray",
+		"camera": {
+			"type": "ortho",
+			"azimuth": -90,
+			"elevation": 50,
+			"zoom": 3,
+			"focus": [
+				0.3,
+				0.5,
+				0.5
+			],
+			"roll": 30
+		},
+		"resolution": [
+			1600,
+			2000
+		],
+		"look_settings": {
+			"paper": "#d0d6d9",
+			"ink": "#080604"
+		}
+	}
+]

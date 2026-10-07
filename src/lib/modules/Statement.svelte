@@ -20,8 +20,8 @@
 </script>
 
 <div class="statement" style:--indent={label ? indent : 0}>
-	{#if label}<p class="label type-body">{label}</p>{/if}
-	<p class="text type-h3">{text}</p>
+	{#if label}<p class="label type-body-large">{label}</p>{/if}
+	<p class="text type-h2">{text}</p>
 </div>
 
 <style>

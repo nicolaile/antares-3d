@@ -1,0 +1,242 @@
+[
+	{
+		"name": "pcs-ef-side",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 0.5,
+			"lens": 200,
+			"fit": "box",
+			"margin": 1.6
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "soft-cove",
+			"fill": 0.12,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.06,
+				0.2
+			],
+			"roughness_add": 0.12,
+			"cove": true,
+			"sweep_colour": "#c8cbce",
+			"sweep_roughness": 0.12,
+			"auto_exposure": 1.35,
+			"frosted_panels": true,
+			"contrast_curve": 0.0,
+			"frost_roughness": 0.12,
+			"frost_colour": "#f2f4f6",
+			"hdri": "photo_studio_loft_hall-2k.hdr",
+			"hdri_strength": 0.12,
+			"agx": true,
+			"exposure_trim": 1.45,
+			"pbr_metal": "Metal009",
+			"smudges": 0.25
+		},
+		"samples": 128,
+		"post": {
+			"grain": 0.004
+		}
+	},
+	{
+		"name": "pcs-ef-side-higher",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 2.0,
+			"lens": 200,
+			"fit": "box",
+			"margin": 1.6
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "soft-cove",
+			"fill": 0.12,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.06,
+				0.2
+			],
+			"roughness_add": 0.12,
+			"cove": true,
+			"sweep_colour": "#c8cbce",
+			"sweep_roughness": 0.12,
+			"auto_exposure": 1.35,
+			"frosted_panels": true,
+			"contrast_curve": 0.0,
+			"frost_roughness": 0.12,
+			"frost_colour": "#f2f4f6",
+			"hdri": "photo_studio_loft_hall-2k.hdr",
+			"hdri_strength": 0.12,
+			"agx": true,
+			"exposure_trim": 1.45,
+			"pbr_metal": "Metal009",
+			"smudges": 0.25
+		},
+		"samples": 128,
+		"post": {
+			"grain": 0.004
+		}
+	},
+	{
+		"name": "pcs-ef-front",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 90,
+			"elevation": 2.0,
+			"lens": 200,
+			"fit": "box",
+			"margin": 1.6
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "soft-cove",
+			"fill": 0.12,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.06,
+				0.2
+			],
+			"roughness_add": 0.12,
+			"cove": true,
+			"sweep_colour": "#c8cbce",
+			"sweep_roughness": 0.12,
+			"auto_exposure": 1.35,
+			"frosted_panels": true,
+			"contrast_curve": 0.0,
+			"frost_roughness": 0.12,
+			"frost_colour": "#f2f4f6",
+			"hdri": "photo_studio_loft_hall-2k.hdr",
+			"hdri_strength": 0.12,
+			"agx": true,
+			"exposure_trim": 1.45,
+			"pbr_metal": "Metal009",
+			"smudges": 0.25
+		},
+		"samples": 128,
+		"post": {
+			"grain": 0.004
+		}
+	},
+	{
+		"name": "pcs-ef-three-quarter",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 35,
+			"elevation": 6,
+			"lens": 135,
+			"fit": "box",
+			"margin": 1.3
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "soft-cove",
+			"fill": 0.12,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.06,
+				0.2
+			],
+			"roughness_add": 0.12,
+			"cove": true,
+			"sweep_colour": "#c8cbce",
+			"sweep_roughness": 0.12,
+			"auto_exposure": 1.35,
+			"frosted_panels": true,
+			"contrast_curve": 0.0,
+			"frost_roughness": 0.12,
+			"frost_colour": "#f2f4f6",
+			"hdri": "photo_studio_loft_hall-2k.hdr",
+			"hdri_strength": 0.12,
+			"agx": true,
+			"exposure_trim": 1.45,
+			"pbr_metal": "Metal009",
+			"smudges": 0.25
+		},
+		"samples": 128,
+		"post": {
+			"grain": 0.004
+		}
+	},
+	{
+		"name": "pcs-ef-three-quarter-back",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 215,
+			"elevation": 4,
+			"lens": 135,
+			"fit": "box",
+			"margin": 1.6
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "soft-cove",
+			"fill": 0.12,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.06,
+				0.2
+			],
+			"roughness_add": 0.12,
+			"cove": true,
+			"sweep_colour": "#c8cbce",
+			"sweep_roughness": 0.12,
+			"auto_exposure": 1.35,
+			"frosted_panels": true,
+			"contrast_curve": 0.0,
+			"frost_roughness": 0.12,
+			"frost_colour": "#f2f4f6",
+			"hdri": "photo_studio_loft_hall-2k.hdr",
+			"hdri_strength": 0.12,
+			"agx": true,
+			"exposure_trim": 1.45,
+			"pbr_metal": "Metal009",
+			"smudges": 0.25
+		},
+		"samples": 128,
+		"post": {
+			"grain": 0.004
+		}
+	}
+]

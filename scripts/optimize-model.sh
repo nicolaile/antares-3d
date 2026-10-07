@@ -3,12 +3,16 @@
 #
 #   ./scripts/optimize-model.sh ~/Downloads/Cylinder_clean.glb static/models/cylinder.glb
 #
+# --keep-nodes skips GPU instancing, which folds repeated parts into one
+# node: the tagging tool needs every part to stay its own node.
+#
 # Re-run this on every re-export from the 3D artist — never hand-optimise in
 # Blender, or the work is lost the next time the model changes.
 set -euo pipefail
 
 IN="${1:?usage: optimize-model.sh <input.glb> <output.glb>}"
 OUT="${2:?usage: optimize-model.sh <input.glb> <output.glb>}"
+KEEP_NODES="${3:-}"
 GT="npx --yes @gltf-transform/cli@4"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -21,7 +25,11 @@ echo "input      $(mb "$IN") MB"
 # mesh object, so the instancer cannot see the repetition until identical
 # meshes are collapsed into shared references.
 $GT dedup    "$IN"        "$TMP/1.glb" >/dev/null
-$GT instance "$TMP/1.glb" "$TMP/2.glb" >/dev/null   # -> EXT_mesh_gpu_instancing
+if [ "$KEEP_NODES" = "--keep-nodes" ]; then
+	cp "$TMP/1.glb" "$TMP/2.glb"
+else
+	$GT instance "$TMP/1.glb" "$TMP/2.glb" >/dev/null   # -> EXT_mesh_gpu_instancing
+fi
 $GT prune    "$TMP/2.glb" "$TMP/3.glb" >/dev/null   # drops unread UVs & orphans
 $GT weld     "$TMP/3.glb" "$TMP/4.glb" >/dev/null
 $GT reorder  "$TMP/4.glb" "$TMP/5.glb" >/dev/null   # vertex-cache locality

@@ -94,8 +94,9 @@ void main() {
  * side takes that surface instead. Anything standing in front of it — a
  * pipe, a wire — is kept.
  */
-function patchMaterial(surfaces: THREE.Texture) {
+function patchMaterial(surfaces: THREE.Texture | null = null, earlyOut = false) {
 	return new THREE.ShaderMaterial({
+		defines: earlyOut ? { EARLY_OUT: '' } : {},
 		uniforms: {
 			surfaces: { value: surfaces },
 			texel: { value: new THREE.Vector2() },
@@ -128,9 +129,31 @@ bool sealed(vec4 c, vec4 a, vec4 b, float span, out vec4 fill) {
 	return true;
 }
 
+// Whether c lies on one smooth surface with a and b, either side of it:
+// all there, the same way up, facing about the same way, and c on the line
+// between them to within half a pixel (so a pinhole, sitting behind, isn't).
+bool through(vec4 a, vec4 c, vec4 b) {
+	if (a.w == 0.0 || b.w == 0.0 || sign(a.w) != sign(c.w) || sign(b.w) != sign(c.w)) return false;
+	if (dot(a.xyz, c.xyz) < 0.95 || dot(b.xyz, c.xyz) < 0.95) return false;
+	return abs((abs(a.w) + abs(b.w)) / 2.0 - abs(c.w)) <= 0.5 * abs(c.w) * footprint;
+}
+
 void main() {
 	vec4 raw = texture2D(surfaces, vUv);
 	vec4 c = unpack(raw);
+	#ifdef EARLY_OUT
+	// Most pixels lie inside a smooth surface or in open background, where
+	// there's nothing to seal: settle those from the four neighbours alone.
+	// (A pixel kept this way could at most have taken a near-identical fill.)
+	vec4 l = at(vec2(-1.0, 0.0));
+	vec4 r = at(vec2(1.0, 0.0));
+	vec4 d = at(vec2(0.0, -1.0));
+	vec4 u = at(vec2(0.0, 1.0));
+	if (c.w == 0.0 ? l.w == 0.0 && r.w == 0.0 && d.w == 0.0 && u.w == 0.0 : through(l, c, r) && through(d, c, u)) {
+		gl_FragColor = raw;
+		return;
+	}
+	#endif
 	vec4 fill;
 	// Gaps one to three pixels across (up to about one and a half screen pixels), either way.
 	for (int g = 1; g <= 3; g++) {
@@ -152,7 +175,7 @@ void main() {
 	});
 }
 
-function inkMaterial(surfaces: THREE.Texture) {
+function inkMaterial(surfaces: THREE.Texture | null = null) {
 	return new THREE.ShaderMaterial({
 		uniforms: {
 			surfaces: { value: surfaces },
@@ -243,7 +266,7 @@ void main() {
  * lengthened (about 34 pixels each way, from 12) for the long shallow
  * steps of nearly upright lines.
  */
-function smoothMaterial(lines: THREE.Texture) {
+function smoothMaterial(lines: THREE.Texture | null = null) {
 	const fragmentShader = FXAAShader.fragmentShader
 		.replace('#define EDGE_STEP_COUNT 6', '#define EDGE_STEP_COUNT 10')
 		.replace('#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 4.0', '#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 8.0, 8.0')
@@ -302,35 +325,61 @@ void main() {
 	});
 }
 
-export class LineDrawing {
-	/** The surfaces, packed (PACKING), supersampled. */
-	private target = new THREE.WebGLRenderTarget(1, 1, {
-		type: THREE.HalfFloatType,
-		minFilter: THREE.NearestFilter,
-		magFilter: THREE.NearestFilter
-	});
+/** One quality's buffers: the surfaces, the surfaces patched, and the ink amount, at one size. */
+interface Tier {
+	/** The surfaces, packed (PACKING). */
+	target: THREE.WebGLRenderTarget;
 	/** The surfaces with their pinholes sealed, which the ink reads. */
-	private patched = new THREE.WebGLRenderTarget(1, 1, {
-		type: THREE.HalfFloatType,
-		minFilter: THREE.NearestFilter,
-		magFilter: THREE.NearestFilter,
-		depthBuffer: false
-	});
-	private surfaces = surfaceMaterial();
-	private patch = patchMaterial(this.target.texture);
-	private ink = inkMaterial(this.patched.texture);
+	patched: THREE.WebGLRenderTarget;
 	/** The ink amount (red) and the model's mask (green) per pixel, before they're brought down to the screen. */
-	private lines = new THREE.WebGLRenderTarget(1, 1, {
-		format: THREE.RGFormat,
-		minFilter: THREE.LinearFilter,
-		magFilter: THREE.LinearFilter,
-		depthBuffer: false
-	});
-	private smooth = smoothMaterial(this.lines.texture);
+	lines: THREE.WebGLRenderTarget;
+}
+
+function tier(): Tier {
+	const surfaces = { type: THREE.HalfFloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter };
+	return {
+		target: new THREE.WebGLRenderTarget(1, 1, surfaces),
+		patched: new THREE.WebGLRenderTarget(1, 1, { ...surfaces, depthBuffer: false }),
+		lines: new THREE.WebGLRenderTarget(1, 1, {
+			format: THREE.RGFormat,
+			minFilter: THREE.LinearFilter,
+			magFilter: THREE.LinearFilter,
+			depthBuffer: false
+		})
+	};
+}
+
+/**
+ * Two qualities: `final` for a still frame, `draft` for frames in motion.
+ * Both supersample fully by default, so motion looks exactly like rest; a
+ * caller short of time lowers the draft's (CadViewer's web mode does, on a
+ * device that can't keep up), and shows the final once things settle. Each
+ * keeps its own buffers, made on first use.
+ */
+export type Quality = 'draft' | 'final';
+
+export class LineDrawing {
+	/** Supersampling for each quality, each way (the final one also held to SUPERSAMPLE_BUDGET). */
+	readonly supersample: Record<Quality, number> = { draft: SUPERSAMPLE, final: SUPERSAMPLE };
+	private tiers: Partial<Record<Quality, Tier>> = {};
+	private surfaces = surfaceMaterial();
+	// Their inputs are set per render, from the quality's buffers.
+	private patch: THREE.ShaderMaterial;
+	private ink = inkMaterial();
+	private smooth = smoothMaterial();
 	private quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.ink);
 	private quadCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-	constructor(private renderer: THREE.WebGLRenderer) {
+	/**
+	 * `fast` (the site's web-optimized drawing) lets the pinhole pass skip
+	 * the pixels that can't need it, about half its cost; the result differs
+	 * in about one ink pixel in two thousand. /cad leaves it off.
+	 */
+	constructor(
+		private renderer: THREE.WebGLRenderer,
+		{ fast = false }: { fast?: boolean } = {}
+	) {
+		this.patch = patchMaterial(null, fast);
 		this.quad.frustumCulled = false;
 	}
 
@@ -352,25 +401,61 @@ export class LineDrawing {
 		this.smooth.uniforms.inkOpacity.value = opacity;
 	}
 
+	/**
+	 * Compiles every program the drawing will use ahead of its first frame,
+	 * without blocking where the browser compiles in parallel: the passes,
+	 * and the surfaces both whole and cut by `plane` (a section); `extra`
+	 * adds a caller's own (the labels' visibility pass).
+	 */
+	async precompile(camera: THREE.Camera, plane: THREE.Plane, extra: THREE.Material[] = []) {
+		const r = this.renderer;
+		const scene = new THREE.Scene();
+		for (const m of [this.surfaces, this.patch, this.ink, this.smooth, ...extra]) {
+			const mesh = new THREE.Mesh(this.quad.geometry, m);
+			mesh.frustumCulled = false;
+			scene.add(mesh);
+		}
+		const planes = r.clippingPlanes;
+		try {
+			r.clippingPlanes = [];
+			await r.compileAsync(scene, camera);
+			r.clippingPlanes = [plane];
+			await r.compileAsync(scene, camera);
+		} finally {
+			r.clippingPlanes = planes;
+		}
+	}
+
 	/** Draws over whatever the canvas already holds (the shaded render, while fading). */
-	render(scene: THREE.Scene, camera: THREE.Camera) {
+	render(scene: THREE.Scene, camera: THREE.Camera, quality: Quality = 'final') {
+		this.prepare(scene, camera, quality);
+		this.composite(quality);
+	}
+
+	/**
+	 * Draws the drawing at `quality` into that quality's buffers, without
+	 * putting it on screen (`composite` does), so a quality drawn earlier can
+	 * be shown again, or blended with another, for next to nothing.
+	 */
+	prepare(scene: THREE.Scene, camera: THREE.Camera, quality: Quality) {
 		const r = this.renderer;
 		const screen = r.getDrawingBufferSize(new THREE.Vector2());
 		const limit = r.capabilities.maxTextureSize;
 		const scale = Math.min(
-			SUPERSAMPLE,
+			this.supersample[quality],
 			Math.sqrt(SUPERSAMPLE_BUDGET / (screen.x * screen.y)),
 			limit / screen.x,
 			limit / screen.y
 		);
 		const size = screen.clone().multiplyScalar(Math.max(1, scale)).floor();
-		if (this.target.width !== size.x || this.target.height !== size.y) {
-			this.target.setSize(size.x, size.y);
-			this.patched.setSize(size.x, size.y);
-			this.lines.setSize(size.x, size.y);
+		const t = (this.tiers[quality] ??= tier());
+		if (t.target.width !== size.x || t.target.height !== size.y) {
+			t.target.setSize(size.x, size.y);
+			t.patched.setSize(size.x, size.y);
+			t.lines.setSize(size.x, size.y);
 		}
-		this.smooth.uniforms.resolution.value.set(1 / size.x, 1 / size.y);
-		this.smooth.uniforms.samples.value.set(size.x / screen.x, size.y / screen.y);
+		this.patch.uniforms.surfaces.value = t.target.texture;
+		this.ink.uniforms.surfaces.value = t.patched.texture;
 		// Buffer pixels per CSS pixel.
 		this.ink.uniforms.cssPixel.value = (r.getPixelRatio() * size.y) / screen.y;
 		// A buffer pixel's size on a surface one unit away.
@@ -382,10 +467,9 @@ export class LineDrawing {
 		}
 
 		const clearAlpha = r.getClearAlpha();
-		const autoClear = r.autoClear;
 		const planes = r.clippingPlanes;
 		scene.overrideMaterial = this.surfaces;
-		r.setRenderTarget(this.target);
+		r.setRenderTarget(t.target);
 		r.setClearAlpha(0);
 		r.clear();
 		r.render(scene, camera);
@@ -393,28 +477,57 @@ export class LineDrawing {
 
 		r.clippingPlanes = [];
 		this.quad.material = this.patch;
-		r.setRenderTarget(this.patched);
+		r.setRenderTarget(t.patched);
 		r.render(this.quad, this.quadCamera);
 		this.quad.material = this.ink;
-		r.setRenderTarget(this.lines);
+		r.setRenderTarget(t.lines);
 		r.render(this.quad, this.quadCamera);
 		r.setRenderTarget(null);
 		r.setClearAlpha(clearAlpha);
+		r.clippingPlanes = planes;
+	}
 
+	/**
+	 * Puts the drawing last prepared at `quality` on screen, over whatever the
+	 * canvas holds, at `alpha`: under 1, it blends into what's there (another
+	 * quality's drawing, for a crossfade between them).
+	 */
+	composite(quality: Quality, alpha = 1) {
+		const t = this.tiers[quality];
+		if (!t) return;
+		const r = this.renderer;
+		const screen = r.getDrawingBufferSize(new THREE.Vector2());
+		const { width, height } = t.lines;
+		const amount = this.smooth.uniforms.amount.value;
+		this.smooth.uniforms.tDiffuse.value = t.lines.texture;
+		this.smooth.uniforms.resolution.value.set(1 / width, 1 / height);
+		this.smooth.uniforms.samples.value.set(width / screen.x, height / screen.y);
+		this.smooth.uniforms.amount.value = amount * alpha;
+		const autoClear = r.autoClear;
+		const planes = r.clippingPlanes;
 		r.autoClear = false;
+		r.clippingPlanes = [];
 		this.quad.material = this.smooth;
 		r.render(this.quad, this.quadCamera);
 		r.clippingPlanes = planes;
 		r.autoClear = autoClear;
+		this.smooth.uniforms.amount.value = amount;
+	}
+
+	/** Whether `quality` has been prepared at least once (its buffers hold a drawing). */
+	has(quality: Quality) {
+		return !!this.tiers[quality];
 	}
 
 	dispose() {
-		this.target.dispose();
-		this.patched.dispose();
+		for (const t of Object.values(this.tiers)) {
+			t.target.dispose();
+			t.patched.dispose();
+			t.lines.dispose();
+		}
 		this.surfaces.dispose();
 		this.patch.dispose();
 		this.ink.dispose();
-		this.lines.dispose();
 		this.smooth.dispose();
 		this.quad.geometry.dispose();
 	}

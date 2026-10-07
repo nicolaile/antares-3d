@@ -1,7 +1,7 @@
 <!--
 	@component
 	Opens a section: the title on the left and an optional aside on the
-	right, level with it. Takes the section's text colour, so it works on
+	right (columns 9–11), level with it. Takes the section's text colour, so it works on
 	light and dark; the aside is the secondary tone of either. Place in a
 	full-width `subgrid` cell.
 -->
@@ -19,11 +19,11 @@
 
 <header class="header">
 	<Cell span={8} tablet={{ span: 12 }}>
-		<h2 class="title type-h2">{title}</h2>
+		<h2 class="title type-h1">{title}</h2>
 	</Cell>
 	{#if aside}
-		<Cell start={9} span={4} tablet={{ start: 7, span: 6 }}>
-			<p class="aside type-body">{aside}</p>
+		<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
+			<p class="aside type-body-large">{aside}</p>
 		</Cell>
 	{/if}
 </header>

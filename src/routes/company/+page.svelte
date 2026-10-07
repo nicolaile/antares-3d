@@ -2,12 +2,15 @@
 	import Grid from '$lib/components/Grid.svelte';
 	import PersonCard from '$lib/components/PersonCard.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
+	import FeatureCards from '$lib/modules/FeatureCards.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
 	import PersonPanel from '$lib/modules/PersonPanel.svelte';
+	import Slideshow from '$lib/modules/Slideshow.svelte';
+	import Summary from '$lib/modules/Summary.svelte';
 	import { company } from '$lib/content/company';
 	import { footer } from '$lib/content/site';
 
-	const { title, intro, leadership } = company;
+	const { title, intro, leadership, slideshow, summary, culture } = company;
 
 	let panel: PersonPanel;
 </script>
@@ -24,7 +27,7 @@
 		<PageIntro {title} {intro} />
 
 		<section class="leadership" aria-labelledby="leadership-label">
-			<h2 id="leadership-label" class="label type-small">{leadership.label}</h2>
+			<h2 id="leadership-label" class="label type-body-default">{leadership.label}</h2>
 			<ul class="people">
 				{#each leadership.people as person, i (i)}
 					<li><PersonCard {...person} onclick={() => panel.show(person)} /></li>
@@ -33,16 +36,30 @@
 		</section>
 	</main>
 
-	<Footer {...footer} tone="white" />
+	<Slideshow {...slideshow} />
+
+	<div class="culture">
+		<Summary {...summary} />
+		<div class="operations"><FeatureCards {...culture} /></div>
+	</div>
+
+	<Footer {...footer} />
 </PersonPanel>
 
 <style>
 	.company {
 		display: grid;
-		padding: var(--space-120) var(--grid-margin) var(--space-160);
+		padding: var(--space-160) var(--grid-margin) var(--space-96);
 	}
 
 	.leadership {
+		margin-top: var(--space-160);
+	}
+
+	.culture {
+		padding: var(--space-120) var(--grid-margin) var(--space-128);
+	}
+	.operations {
 		margin-top: var(--space-160);
 	}
 	.label {

@@ -5,10 +5,11 @@
 	import OperatingModel from '$lib/sections/OperatingModel.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
+	import Slideshow from '$lib/modules/Slideshow.svelte';
 	import { careers } from '$lib/content/careers';
 	import { footer } from '$lib/content/site';
 
-	const { title, intro, image, positions, quote, why } = careers;
+	const { title, intro, image, positions, quote, why, life } = careers;
 
 	const shown = positions.items.slice(0, positions.featured);
 </script>
@@ -30,7 +31,7 @@
 	</div>
 
 	<section class="positions" aria-labelledby="positions-label">
-		<h2 id="positions-label" class="label type-h5">{positions.label}</h2>
+		<h2 id="positions-label" class="label type-h3">{positions.label}</h2>
 		<p class="count type-caption">1–{shown.length} out of {positions.items.length} positions</p>
 		<ul class="list">
 			{#each shown as position, i (i)}
@@ -44,7 +45,7 @@
 			<Picture {...quote.image} ratio="2880 / 1494" sizes="100vw" />
 		</div>
 		<figcaption class="quote-body">
-			<blockquote class="quote-text type-h5">{quote.text}</blockquote>
+			<blockquote class="quote-text type-h3">{quote.text}</blockquote>
 			<p class="quote-name type-caption">
 				{quote.name}
 				<span>{quote.role}</span>
@@ -57,7 +58,9 @@
 	</div>
 </main>
 
-<Footer {...footer} tone="white" />
+<Slideshow {...life} />
+
+<Footer {...footer} />
 
 <style>
 	.careers {
@@ -74,7 +77,7 @@
 	}
 
 	.head {
-		padding-top: var(--space-120);
+		padding-top: var(--space-160);
 	}
 	.hero {
 		margin-top: var(--space-48);

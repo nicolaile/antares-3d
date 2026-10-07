@@ -1,0 +1,208 @@
+[
+	{
+		"name": "pcs-fac-top--a-B",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"elevation": 89.9,
+			"azimuth": 0,
+			"lens": 50,
+			"fit": "box",
+			"margin": 1.25,
+			"roll": 90
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.04,
+				0.14
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false
+		},
+		"samples": 32
+	},
+	{
+		"name": "pcs-fac-top--b-B-lighter",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"elevation": 89.9,
+			"azimuth": 0,
+			"lens": 50,
+			"fit": "box",
+			"margin": 1.25,
+			"roll": 90
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.1,
+				0.3
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false
+		},
+		"samples": 32
+	},
+	{
+		"name": "pcs-fac-top--c-white-frame-alu-vessels",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"elevation": 89.9,
+			"azimuth": 0,
+			"lens": 50,
+			"fit": "box",
+			"margin": 1.25,
+			"roll": 90
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.04,
+				0.14
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false,
+			"materials": "real",
+			"force_kind": "painted-grey",
+			"albedo_scale": 2.4,
+			"big_kind": "aluminium-blasted",
+			"roughness": [
+				0.25,
+				0.32
+			]
+		},
+		"samples": 32
+	},
+	{
+		"name": "pcs-fac-top-tight--b",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"elevation": 89.9,
+			"azimuth": 0,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.05,
+			"roll": 90
+		},
+		"resolution": [
+			2000,
+			2000
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.1,
+				0.3
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false
+		},
+		"samples": 32
+	},
+	{
+		"name": "pcs-fac-high--b",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"azimuth": 40,
+			"elevation": 50,
+			"lens": 50,
+			"fit": "box",
+			"margin": 1.1
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.1,
+				0.3
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false
+		},
+		"samples": 32
+	},
+	{
+		"name": "pcs-fac-high--c",
+		"model": "power-conversion-system",
+		"look": "factory",
+		"camera": {
+			"azimuth": 40,
+			"elevation": 50,
+			"lens": 50,
+			"fit": "box",
+			"margin": 1.1
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false,
+			"albedo": [
+				0.04,
+				0.14
+			],
+			"roughness_add": 0.12,
+			"auto_exposure": 0.95,
+			"props": false,
+			"materials": "real",
+			"force_kind": "painted-grey",
+			"albedo_scale": 2.4,
+			"big_kind": "aluminium-blasted",
+			"roughness": [
+				0.25,
+				0.32
+			]
+		},
+		"samples": 32
+	}
+]

@@ -1,0 +1,219 @@
+[
+	{
+		"name": "pcs-grey-classic-01-side",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 5,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-02-front",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 90,
+			"elevation": 5,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-03-back",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 180,
+			"elevation": 5,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-04-other-side",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 270,
+			"elevation": 5,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-05-plan",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 89.5,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.06,
+			"roll": 90
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-06-vessel-straight",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 3,
+			"lens": 135,
+			"zoom": 3.0,
+			"focus": [
+				0.2,
+				0.3,
+				0.55
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-07-skid-straight",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 0,
+			"elevation": 3,
+			"lens": 135,
+			"zoom": 2.4,
+			"focus": [
+				0.5,
+				0.75,
+				0.5
+			]
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	},
+	{
+		"name": "pcs-grey-classic-08-front-low",
+		"model": "power-conversion-system",
+		"look": "studio",
+		"camera": {
+			"azimuth": 90,
+			"elevation": -4,
+			"lens": 85,
+			"fit": "box",
+			"margin": 1.08
+		},
+		"resolution": [
+			2400,
+			1350
+		],
+		"look_settings": {
+			"style": "classic",
+			"rig": "studio-dramatic",
+			"fill": 0.006,
+			"texture": "micro",
+			"scratches": 0,
+			"wipes": 0,
+			"blasted_grit": false
+		},
+		"samples": 128
+	}
+]

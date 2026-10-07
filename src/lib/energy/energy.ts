@@ -29,6 +29,25 @@ export interface EnergyParams {
 	sparks: number;
 	/** How far each pipe's temperature cools its colour towards grey, 0..1. */
 	temperature: number;
+	/**
+	 * How far temperature calms the flow as well as cooling its colour, 0..1:
+	 * hot gas keeps its turbulence, sparks and bloom; cooled gas runs as a
+	 * calm, crisp line with a tight halo and no sparks.
+	 */
+	agitation: number;
+	/**
+	 * How warm the hot side's white-hot head is, 0..1, from cool white to
+	 * HOT_HEAD (dark stage). Cooled gas stays cool white, so white reads as
+	 * cooled, not as the hottest point.
+	 */
+	headWarmth: number;
+	/**
+	 * How hard temperatures are pushed to hot or cold, 0..1: at 1, gas reads
+	 * as one or the other, with in-between shades only where it changes.
+	 */
+	contrast: number;
+	/** Cooled gas's brightness against hot gas's, 0..1. */
+	coolLevel: number;
 }
 
 /** Tuned for the R1 diagram, whose pipes are 27 units across. */
@@ -44,8 +63,68 @@ export const DEFAULT_PARAMS: EnergyParams = {
 	fill: 0.14,
 	wallLight: 0.5,
 	sparks: 0.2,
-	temperature: 1
+	temperature: 1,
+	agitation: 1,
+	headWarmth: 1,
+	contrast: 1,
+	coolLevel: 0.7
 };
+
+/**
+ * What the energy along the CAD's pipes adds to the diagram's look
+ * (EnergyTrails): it's drawn in 3D, over the model, with a bloom of its
+ * own. Spacing is in the diagram's units (a pipe is 27 across).
+ */
+export interface TrailLook {
+	/** The trails' own brightness, over the frame. */
+	brightness: number;
+	/** The bloom's strength. */
+	bloom: number;
+	/** How far the bloom spreads: how many halvings it blurs down. */
+	reach: number;
+	/** Head to head along a pipe. */
+	spacing: number;
+	/**
+	 * The colours from the tail to the head, as #rrggbb: the dark ramp's,
+	 * the head the hot side's warm white (`HOT_HEAD`).
+	 */
+	tail: string;
+	body: string;
+	head: string;
+	/** How strongly the tail shows where it's fullest, 0..1. */
+	tailOpacity: number;
+	/** Where along the trail, tail (0) to head (1), it has turned to the body's colour. */
+	bodyFrom: number;
+}
+
+export const DEFAULT_TRAIL_LOOK: TrailLook = {
+	brightness: 0.9,
+	bloom: 1.25,
+	reach: 6,
+	spacing: 950,
+	tail: '#ff63cb',
+	body: '#ff751f',
+	head: '#ffd4b0',
+	tailOpacity: 0.18,
+	bodyFrom: 0.3
+};
+
+/**
+ * The diagram's parameters as the energy along the CAD's pipes uses them:
+ * calmer, its halo, fill and wall light left mostly to the bloom.
+ */
+export const DEFAULT_TRAIL_PARAMS: EnergyParams = {
+	...DEFAULT_PARAMS,
+	speed: 160,
+	glowAmount: 0.06,
+	ambient: 0.03,
+	fill: 0.04,
+	wallLight: 0.02,
+	sparks: 0.04
+};
+
+/** The hot side's head, warm white (#FFD4B0), on the dark stage: see `headWarmth`. */
+export const HOT_HEAD: [number, number, number] = [255, 212, 176];
 
 /** Multiplier on every line tier's weight. */
 export const DEFAULT_LINE_WEIGHT = 0.5;
@@ -85,8 +164,9 @@ type Stop = { x: number; rgb: [number, number, number]; a: number };
 
 /**
  * Colour from the tail (0) to the head (1), fading out towards the tail. On
- * the light stage the heat stays orange; on dark it runs up to white-hot,
- * which only reads because the glow adds light there rather than covering.
+ * the light stage the heat stays orange; on dark it runs from a pink tail
+ * (#FF63CB) through orange (#FF751F) up to white-hot (#F9F9F9), which only
+ * reads because the glow adds light there rather than covering.
  * Each route's temperature then cools it towards COOL, so hot pipes glow
  * orange and cold ones read grey-white.
  */
@@ -98,10 +178,10 @@ export const RAMPS: Record<Theme, Stop[]> = {
 		{ x: 1, rgb: [255, 132, 78], a: 1 }
 	],
 	dark: [
-		{ x: 0, rgb: [122, 26, 12], a: 0 },
-		{ x: 0.35, rgb: [194, 54, 28], a: 0.6 },
-		{ x: 0.7, rgb: [255, 106, 46], a: 1 },
-		{ x: 1, rgb: [255, 241, 220], a: 1 }
+		{ x: 0, rgb: [255, 99, 203], a: 0 },
+		{ x: 0.35, rgb: [255, 99, 203], a: 0.6 },
+		{ x: 0.7, rgb: [255, 117, 31], a: 1 },
+		{ x: 1, rgb: [249, 249, 249], a: 1 }
 	]
 };
 
@@ -113,7 +193,7 @@ export const RAMPS: Record<Theme, Stop[]> = {
  */
 export const COOL: Record<Theme, [number, number, number]> = {
 	light: [168, 160, 156],
-	dark: [240, 240, 245]
+	dark: [249, 249, 249]
 };
 
 /** The glow behind a marker as energy passes: white, as the dot itself lights up. */

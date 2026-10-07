@@ -4,6 +4,7 @@
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import UpdateCard from '$lib/components/UpdateCard.svelte';
+	import DownloadCard from '$lib/components/DownloadCard.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
 	import { gsap, prefersReducedMotion } from '$lib/scroll';
 	import { updates } from '$lib/content/updates';
@@ -32,10 +33,10 @@
 
 <Grid visible={false} />
 
-<main class="updates">
+<main class="updates" data-tone="dark">
 	<Row>
 		<Cell span={4} tablet={{ span: 6 }}>
-			<h1 class="intro type-h5">
+			<h1 class="intro type-h3">
 				{title}
 				<span class="secondary">{intro}</span>
 			</h1>
@@ -51,7 +52,7 @@
 	</section>
 
 	{#if shown < items.length}
-		<button class="more type-small" type="button" onclick={loadMore}>
+		<button class="more type-body-default" type="button" onclick={loadMore}>
 			Load more
 			<svg viewBox="0 0 12 12" aria-hidden="true">
 				<path d="M6 0v12M0 6h12" />
@@ -59,21 +60,7 @@
 		</button>
 	{/if}
 
-	<a class="press" href={pressKit.href}>
-		<div class="press-image" aria-hidden="true"></div>
-		<div class="press-body">
-			<div>
-				<p class="press-title type-paragraph">{pressKit.title}</p>
-				<p class="press-size type-caption">{pressKit.size}</p>
-			</div>
-			<span class="press-download type-caption">
-				Download
-				<svg viewBox="0 0 12 12" aria-hidden="true">
-					<path d="M6 0v11M1 6l5 5 5-5" />
-				</svg>
-			</span>
-		</div>
-	</a>
+	<div class="press"><DownloadCard {...pressKit} tone="dark" /></div>
 </main>
 
 <Footer {...footer} tone="dark" />
@@ -86,7 +73,7 @@
 
 	.updates {
 		display: grid;
-		padding: var(--space-120) var(--grid-margin) var(--space-160);
+		padding: var(--space-160) var(--grid-margin) var(--space-160);
 		background: var(--grey-850);
 		color: var(--grey-0);
 	}
@@ -130,7 +117,7 @@
 		justify-content: space-between;
 		margin-top: var(--space-64);
 		padding: var(--space-24);
-		border: 1px solid var(--grey-800);
+		border: 1px solid var(--grey-750);
 		border-radius: var(--stage-radius);
 		background: none;
 		color: inherit;
@@ -149,66 +136,6 @@
 	}
 
 	.press {
-		display: grid;
-		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
-		column-gap: var(--grid-gutter);
 		margin-top: var(--space-160);
-		overflow: hidden;
-		border-radius: var(--card-radius);
-		background: var(--grey-800);
-		color: inherit;
-		text-decoration: none;
-	}
-	.press:focus-visible,
-	.more:focus-visible {
-		outline: 1px solid var(--grey-0);
-		outline-offset: 2px;
-	}
-	.press-image {
-		grid-column: span 3;
-		aspect-ratio: 340 / 228;
-		background: var(--grey-700);
-	}
-	.press-body {
-		grid-column: span 9;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		padding: var(--space-24) var(--space-24) var(--space-24) 0;
-	}
-	.press-title,
-	.press-size {
-		margin: 0;
-	}
-	.press-size {
-		margin-top: var(--space-24);
-		color: var(--grey-400);
-	}
-	.press-download {
-		display: flex;
-		align-items: center;
-		gap: var(--space-8);
-		align-self: end;
-		color: var(--grey-400);
-	}
-	.press-download svg {
-		stroke: var(--accent-500);
-	}
-	.press:hover .press-download {
-		color: var(--grey-0);
-	}
-
-	@media screen and (max-width: 767px) {
-		.press-image,
-		.press-body {
-			grid-column: 1 / -1;
-		}
-		.press-image {
-			aspect-ratio: 16 / 9;
-		}
-		.press-body {
-			gap: var(--space-40);
-			padding: var(--space-24);
-		}
 	}
 </style>

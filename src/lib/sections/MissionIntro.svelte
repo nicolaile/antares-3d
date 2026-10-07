@@ -1,8 +1,8 @@
 <!--
 	@component
 	Who we are: a statement across the first seven columns, the figures under it, and
-	two images on the right whose bottoms line up — a large one on columns
-	8–10 and a smaller one on 11–12.
+	images on the right whose bottoms line up — an optional large one on
+	columns 8–10 and a smaller one on 11–12.
 
 	An image without a `src` renders as a grey placeholder that already
 	holds the layout.
@@ -23,14 +23,14 @@
 	}: {
 		statement: string;
 		milestones: { value: string; label: string }[];
-		images: { primary: Image; secondary: Image };
+		images: { primary?: Image; secondary: Image };
 	} = $props();
 </script>
 
 <section class="mission">
 	<Row gap={40}>
 		<Cell span={7} tablet={{ span: 12 }} mobile={{ span: 12 }}>
-			<p class="statement type-h4">{statement}</p>
+			<p class="statement type-h2">{statement}</p>
 		</Cell>
 
 		<!-- The figures sit at the top of this row, the images at its foot,
@@ -40,10 +40,12 @@
 				<Milestones items={milestones} quiet />
 			</Cell>
 			<Cell start={8} span={5} tablet={{ start: 1, span: 12 }} subgrid align="end">
-				<div class="primary">
-					<Picture {...images.primary} surface ratio="11 / 9" sizes="(max-width: 991px) 60vw, 24vw" />
-				</div>
-				<div class="secondary">
+				{#if images.primary}
+					<div class="primary">
+						<Picture {...images.primary} surface ratio="11 / 9" sizes="(max-width: 991px) 60vw, 24vw" />
+					</div>
+				{/if}
+				<div class="secondary" class:alone={!images.primary}>
 					<Picture {...images.secondary} surface ratio="12 / 7" sizes="(max-width: 991px) 40vw, 16vw" />
 				</div>
 			</Cell>
@@ -58,8 +60,11 @@
 		margin-bottom: calc(var(--space-40) * -1);
 	}
 
+	/* H2, at the size H2 takes on phones (1.75 units, about 25px at 1440):
+	   between H3 and H2, for a statement this long. */
 	.statement {
 		margin: 0;
+		font-size: calc(var(--size-font) * 1.75);
 	}
 
 	.primary,
@@ -76,6 +81,10 @@
 	.secondary {
 		grid-column: span 2;
 	}
+	/* Without the large one, still on columns 11–12. */
+	.secondary.alone {
+		grid-column: 4 / span 2;
+	}
 
 	@media screen and (max-width: 991px) {
 		.primary {
@@ -84,6 +93,9 @@
 		}
 		.secondary {
 			grid-column: span 5;
+		}
+		.secondary.alone {
+			grid-column: 8 / span 5;
 		}
 	}
 </style>

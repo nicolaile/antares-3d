@@ -8,9 +8,10 @@
  * and the heat pipes run on from the core up into its tube bundle. The
  * outlet elbow on its dome rises with it, and so do the skid's first two
  * pipe pieces, leaving a 0.39 m gap at the top of the down pipe that
- * FILLER bridges. What the stack makes redundant (Mark-0's drive motors,
- * the exchanger's own stand) is tagged `remove` and isn't in the web
- * models (scripts/auto-tag-cad.mjs). Inferred from the geometry and the
+ * FILLER bridges. What the stack makes redundant is left out of it:
+ * Mark-0's drive motors (their own group, f2_drives) and the exchanger's
+ * own stand (`standalone`, for the landing, where the system stands on its
+ * own; scripts/auto-tag-cad.mjs). Inferred from the geometry and the
  * product video; not confirmed by an engineer.
  *
  * The two files aren't clocked alike: Mark-0 turns 30° about its axis

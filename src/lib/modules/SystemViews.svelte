@@ -12,11 +12,13 @@
 	build-up reaches it; one whose part is turned out of sight hides until
 	it's back in view.
 
-	Back to the section, the isometric fades as the section draws itself on
-	again (EnergyDiagram's reveal), and the markers fade back in on it.
+	Back to the section, the isometric turns slightly home and fades as
+	the section draws itself on again (EnergyDiagram's reveal), and the
+	markers fade back in on it.
 
 	In the isometric, dragging turns the model (and up and down, tilts it);
-	it eases after the pointer, and unwinds on the way back to the section.
+	it eases after the pointer, and starts from the plain isometric on each
+	visit.
 	On touch only sideways drags turn it, so the page still scrolls.
 
 	The CAD loads as the section nears the screen, so the switch is ready
@@ -65,15 +67,26 @@
 
 	/**
 	 * Trial: the isometric builds itself up as it arrives, a section cut
-	 * across X sweeping from nothing (0) to the whole model (1), its cut
-	 * faces hatched as it goes and each label appearing as the cut reaches
-	 * its part. Starts with the camera's swing (1.6s) and carries on a while
+	 * sweeping from nothing (0) to the whole model (1), its cut faces
+	 * hatched as it goes and each label appearing as the cut reaches its
+	 * part. Starts with the camera's swing (SWITCH) and carries on a while
 	 * after it settles.
+	 *
+	 * Across X. At first the camera looks straight down X (the elevation),
+	 * where every slice would show the model's whole outline and it would
+	 * seem to be there from the start; so the sweep waits until the camera
+	 * is a third of the way round (0.4s into its 1.2s swing) and the cut is
+	 * turning oblique.
 	 */
+	/** The switch itself, seconds: the camera's swing and the crossfade. */
+	const SWITCH = 1.2;
+	/** How much of the swing the isometric turns back through as it fades out to the section. */
+	const EXIT_TURN = 0.2;
 	const SWEEP = {
 		axis: 'x' as const,
-		duration: 3.8,
-		delay: 0.2,
+		fromMax: false,
+		duration: 3.5,
+		delay: 0.4,
 		ease: 'power2.inOut'
 	};
 	const sweep = { cut: 1 };
@@ -81,13 +94,13 @@
 	function buildUp() {
 		sweeping?.kill();
 		sweep.cut = 0;
-		iso?.setSection(SWEEP.axis, 0);
+		iso?.setSection(SWEEP.axis, 0, SWEEP.fromMax);
 		sweeping = gsap.to(sweep, {
 			cut: 1,
 			duration: prefersReducedMotion() ? 0 : SWEEP.duration,
 			delay: prefersReducedMotion() ? 0 : SWEEP.delay,
 			ease: SWEEP.ease,
-			onUpdate: () => iso?.setSection(SWEEP.axis, sweep.cut)
+			onUpdate: () => iso?.setSection(SWEEP.axis, sweep.cut, SWEEP.fromMax)
 		});
 	}
 	let iso: IsoDrawing | null = null;
@@ -120,29 +133,63 @@
 		const onModel = t >= 0.5;
 		const fade = onModel ? ramp(0.7, 1, t) : 1 - ramp(0, 0.3, t);
 		for (let i = 0; i < els.length && i < MARKERS.length; i++) {
-			const el = els[i] as HTMLElement;
 			const at = anchors[i];
 			const p = onModel && at && iso ? iso.project(at) : null;
 			let shown = fade;
+			let translate = '';
 			if (p) {
-				const x = ((MARKERS[i].x - FRAME.x) / FRAME.width) * markersEl!.clientWidth;
-				const y = ((MARKERS[i].y - FRAME.y) / FRAME.height) * markersEl!.clientHeight;
-				el.style.translate = `${p.x - x}px ${p.y - y}px`;
+				const x = ((MARKERS[i].x - FRAME.x) / FRAME.width) * layout.width;
+				const y = ((MARKERS[i].y - FRAME.y) / FRAME.height) * layout.height;
+				// The isometric's canvas can run past the figure (the panel's height).
+				translate = `${(p.x + layout.left - x).toFixed(1)}px ${(p.y + layout.top - y).toFixed(1)}px`;
 				if (!iso!.anchorVisible(anchorIndex[i])) shown = 0;
-			} else {
-				el.style.translate = '';
-				if (onModel) shown = 0;
+			} else if (onModel) shown = 0;
+			// Write only what changed: this runs every frame the drawing does.
+			const was = written[i] ?? (written[i] = { translate: '', shown: 1 });
+			const el = els[i] as HTMLElement;
+			if (was.translate !== translate) el.style.translate = was.translate = translate;
+			shown = Math.round(shown * 100) / 100;
+			if (was.shown !== shown) {
+				was.shown = shown;
+				el.style.filter = shown < 1 ? `opacity(${shown})` : '';
+				el.style.pointerEvents = shown < 0.5 ? 'none' : '';
 			}
-			el.style.filter = shown < 1 ? `opacity(${shown})` : '';
-			el.style.pointerEvents = shown < 0.5 ? 'none' : '';
 		}
+	}
+	/** What placeMarkers last wrote to each marker. */
+	const written: { translate: string; shown: number }[] = [];
+	/**
+	 * The markers' layer's size and the isometric canvas's offset in it,
+	 * measured when they change size rather than read every frame (which
+	 * would force a layout each time).
+	 */
+	const layout = { width: 0, height: 0, left: 0, top: 0 };
+	function measure() {
+		if (!markersEl || !isoHost) return;
+		layout.width = markersEl.clientWidth;
+		layout.height = markersEl.clientHeight;
+		layout.left = isoHost.offsetLeft;
+		layout.top = isoHost.offsetTop;
+	}
+
+	/**
+	 * The isometric only works while it can be seen: the section on screen,
+	 * and the isometric showing or on its way in or out. Otherwise it does
+	 * nothing at all, not even its frame loop.
+	 */
+	// Assumed until the observer first reports: better a little work than a blank stage.
+	let onScreen = true;
+	function syncActive() {
+		if (iso) iso.active = onScreen && (view === 'isometric' || progress.t > 0);
 	}
 
 	function apply() {
 		const t = progress.t;
 		drawing = returning ? 1 : 1 - ramp(0, 0.45, t);
 		isoShown = ramp(0.15, 0.6, t);
-		iso?.pose(t);
+		// The way in swings all the way round from the elevation; the way back
+		// only starts to turn home (EXIT_TURN of the swing) as it fades.
+		iso?.pose(returning ? 1 - EXIT_TURN * (1 - t) : t);
 		placeMarkers();
 	}
 
@@ -178,6 +225,10 @@
 				// The camera moves (and the stage resizes) after the frame; markers follow then.
 				viewer.onFrame = placeMarkers;
 				iso = viewer;
+				measure();
+				syncActive();
+				// Scriptable from the console, like __cad on /cad.
+				if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__iso = viewer;
 				return viewer;
 			})
 			.catch(() => null);
@@ -227,12 +278,12 @@
 	async function show(next: View) {
 		if (next === view) return;
 		view = next;
+		syncActive();
 		redraw?.kill();
-		// Back to the section: the turn unwinds with the switch, and the
-		// section draws itself on again.
+		// Back to the section: the isometric turns slightly home as it fades
+		// (any turn is undone next time, while it's hidden), and the section
+		// draws itself on again.
 		if (next === 'section') {
-			aim.turn = aim.tilt = 0;
-			turnTo(0, 0);
 			returning = true;
 			diagram?.conceal();
 			redraw = gsap.delayedCall(prefersReducedMotion() ? 0 : REDRAW_AT, () => diagram?.reveal());
@@ -245,13 +296,22 @@
 		// Clicked again while loading: the latest choice wins.
 		if (view !== next) return;
 		if (iso) matchLines(iso);
-		if (next === 'isometric') buildUp();
+		if (next === 'isometric') {
+			// Start from the plain isometric: the last visit's turn goes, unseen.
+			gsap.killTweensOf(turned);
+			follow = null;
+			aim.turn = aim.tilt = turned.turn = turned.tilt = 0;
+			iso?.rotate(0, 0);
+			buildUp();
+		}
 		gsap.to(progress, {
 			t: next === 'isometric' ? 1 : 0,
-			duration: prefersReducedMotion() ? 0 : 1.6,
+			duration: prefersReducedMotion() ? 0 : SWITCH,
 			ease: 'power3.inOut',
 			overwrite: true,
-			onUpdate: apply
+			onUpdate: apply,
+			// Back at the section, the isometric rests.
+			onComplete: syncActive
 		});
 	}
 
@@ -266,8 +326,21 @@
 			{ rootMargin: '100% 0px' }
 		);
 		io.observe(root);
+		const seen = new IntersectionObserver(([entry]) => {
+			onScreen = entry.isIntersecting;
+			syncActive();
+		});
+		seen.observe(root);
+		const sized = new ResizeObserver(() => {
+			measure();
+			placeMarkers();
+		});
+		sized.observe(isoHost);
+		if (markersEl) sized.observe(markersEl);
 		return () => {
 			io.disconnect();
+			seen.disconnect();
+			sized.disconnect();
 			gsap.killTweensOf(progress);
 			redraw?.kill();
 			sweeping?.kill();
@@ -283,7 +356,7 @@
 				<span>{title}</span>
 				<span class="text">{text}</span>
 			</p>
-			<div class="switch type-body" role="group" aria-label="Drawing">
+			<div class="switch type-body-default" role="group" aria-label="Drawing">
 				{#each VIEWS as v, i (v.id)}
 					{#if i > 0}<span class="slash" aria-hidden="true">/</span>{/if}
 					<button type="button" class:active={view === v.id} aria-pressed={view === v.id} onclick={() => show(v.id)}>
@@ -315,25 +388,22 @@
 
 <style>
 	.views {
-		/* For the side's lift, in the row's width. */
-		container-type: inline-size;
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-columns: subgrid;
 		row-gap: var(--space-40);
 	}
 
-	/* The title and line level with the drawing's middle, the switch at its
-	   foot: the frame has empty stage under the drawing, about 7.5% of the
-	   row's width (as R1Microreactor pulls it up by above), so the switch
-	   lifts by as much. */
 	.side {
+		/* Over the drawing's stage, which can reach under a long line. */
+		position: relative;
+		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-24);
 		height: 100%;
 		box-sizing: border-box;
-		padding-bottom: 7.5cqw;
+		padding-bottom: var(--space-40);
 	}
 	.intro {
 		display: grid;
@@ -383,6 +453,45 @@
 		display: block;
 		width: 100%;
 		height: 100%;
+	}
+
+	/*
+	 * Desktop: one screen tall. The title and line sit in its middle and the
+	 * switch at its foot; the section keeps its own proportions, centred
+	 * (and held to the screen's height on wide, short ones); the isometric
+	 * takes the panel's whole height, so the model has room as it's turned.
+	 */
+	@media screen and (min-width: 992px) {
+		.views {
+			height: 100svh;
+			/* The section's widened frame runs past the page's edge; trimmed
+			   sideways only, so the isometric can still run tall. */
+			overflow-x: clip;
+		}
+		.turn {
+			display: grid;
+			/* One track the cell's width, so the frame's width below measures
+			   from the cell and not from itself. */
+			grid-template-columns: minmax(0, 1fr);
+			align-content: center;
+			height: 100%;
+		}
+		.turn :global(figure.diagram) {
+			/* The drawing sits well inside its frame (about a tenth of the
+			   width clear each side), so the frame runs a fifth wider than the
+			   cell, centred on it: the drawing grows and still keeps to the
+			   cell's columns. */
+			--width: min(100% * 1.2, 120svh * 1930 / 1284);
+			/* The isometric runs past the section's frame, into the panel. */
+			overflow: visible;
+			width: var(--width);
+			margin-left: calc((100% - var(--width)) / 2);
+		}
+		.iso {
+			top: calc(50% - 50svh);
+			bottom: auto;
+			height: 100svh;
+		}
 	}
 
 	/* Stacked over the drawing: the line, then the switch. */

@@ -14,7 +14,9 @@ import controlSystems from '$lib/assets/images/landing/control-systems.jpg?w=202
 // Graphite Machining's photo card, eight columns (928px at 1440).
 import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1862;928;464&enhanced';
 import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;1800;1200;800&enhanced';
-import intro02 from '$lib/assets/images/intro-02.jpg?w=648;330&enhanced';
+// The mission video's still, three columns (338px at 1440): the source is 676px wide.
+import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;700&enhanced';
+import videoStill from '$lib/assets/images/landing/video.jpg?w=676;338&enhanced';
 
 import type { Feature, CadModel, CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
 import type { Shot } from '$lib/three/shot';
@@ -27,14 +29,19 @@ export const hero = {
 
 export const mission = {
 	statement:
-		'We are a team of entrepreneurs trained in operations, design, architecture, construction, accounting, and finance, with the common interest in building communities and creating spaces that inspire active lifestyles.',
+		'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 	milestones: [
-		{ value: '322,000 Sq.', label: 'Manufacturing Scale' },
+		{ value: '322.000SQ', label: 'Manufacturing Scale' },
 		{ value: '30+', label: 'Experts' },
 		{ value: '$600M+', label: 'Capital Raised' }
 	],
 	images: {
-		secondary: { src: intro02, alt: 'A prefabricated metal building on open ground, in faded colour film' }
+		secondary: {
+			src: videoStill,
+			alt: 'A machinist in a hard hat working on a graphite block, seen from above, in black and white',
+			ratio: '676 / 420',
+			duration: '02:23'
+		}
 	}
 };
 
@@ -133,8 +140,8 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 // Copy from antaresindustries.com (the R1 section, 01–07).
 const features: Feature[] = [
 	{
-		title: 'Integrated Shielding & Transport Cradle',
-		text: 'Cradle simplifies deployment with minimal gear.',
+		title: 'Integrated Shielding',
+		text: 'Cradle simplifies deployment with minimal gear. The shielded vessel travels in its own cradle, ready to set down and connect on site.',
 		model: 'mark-0',
 		shot: vessel
 	},
@@ -208,7 +215,7 @@ const features: Feature[] = [
 	},
 	{
 		title: 'Primary Heat Exchanger',
-		text: 'Fin and tube heat exchanger.',
+		text: 'Fin and tube heat exchanger. It carries the heat from the sodium heat pipes into the nitrogen loop that drives the turbine.',
 		model: 'power-conversion-system',
 		// The whole system head-on, from nearly level: turned a quarter so
 		// the skid stands on the left and the exchanger on the right, held
@@ -268,13 +275,13 @@ const features: Feature[] = [
 
 export const r1 = {
 	title: 'R1 Microreactor',
-	aside: 'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
+	aside: 'Purpose-designed modular power for defense-critical assets',
 	features,
 	models,
 	diagram: { alt: 'Diagram of the R1 power conversion system' },
 	views: {
-		title: 'Technical specifications',
-		text: 'Purpose-designed modular power for defense-critical assets'
+		title: 'Optimized for reliability, uptime, and manufacturability',
+		text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.'
 	},
 };
 
@@ -287,6 +294,18 @@ const operatingPoint = {
 export const operating = {
 	label: 'Operating model',
 	points: [operatingPoint, operatingPoint, operatingPoint]
+};
+
+/** The paragraph is a placeholder, as in the design. */
+export const progress = {
+	title: 'FROM MARK-01',
+	name: 'R1',
+	image: {
+		src: progressImage,
+		alt: 'The R1 microreactor in exploded view, its modules side by side on a grey studio gradient'
+	},
+	text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
+	link: { label: 'Progress', href: '#' }
 };
 
 /** One row of the Capabilities accordion. */

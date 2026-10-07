@@ -27,7 +27,6 @@
 		DEFAULT_PARAMS,
 		DEFAULT_TONES,
 		cloneTones,
-		dotFlares,
 		sampleNetwork,
 		type EnergyParams
 	} from '$lib/energy/energy';
@@ -98,7 +97,7 @@
 	let ink = $state('');
 	let paused = $state(false);
 	let dark = $state(untrack(() => startDark));
-	// The tuning panel: on in dev, or with ?controls on any build.
+	// The tuning panel: hidden for now, ?controls only.
 	let showControls = $state(false);
 	/** Motion allowed: false means a still frame and no pause button. */
 	let moving = $state(false);
@@ -154,7 +153,7 @@
 	const DESKTOP_WIDTH = 880;
 
 	onMount(() => {
-		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
+		showControls = new URLSearchParams(location.search).has('controls');
 		const readInk = () => (ink = getComputedStyle(host).getPropertyValue('--ink').trim());
 		readInk();
 		const stopInk = $effect.root(() => {
@@ -183,31 +182,14 @@
 		let theme: 'light' | 'dark' = 'light';
 		/** Something on screen changed since the last draw. */
 		let dirty = true;
-		// Each marker lights up as a pulse passes through it: the same flare
-		// the canvas draws behind it, handed to the marker as --lit (0..1).
-		const flares = new Float32Array(MARKERS.length);
-		const lightMarkers = () => {
-			dotFlares(net, look, head, flares);
-			const els = markersEl?.children;
-			if (!els) return;
-			for (let i = 0; i < els.length && i < flares.length; i++) {
-				(els[i] as HTMLElement).style.setProperty('--lit', flares[i].toFixed(3));
-			}
-		};
 		const draw = () => {
 			flow?.render(head, time, look, theme);
-			lightMarkers();
 			dirty = false;
 		};
-		// Hidden behind another view: the flow stops, and the markers go dark
-		// rather than holding a pulse's light.
+		// Back in view: draw again.
 		const stopShown = $effect.root(() => {
 			$effect(() => {
-				if (shown) {
-					dirty = true;
-					return;
-				}
-				for (const el of markersEl?.children ?? []) (el as HTMLElement).style.setProperty('--lit', '0');
+				if (shown) dirty = true;
 			});
 		});
 
@@ -396,6 +378,7 @@
 		{#each MARKERS as m, i (m.label)}
 			<DiagramLabel
 				label={m.label}
+				text={m.text}
 				x={(m.x - FRAME.x) / FRAME.width}
 				y={(m.y - FRAME.y) / FRAME.height}
 				order={i}

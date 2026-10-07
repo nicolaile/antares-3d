@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Grid from '$lib/components/Grid.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import PositionCard from '$lib/components/PositionCard.svelte';
+	import PositionsCarousel from '$lib/modules/PositionsCarousel.svelte';
 	import OperatingModel from '$lib/sections/OperatingModel.svelte';
 	import Footer from '$lib/modules/Footer.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
@@ -30,15 +30,9 @@
 		</div>
 	</div>
 
-	<section class="positions" aria-labelledby="positions-label">
-		<h2 id="positions-label" class="label type-h3">{positions.label}</h2>
-		<p class="count type-caption">1–{shown.length} out of {positions.items.length} positions</p>
-		<ul class="list">
-			{#each shown as position, i (i)}
-				<li><PositionCard {...position} /></li>
-			{/each}
-		</ul>
-	</section>
+	<div class="positions">
+		<PositionsCarousel label={positions.label} items={shown} total={positions.items.length} all={positions.all} />
+	</div>
 
 	<figure class="quote">
 		<div class="quote-image">
@@ -86,37 +80,9 @@
 	}
 
 	.positions {
+		min-width: 0;
 		margin-top: var(--space-80);
 	}
-	.label,
-	.count {
-		margin: 0;
-	}
-	.count {
-		margin-top: var(--space-48);
-		color: var(--grey-700);
-	}
-	/* Four up, three columns each (338px at 1440), on the page's gutter.
-	   Two up on tablet, one on phones. */
-	.list {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: var(--grid-gutter);
-		margin: var(--space-24) 0 0;
-		padding: 0;
-		list-style: none;
-	}
-	@media screen and (max-width: 991px) {
-		.list {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-	@media screen and (max-width: 767px) {
-		.list {
-			grid-template-columns: minmax(0, 1fr);
-		}
-	}
-
 	/* The quote sits over the light left side of the portrait, its copy
 	   on columns 1–5, inset 80px: a little short of column 2. */
 	.quote {

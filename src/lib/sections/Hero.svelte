@@ -117,7 +117,7 @@
 
 	<div class="mask" data-tone="dark" bind:this={mask}>
 		<div class="photo" bind:this={photo}>
-			<Picture {...image} ratio="auto" sizes="100vw" loading="eager" />
+			<Picture {...image} ratio="auto" sizes="100vw" loading="eager" priority />
 		</div>
 	</div>
 </section>

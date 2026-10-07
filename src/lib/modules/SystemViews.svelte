@@ -2,8 +2,8 @@
 	@component
 	R1 two ways, switched at the bottom left: the section (the energy
 	diagram) and an isometric line drawing of the assembled CAD
-	(IsoDrawing). A short title and line sit at the left, the drawing to
-	their right.
+	(IsoDrawing). A short title and a paragraph sit at the top left, over
+	the drawing's corner; the drawing takes the rest of the width.
 
 	Switching turns one into the other: the 3D camera swings from the front
 	elevation the section is drawn in round to the isometric while the two
@@ -51,6 +51,8 @@
 		{ id: 'isometric', name: 'Isometric' }
 	];
 	let view: View = $state('section');
+	/** Off for now: the section only, the switch hidden and the CAD not loaded. */
+	const SWITCHABLE = false;
 
 	let root: HTMLElement;
 	let isoHost: HTMLDivElement;
@@ -319,7 +321,7 @@
 		// Load ahead, while the section is still a screen away.
 		const io = new IntersectionObserver(
 			([entry]) => {
-				if (!entry.isIntersecting) return;
+				if (!entry.isIntersecting || !SWITCHABLE) return;
 				io.disconnect();
 				load();
 			},
@@ -349,24 +351,26 @@
 	});
 </script>
 
-<div class="views" bind:this={root}>
-	<Cell span={3} tablet={{ span: 12 }}>
+<div class="views" class:full={SWITCHABLE} bind:this={root}>
+	<Cell start={1} span={3} tablet={{ start: 1, span: 12 }}>
 		<div class="side">
-			<p class="intro type-body-large">
-				<span>{title}</span>
-				<span class="text">{text}</span>
-			</p>
-			<div class="switch type-body-default" role="group" aria-label="Drawing">
-				{#each VIEWS as v, i (v.id)}
-					{#if i > 0}<span class="slash" aria-hidden="true">/</span>{/if}
-					<button type="button" class:active={view === v.id} aria-pressed={view === v.id} onclick={() => show(v.id)}>
-						{v.name}
-					</button>
-				{/each}
+			<div class="intro">
+				<p class="title type-body-default">{title}</p>
+				<p class="text type-caption">{text}</p>
 			</div>
+			{#if SWITCHABLE}
+				<div class="switch type-body-default" role="group" aria-label="Drawing">
+					{#each VIEWS as v, i (v.id)}
+						{#if i > 0}<span class="slash" aria-hidden="true">/</span>{/if}
+						<button type="button" class:active={view === v.id} aria-pressed={view === v.id} onclick={() => show(v.id)}>
+							{v.name}
+						</button>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</Cell>
-	<Cell start={4} span={9} tablet={{ start: 1, span: 12 }}>
+	<Cell start={2} span={11} tablet={{ start: 1, span: 12 }}>
 		<!-- svelte-ignore a11y_no_static_element_interactions: dragging to turn is a pointer extra; the switch and markers stay the keyboard's way in. -->
 		<div
 			class="turn"
@@ -395,19 +399,35 @@
 	}
 
 	.side {
-		/* Over the drawing's stage, which can reach under a long line. */
+		/* Over the drawing's stage, which runs under it. */
 		position: relative;
 		z-index: 1;
 		display: flex;
 		flex-direction: column;
+		justify-content: space-between;
 		gap: var(--space-24);
 		height: 100%;
 		box-sizing: border-box;
 		padding-bottom: var(--space-40);
+		/* Only its text and switch take the pointer: the markers and the
+		   drag reach the drawing through the rest. */
+		pointer-events: none;
+	}
+	.side > * {
+		pointer-events: auto;
 	}
 	.intro {
 		display: grid;
-		margin: auto 0;
+		gap: var(--space-24);
+		/* 280px at 1440: the paragraph's short measure. */
+		max-width: calc(var(--size-font) * 17.5);
+	}
+	.intro p {
+		margin: 0;
+	}
+	/* 240px at 1440: breaks after "uptime,". */
+	.intro .title {
+		max-width: calc(var(--size-font) * 15);
 	}
 	.text {
 		color: var(--secondary);
@@ -456,17 +476,38 @@
 	}
 
 	/*
-	 * Desktop: one screen tall. The title and line sit in its middle and the
-	 * switch at its foot; the section keeps its own proportions, centred
-	 * (and held to the screen's height on wide, short ones); the isometric
-	 * takes the panel's whole height, so the model has room as it's turned.
+	 * Desktop: the title and paragraph at the top left, over the drawing's
+	 * corner. The section keeps its own proportions, held to the screen's
+	 * height on wide, short ones.
+	 *
+	 * Section only (the switch off): the panel hugs the drawing. The frame's
+	 * empty margin above and below is trimmed (235 and 234 of its 1284), so
+	 * the drawing's top lines up with the text's, and its right edge
+	 * (199 of 1930 in) sits on the grid's.
+	 *
+	 * With the switch (`full`): one screen tall, the switch at its foot and
+	 * the section centred; the isometric takes the panel's whole height, so
+	 * the model has room as it's turned.
 	 */
 	@media screen and (min-width: 992px) {
 		.views {
-			height: 100svh;
+			/* The text and the drawing share the one row. */
+			grid-template-rows: auto;
 			/* The section's widened frame runs past the page's edge; trimmed
 			   sideways only, so the isometric can still run tall. */
 			overflow-x: clip;
+		}
+		/* Section only: the trimmed margin is clipped too, so the frame's
+		   stage colour and focus veils stay inside the band. */
+		.views:not(.full) {
+			overflow: clip;
+		}
+		.views.full {
+			height: 100svh;
+			grid-template-rows: 100%;
+		}
+		.views > :global(.cell) {
+			grid-row: 1;
 		}
 		.turn {
 			display: grid;
@@ -474,18 +515,22 @@
 			   from the cell and not from itself. */
 			grid-template-columns: minmax(0, 1fr);
 			align-content: center;
+		}
+		.full .turn {
 			height: 100%;
 		}
 		.turn :global(figure.diagram) {
-			/* The drawing sits well inside its frame (about a tenth of the
-			   width clear each side), so the frame runs a fifth wider than the
-			   cell, centred on it: the drawing grows and still keeps to the
-			   cell's columns. */
-			--width: min(100% * 1.2, 120svh * 1930 / 1284);
+			/* The frame the cell's width (columns 2–12), held to the screen's
+			   height on wide, short ones. */
+			--width: min(100%, 92svh * 1930 / 1284);
 			/* The isometric runs past the section's frame, into the panel. */
 			overflow: visible;
 			width: var(--width);
-			margin-left: calc((100% - var(--width)) / 2);
+			margin: calc(var(--width) * -235 / 1930) 0 calc(var(--width) * -234 / 1930)
+				calc(100% - var(--width) * (1930 - 199) / 1930);
+		}
+		.full .turn :global(figure.diagram) {
+			margin: 0 0 0 calc((100% - var(--width)) / 2);
 		}
 		.iso {
 			top: calc(50% - 50svh);

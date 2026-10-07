@@ -45,6 +45,10 @@
 	/** Energy: the diagram's markers and the heat moving through it. */
 	--accent-500: #ff751f;
 
+	/* Translucent near-black for controls laid over imagery (the video's
+	   Play label): the image shows through, the label still reads. */
+	--scrim: color-mix(in srgb, var(--grey-950) 55%, transparent);
+
 	/* Native form controls (range, checkbox, colour) follow this. */
 	color-scheme: light;
 }

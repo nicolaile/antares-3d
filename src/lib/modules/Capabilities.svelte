@@ -98,7 +98,7 @@
 				</h3>
 				<div class="panel" id="{id}-{i}" bind:this={panels[i]} style:height={i === 0 ? 'auto' : '0px'}>
 					<div class="body">
-						<p class="text type-caption">{item.text}</p>
+						<p class="text type-body-default">{item.text}</p>
 						<div class="image">
 							<Picture {...item.image} ratio="{item.image.src.img.w} / {item.image.src.img.h}" sizes="(max-width: 767px) 100vw, 25vw" />
 						</div>
@@ -193,13 +193,15 @@
 	.panel {
 		overflow: hidden;
 	}
+	/* 32px under the photo; the paragraph sits 32px higher again, 64px
+	   off the next row's rule. */
 	.body {
 		align-items: end;
-		padding: 0 var(--space-16) var(--space-16);
+		padding: 0 var(--space-16) var(--space-32);
 	}
 	.text {
 		grid-column: 2 / span 4;
-		margin: 0;
+		margin: 0 0 var(--space-32);
 		color: var(--grey-700);
 	}
 	.image {

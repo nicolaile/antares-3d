@@ -58,6 +58,11 @@
 	--type-h2-leading: 1.1176;
 	--type-h2-tracking: -0.02em;
 
+	/* 28/32px */
+	--type-h2-small-size: calc(var(--size-font) * 1.75);
+	--type-h2-small-leading: 1.1429;
+	--type-h2-small-tracking: -0.02em;
+
 	/* 24/28px */
 	--type-h3-size: calc(var(--size-font) * 1.5);
 	--type-h3-leading: 1.1667;
@@ -179,6 +184,14 @@ pre {
 	font-size: var(--type-h2-size);
 	line-height: var(--type-h2-leading);
 	letter-spacing: var(--type-h2-tracking);
+}
+
+/** H2-Small — a step under H2, for headings that need more presence than H3. */
+.type-h2-small {
+	font-family: var(--font-sans);
+	font-size: var(--type-h2-small-size);
+	line-height: var(--type-h2-small-leading);
+	letter-spacing: var(--type-h2-small-tracking);
 }
 
 /** H3 — section-opening statements, card titles and small headings. */

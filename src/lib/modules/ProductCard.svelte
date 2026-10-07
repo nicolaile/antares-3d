@@ -4,10 +4,10 @@
 	line about it centred at the top, a video of it in the middle, sitting on the card's foot, and a
 	short line with a call to action in the bottom-left corner. The video
 	plays once, when you first scroll down to the card, and holds on its
-	last frame. On phones the copy follows the video.
+	last frame. It loads only as the card nears, not with the page. On phones the copy follows the video.
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import Button from '$lib/components/Button.svelte';
 	import type { Link } from '$lib/content/site';
 
@@ -21,26 +21,46 @@
 		title: string;
 		/** Under the name, in grey. */
 		subtitle?: string;
-		/** A muted clip of the product, played once. */
-		video: { src: string; label: string };
+		/** A muted clip of the product, played once; `start` (seconds) skips a dark lead-in. */
+		video: { src: string; label: string; start?: number };
 		text: string;
 		link: Link;
 	} = $props();
 
 	let player: HTMLVideoElement;
+	/** The card is near: the clip gets its source, and starts loading. */
+	let near = $state(false);
 
-	/** Plays the clip once, as soon as a little of the card (15%) is on screen. */
 	onMount(() => {
-		const seen = new IntersectionObserver(
+		const card = player.closest('section')!;
+		// Loads the clip a screen and a half before the card, so it's ready
+		// by the time it's reached, without weighing on the page's own load.
+		const coming = new IntersectionObserver(
 			([entry]) => {
 				if (!entry.isIntersecting) return;
-				player.play().catch(() => {});
+				near = true;
+				coming.disconnect();
+			},
+			{ rootMargin: '150% 0px' }
+		);
+		// Plays it once, as soon as a little of the card (15%) is on screen.
+		// Reached in a jump, the source is set first, then it plays.
+		const seen = new IntersectionObserver(
+			async ([entry]) => {
+				if (!entry.isIntersecting) return;
 				seen.disconnect();
+				near = true;
+				await tick();
+				player.play().catch(() => {});
 			},
 			{ threshold: 0.15 }
 		);
-		seen.observe(player.closest('section')!);
-		return () => seen.disconnect();
+		coming.observe(card);
+		seen.observe(card);
+		return () => {
+			coming.disconnect();
+			seen.disconnect();
+		};
 	});
 </script>
 
@@ -49,7 +69,15 @@
 		{title}
 		{#if subtitle}<span class="subtitle">{subtitle}</span>{/if}
 	</h2>
-	<video class="video" src={video.src} aria-label={video.label} muted playsinline preload="auto" bind:this={player}></video>
+	<video
+		class="video"
+		src={near ? (video.start ? `${video.src}#t=${video.start}` : video.src) : undefined}
+		aria-label={video.label}
+		muted
+		playsinline
+		preload="auto"
+		bind:this={player}
+	></video>
 	<div class="copy">
 		<p class="text type-caption">{text}</p>
 		<Button {...link} />

@@ -37,6 +37,8 @@
 		shot,
 		paused = false,
 		later = false,
+		poster: posterOn = true,
+		hold = false,
 		onready = undefined
 	}: {
 		/** The model: one .glb, or several that make it up between them (ModelViewer's `url`). */
@@ -55,6 +57,16 @@
 		paused?: boolean;
 		/** Out of sight to begin with: its model loads after those in view (read once, at the start). */
 		later?: boolean;
+		/**
+		 * The render shown until the canvas fades in. Off for a model it
+		 * doesn't show: then it isn't fetched at all.
+		 */
+		poster?: boolean;
+		/**
+		 * Not wanted yet: nothing is fetched, even within a screen of view,
+		 * until it turns false. For a model the visitor may never reach.
+		 */
+		hold?: boolean;
 		/** Fires once the model is in the scene, for the render controls. */
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
@@ -79,6 +91,12 @@
 	let posterShown = $state(true);
 	/** WebGL couldn't start: the poster stays, the loading line goes. */
 	let failed = $state(false);
+
+	/** Starts the load once the stage is near and not held (set on mount). */
+	let begin: (() => void) | null = null;
+	$effect(() => {
+		if (!hold) begin?.();
+	});
 
 	// Pausing and resuming both force a fresh frame: the viewer draws on
 	// demand, so without one a model coming back into view could show a
@@ -313,18 +331,28 @@
 		}
 
 		// Fetch three.js, the model and the lighting only as the stage comes
-		// within a screen of view, so they never hold up the rest of the page.
+		// within a screen of view, so they never hold up the rest of the page;
+		// and, while held, not until it's let go as well.
+		let isNear = false;
+		let begun = false;
+		begin = () => {
+			if (begun || !isNear || untrack(() => hold)) return;
+			begun = true;
+			start();
+		};
 		const near = new IntersectionObserver(
 			([entry]) => {
 				if (!entry.isIntersecting) return;
 				near.disconnect();
-				start();
+				isNear = true;
+				begin?.();
 			},
 			{ rootMargin: '100% 0px' }
 		);
 		near.observe(host);
 
 		return () => {
+			begin = null;
 			unmounted = true;
 			near.disconnect();
 			io.disconnect();
@@ -335,7 +363,7 @@
 </script>
 
 <div class="scene" bind:this={host} aria-hidden="true" style:--poster-fit={POSTER_FIT}>
-	{#if posterShown}
+	{#if posterOn && posterShown}
 		<enhanced:img class="poster" src={poster} alt="" sizes="(max-width: 767px) 100vw, 70vw" />
 	{/if}
 	{#if !loaded && !failed}

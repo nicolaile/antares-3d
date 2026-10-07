@@ -100,6 +100,7 @@
 		trails = undefined,
 		paused = false,
 		hidden = false,
+		hold = false,
 		onready,
 		ontrails
 	}: {
@@ -130,6 +131,8 @@
 		paused?: boolean;
 		/** Off stage: the model stops drawing. */
 		hidden?: boolean;
+		/** Not wanted yet: nothing is fetched until it turns false (Scene's `hold`). */
+		hold?: boolean;
 		onready?: (viewer: ModelViewer) => void;
 		/** The energy along the pipes, once made: for the tuning panel. */
 		ontrails?: (trails: EnergyTrails) => void;
@@ -489,6 +492,8 @@
 		shot={framed}
 		paused={paused || hidden}
 		later={hidden}
+		poster={false}
+		{hold}
 		onready={(v) => {
 			viewer = v;
 			onready?.(v);
@@ -500,10 +505,5 @@
 	.stage {
 		position: absolute;
 		inset: 0;
-	}
-
-	/* The poster is a render of the old model; the canvas fades in on its own. */
-	.stage :global(.poster) {
-		display: none;
 	}
 </style>

@@ -118,7 +118,7 @@
 		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
 		grid-template-rows: 1fr 1fr;
 		gap: var(--grid-gutter);
-		margin-top: var(--space-80);
+		margin-top: var(--space-48);
 	}
 	.dark {
 		grid-area: 1 / 1 / 2 / span 4;

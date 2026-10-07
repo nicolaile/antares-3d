@@ -33,8 +33,10 @@ export const careers = {
 				href: '#'
 			})
 		),
-		/** How many show, as the latest openings. */
-		featured: 4
+		/** How many show, as the latest openings, in the carousel. */
+		featured: 12,
+		/** Every opening: no listing page yet. */
+		all: { label: 'Explore all', href: '#' }
 	},
 	quote: {
 		text: 'We are a team of entrepreneurs trained in operations, design, architecture, construction, accounting, and finance, with the common interest in building communities and creating spaces that inspire active lifestyles.',

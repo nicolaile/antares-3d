@@ -41,7 +41,7 @@
 		text-decoration: none;
 	}
 	.card:hover {
-		background: var(--grey-200);
+		background: var(--grey-150);
 	}
 	.card:focus-visible {
 		outline: 1px solid var(--grey-950);

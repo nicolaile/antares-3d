@@ -210,11 +210,36 @@
 	function select(i: number) {
 		if (i !== active) active = i;
 	}
+
+	/**
+	 * Which models may load. The opening one at once; each other only once
+	 * the visitor heads for it: a feature on it is next to the open one, or
+	 * its tab is pointed at or focused. Most visitors never open the later
+	 * models, and they're megabytes each.
+	 */
+	const wanted = $state(untrack(() => Object.fromEntries(names.map((m) => [m, m === features[active].model])))) as Record<
+		CadModel,
+		boolean
+	>;
+	const want = (i: number) => {
+		const m = features[i]?.model;
+		if (m && !wanted[m]) wanted[m] = true;
+	};
+	$effect(() => {
+		for (const i of [active - 1, active, active + 1]) want(i);
+	});
+	/** The tab under the pointer or focus, by its place in the strip. */
+	function onTabIntent(e: Event) {
+		const tab = (e.target as Element).closest('li');
+		if (tab) want([...(e.currentTarget as Element).children].indexOf(tab));
+	}
 	/** The viewer on stage, for the render controls. */
 	const viewers: Partial<Record<CadModel, ModelViewer>> = $state({});
 	const viewer = $derived(typeof onStage === 'string' ? (viewers[onStage] ?? null) : null);
 	// The render tuning panel: on in dev, or with ?controls on any build.
 	let showControls = $state(false);
+	// The energy tuning panel: hidden for now, ?controls only.
+	let showEnergyControls = $state(false);
 	/**
 	 * The energy along each model's pipes, and its tuning (EnergyControls):
 	 * the panel tunes the model on stage, from that model's own settings.
@@ -231,15 +256,48 @@
 		}
 	});
 
+	/**
+	 * The entrance: when the section's reveal fades the viewport in, the
+	 * model on stage turns a quarter turn into place. If it isn't loaded
+	 * yet, it turns in once it is. Grabbing it ends the turn there.
+	 */
+	const TURN_IN = { from: -Math.PI / 2, duration: 2.4, ease: 'power3.out' };
+	let viewportEl: HTMLDivElement;
+	let revealed = false;
+	let turnedIn = false;
+	let turnIn: gsap.core.Tween | null = null;
+	$effect(() => {
+		// `viewer` read first, so this re-runs as the model loads.
+		const v = viewer;
+		if (v && revealed && !turnedIn) spinIn(v);
+	});
+	function spinIn(v: ModelViewer) {
+		turnedIn = true;
+		turnIn = gsap.fromTo(v.userRotation, { y: TURN_IN.from }, { y: 0, duration: TURN_IN.duration, ease: TURN_IN.ease });
+	}
+	function onRevealed() {
+		revealed = true;
+		if (viewer && !turnedIn) spinIn(viewer);
+	}
+
 	onMount(() => {
+		viewportEl.addEventListener('reveal', onRevealed, { once: true });
+		const grab = () => turnIn?.kill();
+		viewportEl.addEventListener('pointerdown', grab);
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
+		showEnergyControls = new URLSearchParams(location.search).has('controls');
+		return () => {
+			viewportEl.removeEventListener('reveal', onRevealed);
+			viewportEl.removeEventListener('pointerdown', grab);
+			turnIn?.kill();
+		};
 	});
 
 </script>
 
 <div class="explorer">
-	<ol class="tabs" style:--count={features.length}>
+	<ol class="tabs" style:--count={features.length} onpointerover={onTabIntent} onfocusin={onTabIntent}>
 		{#each features as feature, i (feature.title)}
 			<FeatureTab index={i} title={feature.title} text={feature.text} open={i === active} onselect={() => select(i)} />
 		{/each}
@@ -251,7 +309,7 @@
 		<span class="detail-text">{features[active].text}</span>
 	</p>
 
-	<div class="viewport">
+	<div class="viewport" bind:this={viewportEl}>
 		<!-- Every model stays mounted, so switching never reloads one; those
 		     not on stage at the start wait hidden. -->
 		{#each names as model (model)}
@@ -267,6 +325,7 @@
 					explode={explodeOf(model)}
 					paused={paused || !!features[active].still}
 					hidden={onStage !== model}
+					hold={!wanted[model]}
 					onready={(v) => (viewers[model] = v)}
 					ontrails={(t) => {
 						trails[model] = t;
@@ -311,7 +370,7 @@
 
 {#if showControls}
 	<Controls {viewer} />
-	{#if tuned && tuning[tuned]}
+	{#if showEnergyControls && tuned && tuning[tuned]}
 		{@const t = trails[tuned]!}
 		<div class="energy-controls">
 			<EnergyControls
@@ -344,11 +403,12 @@
 	/* The strip: a hairline across the row, the tabs hung from it, 38px
 	   tall at 1440 (a 22px badge, 8px clear above and below). Widths in the
 	   strip's own units: a closed tab 5 base units (80px at 1440), the open
-	   one four of the page's columns. */
+	   one four and a half of the page's columns (516px at 1440), room for
+	   the longest title at 16px. */
 	.tabs {
 		--strip-height: calc(var(--size-font) * 2.375);
 		--closed-width: calc(var(--size-font) * 5);
-		--open-width: calc((100cqw - 11 * var(--grid-gutter)) / 12 * 4 + 3 * var(--grid-gutter));
+		--open-width: calc((100cqw - 11 * var(--grid-gutter)) / 12 * 4.5 + 4 * var(--grid-gutter));
 		container-type: inline-size;
 		position: relative;
 		z-index: 1;

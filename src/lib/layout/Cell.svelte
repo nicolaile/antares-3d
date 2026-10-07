@@ -6,6 +6,8 @@
 
 	`subgrid` makes the cell a grid of its own that reuses the page's column
 	lines, so its children are placed with the same column numbers.
+
+	Attachments (`{@attach reveal()}`) pass through to its element.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -21,7 +23,8 @@
 		gap,
 		align,
 		self,
-		children
+		children,
+		...attachments
 	}: {
 		as?: string;
 		start?: Column;
@@ -41,6 +44,7 @@
 
 <svelte:element
 	this={as}
+	{...attachments}
 	class="cell"
 	class:subgrid
 	style:--start={start}

@@ -3,9 +3,7 @@
  * Links marked `'#'` are placeholders until the pages and profiles exist.
  */
 import type { Picture } from 'vite-imagetools';
-import news01 from '$lib/assets/images/news-01.jpg?w=276;150&enhanced';
-import news02 from '$lib/assets/images/news-02.jpg?w=276;150&enhanced';
-import news03 from '$lib/assets/images/news-03.jpg?w=276;150&enhanced';
+import { updates as stories } from './updates';
 
 export type Link = { label: string; href: string };
 
@@ -46,6 +44,13 @@ export type Update = {
 	image: { src: Picture; alt: string };
 };
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** DD.MM.YYYY → "17 Sep", as the menu dates its updates. */
+const shortDate = (date: string) => {
+	const [d, m] = date.split('.').map(Number);
+	return `${d} ${MONTHS[m - 1]}`;
+};
+
 export const menu = {
 	links: [
 		{ label: 'Home', href: '/' },
@@ -56,31 +61,16 @@ export const menu = {
 	] satisfies Link[],
 	/** Smaller links under the main ones. */
 	secondary: [
-		{ label: 'Contact', href: '#' },
-		{ label: 'Careers', href: '/careers' }
+		{ label: 'Careers', href: '/careers' },
+		{ label: 'Contact', href: '#' }
 	] satisfies Link[],
-	/**
-	 * The latest updates, cycled at the foot of the open menu. Only the first
-	 * is real; the other two are placeholders until the updates feed exists.
-	 */
-	updates: [
-		{
-			date: '24 Feb',
-			title: 'Purpose-designed modular power for defense-critical assets',
-			href: '#',
-			image: { src: news01, alt: 'Aerial view of a reactor test site on open plains' }
-		},
-		{
-			date: '12 Feb',
-			title: 'Placeholder: a second update headline, two lines long',
-			href: '#',
-			image: { src: news02, alt: 'Silhouette of a face against a window onto Earth from orbit' }
-		},
-		{
-			date: '30 Jan',
-			title: 'Placeholder: a third update headline, two lines long',
-			href: '#',
-			image: { src: news03, alt: 'Black-and-white portrait of a man in a cap, mid-conversation' }
-		}
-	] satisfies Update[]
+	/** The three latest stories, cycled at the foot of the open menu. */
+	updates: stories.items.slice(0, 3).map(
+		(story): Update => ({
+			date: shortDate(story.date),
+			title: story.label,
+			href: story.href,
+			image: { src: story.image!.src, alt: story.image!.alt }
+		})
+	)
 };

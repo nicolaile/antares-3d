@@ -10,6 +10,7 @@
 	import SectionHeader from '$lib/modules/SectionHeader.svelte';
 	import ReactorExplorer, { type Feature, type CadModel, type CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
 	import SystemViews from '$lib/modules/SystemViews.svelte';
+	import { reveal } from '$lib/reveal';
 
 	let {
 		title,
@@ -29,13 +30,16 @@
 		/** Beside the drawing, at the left: a title over a line. */
 		views: { title: string; text: string };
 	} = $props();
+
+	const REVEAL = '.header .title, .header .aside, .explorer > .tabs, .explorer > .detail, .explorer > .viewport';
 </script>
 
 <section class="band" data-tone="dark">
-	<Row gap={120}>
-		<Cell subgrid gap={160}>
+	<Row gap={64}>
+		<!-- In turn: the title, the line under it, the tabs, then the model (which turns in, too). -->
+		<Cell subgrid gap={120} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
 			<Cell subgrid>
-				<SectionHeader {title} {aside} />
+				<SectionHeader {title} {aside} align="center" />
 			</Cell>
 			<Cell subgrid>
 				<ReactorExplorer {features} {models} />
@@ -56,7 +60,8 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-		padding: var(--space-40) var(--grid-margin) var(--space-64);
+		/* Room above the centred heading, so it opens the band rather than sitting on its edge. */
+		padding: var(--space-80) var(--grid-margin) var(--space-64);
 		background: var(--grey-850);
 		color: var(--grey-0);
 	}

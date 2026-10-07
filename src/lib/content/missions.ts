@@ -61,7 +61,8 @@ export const missions = {
 	product: {
 		title: 'R1 Microreactor',
 		subtitle: 'Purpose-designed modular power for defense-critical assets',
-		video: { src: r1Reveal, label: 'The R1 microreactor, turning in the light' },
+		// The clip's first 0.85s is black: start where the light comes in.
+		video: { src: r1Reveal, label: 'The R1 microreactor, turning in the light', start: 0.85 },
 		text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud. Ut enim ad minim.',
 		link: { label: 'Start a mission', href: footer.nav.find((l) => l.label === 'Contact')?.href ?? '#' }
 	},

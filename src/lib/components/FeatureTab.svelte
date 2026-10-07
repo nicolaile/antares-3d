@@ -83,8 +83,8 @@
 	<button type="button" class="face" aria-expanded={open} onclick={onselect}>
 		<span class="number type-annotation type-tabular">{number}</span>
 		<span class="copy" bind:this={copyEl} style:visibility={untrack(() => (open ? null : 'hidden'))}>
-			<span class="title type-caption">{title}</span>
-			<span class="text type-caption">{text}</span>
+			<span class="title type-body-default">{title}</span>
+			<span class="text type-body-default">{text}</span>
 		</span>
 	</button>
 </li>
@@ -148,8 +148,7 @@
 		background: var(--accent-500);
 	}
 
-	/* The title on one line, centred on the badge (Caption trims to its cap
-	   height, so this centres the letters). */
+	/* The title on one line, 16px, centred on the badge. */
 	.copy {
 		display: flex;
 		flex: none;

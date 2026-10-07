@@ -304,8 +304,8 @@
 											<Picture
 												src={update.image.src}
 												alt={update.image.alt}
-												ratio="1 / 1"
-												sizes="(max-width: 767px) 25vw, 11vw"
+												ratio="456 / 277"
+												sizes="(max-width: 767px) 32vw, 14vw"
 											/>
 										</span>
 										<span class="copy">
@@ -468,7 +468,7 @@
 
 	.thumb {
 		flex: none;
-		width: calc(var(--size-font) * 9.5);
+		width: calc(var(--size-font) * 12);
 		border-radius: var(--stage-radius);
 		overflow: hidden;
 	}
@@ -561,7 +561,7 @@
 			);
 		}
 		.thumb {
-			width: calc(var(--size-font) * 6);
+			width: calc(var(--size-font) * 7.5);
 		}
 	}
 </style>

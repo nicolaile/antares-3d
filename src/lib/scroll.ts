@@ -17,6 +17,9 @@ CustomEase.create('panel', '0.32, 0, 0, 0.97');
 
 let lenis: Lenis | null = null;
 let refs = 0;
+/** Re-measures the scroll triggers when the page's height changes (see `initScroll`). */
+let resized: ResizeObserver | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
  * One clock for everything.
@@ -43,6 +46,18 @@ export function initScroll() {
 	// GSAP's lag smoothing skips frames after a stall, which makes scrub jump.
 	gsap.ticker.lagSmoothing(0);
 
+	// ScrollTrigger measures where its triggers start and end once, and again
+	// only on a window resize. Content that changes height afterwards (images
+	// arriving, a section opening, an edit reloading in development) moves
+	// everything below it, and a pin measured before that holds the page in
+	// the wrong place. So it re-measures whenever the page's height changes,
+	// once the change has settled.
+	resized = new ResizeObserver(() => {
+		clearTimeout(refreshTimer);
+		refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
+	});
+	resized.observe(document.body);
+
 	return lenis;
 }
 
@@ -66,6 +81,9 @@ export function destroyScroll() {
 	refs = Math.max(0, refs - 1);
 	if (refs > 0 || !lenis) return;
 	gsap.ticker.remove(tickLenis);
+	resized?.disconnect();
+	resized = null;
+	clearTimeout(refreshTimer);
 	lenis.destroy();
 	lenis = null;
 }

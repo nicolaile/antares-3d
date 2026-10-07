@@ -179,7 +179,7 @@ const features: Feature[] = [
 	},
 	{
 		title: 'Core',
-		text: 'TRISO coated particle fuel in prismatic graphite core.',
+		text: 'TRISO coated particle fuel in a prismatic graphite core. Each particle holds in its own fission products, even at extreme heat.',
 		model: 'mark-0',
 		// Close, from about 25° above: the top layer's hex face and
 		// fuel holes, the gaps between the layers in bands; tilted 30° to the

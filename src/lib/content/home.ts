@@ -151,8 +151,9 @@ const features: Feature[] = [
 		model: 'mark-0',
 		// Close, from about 30° above: the nearest drums and their drives
 		// large at the front, the ring curving away round the core; leaning
-		// 15° to the right as it comes apart.
-		shot: { pos: [0, 0.86, 1.48], target: [0, 0.03, 0], spin: 0, fov: 29, lean: (-15 * Math.PI) / 180 },
+		// 15° to the right as it comes apart. Back ~5% from [0, 0.86, 1.48],
+		// along the same line, so the ring sits a touch smaller in the frame.
+		shot: { pos: [0, 0.9, 1.55], target: [0, 0.03, 0], spin: 0, fov: 29, lean: (-15 * Math.PI) / 180 },
 		// Taken apart, as the video shows it: the shield opened and faded
 		// away, the drums and the reflector blocks between them out from the
 		// core into one ring, the drives out and up over their drums, the

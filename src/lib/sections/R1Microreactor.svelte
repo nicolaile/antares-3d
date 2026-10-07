@@ -35,7 +35,7 @@
 </script>
 
 <section class="band" data-tone="dark">
-	<Row gap={64}>
+	<Row gap={80}>
 		<!-- In turn: the title, the line under it, the tabs, then the model (which turns in, too). -->
 		<Cell subgrid gap={120} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
 			<Cell subgrid>

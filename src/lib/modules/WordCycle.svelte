@@ -4,24 +4,20 @@
 	stack of words beside it ("Abundant energy for / Space / Earth /
 	Underwater"), set in the frame's bottom-left corner, one word lit and
 	the rest dimmed. The line fades in as the frame opens.
-
 	The frame comes up the page inside the grid, with the page's margins and
 	rounded corners, and opens out to full bleed as it reaches the top. There
-	it pins, and each further photo slides up from below and stacks over the
-	last, lighting its word as it lands. One gesture, one photo: while
-	pinned the page holds, and each wheel flick, swipe or arrow key plays
-	one change on its own, under a second; past the last photo, or back
-	before the first, the page scrolls on. Inside each slide the photo moves at its own speed: a coming slide's photo rises slower than its frame, and
-	the photo it covers drifts up after it, slower still, a parallax. Lenis smooths the scroll;
+	it pins for a screen of scroll per further photo: each slides up from
+	below with the scroll and stacks over the last, lighting its word as it
+	passes halfway. Inside each slide the photo moves at its own speed: a
+	coming slide's photo rises slower than its frame, and the photo it covers
+	drifts up after it, slower still, a parallax. Let go partway and the page
+	settles onto the nearest photo, full screen. Lenis smooths the scroll;
 	with reduced motion there's no pin, and the first photo holds.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import { gsap, ScrollTrigger, initScroll, destroyScroll, getLenis, prefersReducedMotion } from '$lib/scroll';
-	import { Observer } from 'gsap/Observer';
-
-	gsap.registerPlugin(Observer);
 	import type { Picture as Source } from 'vite-imagetools';
 
 	let { phrase, items }: { phrase: string; items: { word: string; image: { src: Source; alt: string } }[] } = $props();
@@ -33,18 +29,19 @@
 	 * up after it, as a share of the screen. Up, with the slide: drifting down
 	 * it fought the slide, and opened a gap above it past its 10% overhang.
 	 */
-	const LAG = 0.4;
-	const DRIFT = 0.2;
+	const LAG = 0.65;
+	const DRIFT = 0.3;
 	/**
-	 * Each change, once triggered: the slide and photos, then the words. It
-	 * answers the gesture at once and settles softly (an ease-out: an
-	 * ease-in-out held still for the first beat, and read as lag).
+	 * The gentle settle onto the nearest photo once the scroll has rested:
+	 * from a standstill, so a soft ease-in-out, its length growing with the
+	 * distance left to go.
 	 */
-	// `auto`: a change taken while the last is landing takes over from it, no tug of war.
-	const MOVE = { duration: 0.85, ease: 'power3.out', overwrite: 'auto' as const };
-	const FADE = { duration: 0.4, ease: 'power1.out', overwrite: 'auto' as const };
-	/** When the next gesture is taken, as a share of the change: the slide all but landed. */
-	const READY = 0.8;
+	const SNAP = { min: 0.55, max: 0.95, ease: 'sine.inOut' };
+	/**
+	 * How long after the visitor's last input, and the page coming to rest,
+	 * before it settles, in ms.
+	 */
+	const REST = 450;
 
 	let section: HTMLElement;
 	let stage: HTMLElement;
@@ -86,128 +83,94 @@
 
 			// Every photo after the first waits below, its photo lagging.
 			const h = () => window.innerHeight;
+			const steps = items.length - 1;
 			gsap.set(slides.slice(1), { yPercent: 100 });
 			gsap.set(photos.slice(1), { y: () => -LAG * h() });
 
-			// One gesture, one photo. Once the frame reaches the top it pins
-			// and the page stops: each wheel flick, swipe or arrow key plays
-			// one change on its own, under a second, the photo sliding up over
-			// the last (or away, going back), its word lighting. Input during
-			// a change is ignored, so nothing queues. Past the last photo, or
-			// back past the first, the pin lets go and the page scrolls on.
-			let busy = false;
-			const go = (to: number) => {
-				busy = true;
-				current = to;
-				const tl = gsap.timeline({ defaults: MOVE });
-				tl.call(() => (busy = false), [], MOVE.duration * READY);
-				slides.forEach((slide, j) => {
-					if (j > 0) tl.to(slide, { yPercent: j <= to ? 0 : 100 }, 0);
-					tl.to(photos[j], { y: j < to ? -DRIFT * h() : j === to ? 0 : -LAG * h() }, 0);
-					tl.to(words[j], { opacity: j === to ? 1 : DIM, ...FADE }, 0.15);
-				});
-			};
-
-			const lenis = getLenis();
-			/**
-			 * Whether reaching the pin holds the page. Off once it lets go, until
-			 * the page has scrolled out of it, so the let-go can't be caught
-			 * straight back.
-			 */
-			let armed = true;
-			/** Holding the page now: hold() runs once, however many triggers fire together. */
-			let holding = false;
-			/** ScrollTrigger is re-measuring the page: its triggers firing then aren't the visitor's scroll. */
-			let refreshing = false;
-			const onRefreshInit = () => (refreshing = true);
-			// Declared first: created already past it (a reload partway down),
-			// ScrollTrigger fires its callbacks before `create` returns.
-			let pin: ScrollTrigger | undefined;
-			pin = ScrollTrigger.create({
+			// Pinned for a screen of scroll per photo, scrubbed: one unit of
+			// the timeline per change, the slide and its photo rising, the
+			// photo under it drifting after, the words swapping halfway.
+			const tl = gsap.timeline({ defaults: { ease: 'none', duration: 1 } });
+			for (let i = 1; i <= steps; i++) {
+				const at = i - 1;
+				tl.to(slides[i], { yPercent: 0 }, at)
+					.to(photos[i], { y: 0 }, at)
+					.to(photos[i - 1], { y: () => -DRIFT * h() }, at)
+					.to(words[i], { opacity: 1, duration: 0.3, ease: 'power1.out' }, at + 0.35)
+					.to(words[i - 1], { opacity: DIM, duration: 0.3, ease: 'power1.out' }, at + 0.35);
+			}
+			const pin = ScrollTrigger.create({
 				trigger: stage,
 				start: 'top top',
-				end: '+=1',
+				end: () => `+=${steps * h()}`,
 				pin: true,
-				onEnter: () => hold(),
-				onEnterBack: () => hold(),
-				onLeave: () => (armed = true),
-				onLeaveBack: () => (armed = true)
+				// Lenis already smooths the scroll; the slides follow it exactly.
+				scrub: true,
+				animation: tl,
+				invalidateOnRefresh: true,
+				onUpdate: (self) => (current = Math.round(self.progress * steps))
 			});
-			/** Lets go of the pin: the page scrolls on from where it is, with the next gesture. */
-			const release = () => {
-				armed = false;
-				holding = false;
-				gestures.disable();
-				window.removeEventListener('keydown', onKey);
-				lenis?.start();
+
+			// Only once the visitor has stopped (no wheel, touch or key for a
+			// beat, no finger down, the page itself at rest) and it's left between
+			// two photos does it settle onto the nearest. Any input during the
+			// settle cancels it on the spot, so it never pulls against a scroll.
+			const lenis = getLenis();
+			let timer = 0;
+			let touching = false;
+			let settling = false;
+			const later = () => {
+				clearTimeout(timer);
+				timer = window.setTimeout(settle, REST);
 			};
-			const next = () => {
-				if (busy) return;
-				if (current < items.length - 1) go(current + 1);
-				else release();
-			};
-			const previous = () => {
-				if (busy) return;
-				if (current > 0) go(current - 1);
-				else release();
-			};
-			const onKey = (e: KeyboardEvent) => {
-				if (['ArrowDown', 'PageDown', ' '].includes(e.key)) next();
-				else if (['ArrowUp', 'PageUp'].includes(e.key)) previous();
-				else return;
-				e.preventDefault();
-			};
-			// Scrolling down reads as "up" with wheelSpeed -1, as a swipe up
-			// does: both bring the next photo.
-			const gestures = Observer.create({
-				target: window,
-				type: 'wheel,touch',
-				wheelSpeed: -1,
-				tolerance: 12,
-				preventDefault: true,
-				onUp: next,
-				onDown: previous
-			});
-			gestures.disable();
-			/** Holds the page at the pin and hands input to the gestures. */
-			function hold() {
-				// Not for a trigger firing while ScrollTrigger re-measures the page:
-				// only a visitor scrolling into the pin is held.
-				if (!pin || !armed || holding || refreshing) return;
-				// Nor for a jump that passes over it (the scroll restored on a
-				// reload, a link to further down): only arriving at it holds.
-				if (Math.abs(window.scrollY - pin.start) > window.innerHeight / 2) return;
-				holding = true;
-				lenis?.stop();
-				if (lenis) lenis.scrollTo(pin.start, { immediate: true, force: true });
-				gestures.enable();
-				window.addEventListener('keydown', onKey);
+			function settle() {
+				if (touching || !pin.isActive) return;
+				// Still gliding to a stop: look again once it has.
+				if (lenis?.isScrolling) return later();
+				const length = pin.end - pin.start;
+				const target = pin.start + (Math.round(pin.progress * steps) / steps) * length;
+				const distance = Math.abs(window.scrollY - target);
+				if (distance < 2) return;
+				const duration = gsap.utils.clamp(SNAP.min, SNAP.max, SNAP.min + (distance / h()) * (SNAP.max - SNAP.min));
+				settling = true;
+				const done = () => (settling = false);
+				if (lenis) lenis.scrollTo(target, { duration, easing: gsap.parseEase(SNAP.ease), onComplete: done });
+				else window.scrollTo({ top: target, behavior: 'smooth' });
 			}
-			// Scrolled from outside the gestures while holding (a restored scroll
-			// position, a link, the scrollbar dragged): let go, so the page can
-			// never be left stopped away from the pin; re-armed, as it's left it.
+			/** The visitor's input: stops a settle where it is, and puts the next one off. */
+			const onInput = () => {
+				if (settling) {
+					settling = false;
+					lenis?.scrollTo(window.scrollY, { immediate: true, force: true });
+				}
+				later();
+			};
+			const onTouchStart = () => {
+				touching = true;
+				onInput();
+			};
+			const onTouchEnd = () => {
+				touching = false;
+				later();
+			};
+			// The settle's own scroll doesn't put itself off; anything else does.
 			const onScroll = () => {
-				if (!pin || !holding || Math.abs(window.scrollY - pin.start) <= 4) return;
-				release();
-				armed = true;
+				if (!settling) later();
 			};
-			window.addEventListener('scroll', onScroll, { passive: true });
-			// Re-measured while holding (the page above changed height): the pin
-			// has moved, so the page moves with it rather than freezing where
-			// the pin used to be.
-			const onRefresh = () => {
-				refreshing = false;
-				if (pin && holding && lenis) lenis.scrollTo(pin.start, { immediate: true, force: true });
-			};
-			ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
-			ScrollTrigger.addEventListener('refresh', onRefresh);
+			// Captured, so a settle is stopped before Lenis takes the same wheel.
+			const listeners: [string, EventListener][] = [
+				['wheel', onInput],
+				['keydown', onInput],
+				['pointerdown', onInput],
+				['touchstart', onTouchStart],
+				['touchend', onTouchEnd],
+				['touchcancel', onTouchEnd],
+				['scroll', onScroll]
+			];
+			listeners.forEach(([type, fn]) => window.addEventListener(type, fn, { passive: true, capture: true }));
 			cleanups.push(() => {
-				ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);
-				ScrollTrigger.removeEventListener('refresh', onRefresh);
-				window.removeEventListener('scroll', onScroll);
-				gestures.kill();
-				window.removeEventListener('keydown', onKey);
-				lenis?.start();
+				clearTimeout(timer);
+				listeners.forEach(([type, fn]) => window.removeEventListener(type, fn, { capture: true }));
 			});
 		}, section);
 

@@ -71,6 +71,8 @@
 	/* Sits closer to the dark band below than sections usually do: 80px
 	   rather than the page's 120px. */
 	.mission {
+		/* A little more room around it: 24px above and below at 1440. */
+		padding-block: var(--space-24);
 		margin-bottom: calc(var(--space-40) * -1);
 	}
 

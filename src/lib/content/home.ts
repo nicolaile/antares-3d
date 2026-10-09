@@ -22,8 +22,9 @@ import type { Feature, CadModel, CadModelSetup } from '$lib/modules/ReactorExplo
 import type { Shot } from '$lib/three/shot';
 
 export const hero = {
-	title: 'Purpose-designed modular power',
-	text: 'Graphite and boron carbide control drums with independent actuator motors, inspired by historical space reactor designs.',
+	// The line break is the design's; the hero keeps it.
+	title: 'Abundant energy from Earth\nto the asteroid belt',
+	text: 'Fission microreactors to enable strategic energy for critical mission capabilities on Earth, in space, and underwater.',
 	image: { src: heroImage, alt: 'A nuclear-powered spacecraft in orbit, lit by the sun above the curve of the Earth' }
 };
 
@@ -222,7 +223,8 @@ const features: Feature[] = [
 		// the skid stands on the left and the exchanger on the right, held
 		// still. Coming from Mark-0 it turns the last 50° into place as it's
 		// revealed, the camera sweeping down from high above to level.
-		shot: { pos: [0, 0.035, 1.1], target: [0, -0.04, 0], spin: 0, turn: Math.PI / 2, swing: (50 * Math.PI) / 180, swingFrom: { pos: [0, 0.68, 1.2] }, fov: 29 },
+		// The camera a little left of centre, so the model sits right of the panel's text.
+		shot: { pos: [-0.06, 0.035, 1.1], target: [-0.06, -0.04, 0], spin: 0, turn: Math.PI / 2, swing: (50 * Math.PI) / 180, swingFrom: { pos: [-0.06, 0.68, 1.2] }, fov: 29 },
 		// The exchanger's side picked out, a step at a time: the system
 		// arrives, the Brayton skid on the left fades to a faint ghost, the
 		// exchanger's shell cuts open on the tube bundle facing the camera,
@@ -248,7 +250,7 @@ const features: Feature[] = [
 		// The turbo-alternator, centred on its axis (the point is on top of
 		// its housing), from about 30° above, back far enough for the skid
 		// round it to read; the skid turned square on, as in 05.
-		shot: { pos: [-0.06, 0.395, 0.74], target: [-0.06, 0.01, 0], spin: 0, turn: Math.PI, fov: 29, aim: 'point' },
+		shot: { pos: [-0.12, 0.395, 0.74], target: [-0.12, 0.01, 0], spin: 0, turn: Math.PI, fov: 29, aim: 'point' },
 		// As the video shows it: the rest of the skid fades to the faintest
 		// ghost and the exchanger's side away; the turbo-alternator's casing
 		// opens in half-section facing the camera to its axis, and the stack
@@ -276,12 +278,12 @@ const features: Feature[] = [
 
 export const r1 = {
 	title: 'R1 Microreactor',
-	aside: 'Purpose-designed modular power for defense-critical assets',
+	aside: 'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
 	features,
 	models,
+	scale: '2.5M/8.2ft',
 	diagram: { alt: 'Diagram of the R1 power conversion system' },
 	views: {
-		title: 'Optimized for reliability, uptime, and manufacturability',
 		text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.'
 	},
 };

@@ -2,8 +2,9 @@
 	@component
 	R1 two ways, switched at the bottom left: the section (the energy
 	diagram) and an isometric line drawing of the assembled CAD
-	(IsoDrawing). A short title and a paragraph sit at the top left, over
-	the drawing's corner; the drawing takes the rest of the width.
+	(IsoDrawing). A short paragraph sits at the bottom left, under the
+	drawing's corner (beside it, over the switch, when the switch is on);
+	the drawing takes the width from the second column.
 
 	Switching turns one into the other: the 3D camera swings from the front
 	elevation the section is drawn in round to the isometric while the two
@@ -36,12 +37,10 @@
 
 	let {
 		label,
-		title,
 		text
 	}: {
 		/** Accessible description of the section diagram. */
 		label: string;
-		title: string;
 		text: string;
 	} = $props();
 
@@ -355,7 +354,6 @@
 	<Cell start={1} span={3} tablet={{ start: 1, span: 12 }}>
 		<div class="side">
 			<div class="intro">
-				<p class="title type-body-default">{title}</p>
 				<p class="text type-caption">{text}</p>
 			</div>
 			{#if SWITCHABLE}
@@ -425,10 +423,6 @@
 	.intro p {
 		margin: 0;
 	}
-	/* 240px at 1440: breaks after "uptime,". */
-	.intro .title {
-		max-width: calc(var(--size-font) * 15);
-	}
 	.text {
 		color: var(--secondary);
 	}
@@ -476,9 +470,9 @@
 	}
 
 	/*
-	 * Desktop: the title and paragraph at the top left, over the drawing's
-	 * corner. The section keeps its own proportions, held to the screen's
-	 * height on wide, short ones.
+	 * Desktop: the paragraph under the drawing, at the bottom left. The
+	 * section keeps its own proportions, held to the screen's height on
+	 * wide, short ones.
 	 *
 	 * Section only (the switch off): the panel hugs the drawing. The frame's
 	 * empty margin above and below is trimmed (235 and 234 of its 1284), so
@@ -491,7 +485,8 @@
 	 */
 	@media screen and (min-width: 992px) {
 		.views {
-			/* The text and the drawing share the one row. */
+			/* The drawing on the first row (and the text beside it, with the
+			   switch); section only, the text on a row of its own below. */
 			grid-template-rows: auto;
 			/* The section's widened frame runs past the page's edge; trimmed
 			   sideways only, so the isometric can still run tall. */
@@ -501,6 +496,9 @@
 		   stage colour and focus veils stay inside the band. */
 		.views:not(.full) {
 			overflow: clip;
+			/* Room above the drawing, 80px at 1440, so the section stands
+			   taller than the drawing it hugs; the text below ends it. */
+			padding-top: var(--space-80);
 		}
 		.views.full {
 			height: 100svh;
@@ -508,6 +506,24 @@
 		}
 		.views > :global(.cell) {
 			grid-row: 1;
+		}
+		/* Section only: the paragraph under the drawing, at the bottom left. */
+		.views:not(.full) > :global(.cell:first-child) {
+			grid-row: 2;
+		}
+		.views:not(.full) .side {
+			padding-bottom: 0;
+		}
+		/* With the text out from beside it, the drawing has the whole width,
+		   and sits a little right of centre in it (64px at 1440) rather than
+		   against the right edge. */
+		.views:not(.full) > :global(.cell:nth-child(2)) {
+			grid-column: 1 / -1;
+		}
+		.views:not(.full) .turn :global(figure.diagram) {
+			/* 2% up on the frame's fit. */
+			--width: calc(min(100%, 92svh * 1930 / 1284) * 1.02);
+			margin-left: calc((100% - var(--width)) / 2 + var(--space-64));
 		}
 		.turn {
 			display: grid;

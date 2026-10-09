@@ -1,6 +1,6 @@
 <!--
 	@component
-	The site menu: a round toggle fixed top-right, one page margin (16px) in from both edges.
+	The site menu: a round toggle fixed top-right, centred in the header band, one page margin in from the right.
 	Opening dims the page and grows a panel out of the button's corner in two
 	steps — across, then down — before the links rise in. Closing plays it
 	back. Escape, the dimmed page and any link close it.
@@ -19,6 +19,7 @@
 	import MenuButton from '$lib/components/MenuButton.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import { gsap, getLenis, prefersReducedMotion } from '$lib/scroll';
+	import { header } from '$lib/header.svelte';
 	import type { Link, Update } from '$lib/content/site';
 
 	let {
@@ -200,41 +201,13 @@
 		}
 	}
 
-	/**
-	 * Whether the button sits over a dark region: anything marked
-	 * `data-tone="dark"` (the R1 band, slideshows, dark footers, dark
-	 * pages). Checked at the button's centre on every scroll and resize, and
-	 * after each navigation.
-	 */
-	let dark = $state(false);
-	function probe() {
-		const button = toggle?.querySelector('button');
-		if (!button) return;
-		const b = button.getBoundingClientRect();
-		const x = b.left + b.width / 2;
-		const y = b.top + b.height / 2;
-		dark = [...document.querySelectorAll('[data-tone="dark"]')].some((el) => {
-			const r = el.getBoundingClientRect();
-			return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-		});
-	}
-	$effect(() => {
-		void current;
-		tick().then(probe);
-	});
-
 	onMount(() => {
-		window.addEventListener('scroll', probe, { passive: true });
-		window.addEventListener('resize', probe);
-		probe();
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape' && open) setOpen(false);
 		};
 		window.addEventListener('keydown', onKey);
 		return () => {
 			window.removeEventListener('keydown', onKey);
-			window.removeEventListener('scroll', probe);
-			window.removeEventListener('resize', probe);
 			tl?.kill();
 			if (open) getLenis()?.start();
 		};
@@ -340,7 +313,7 @@
 	<div class="toggle" data-nav-toggle="toggle" bind:this={toggle}>
 		<MenuButton
 			{open}
-			tone={dark ? 'dark' : 'light'}
+			tone={header.dark ? 'dark' : 'light'}
 			controls="site-menu"
 			onclick={(e?: MouseEvent) => {
 				// detail is 0 for Enter/Space presses, 1+ for real clicks.
@@ -374,7 +347,7 @@
 	   on the same columns as the page. It starts under the button. */
 	.bar {
 		position: absolute;
-		top: calc(var(--page-margin) + var(--size-font) * 2.125 + var(--space-16));
+		top: calc(var(--header-top) + var(--header-button) + var(--space-16));
 		left: 0;
 		right: 0;
 		padding-inline: var(--grid-margin);
@@ -390,7 +363,7 @@
 		gap: var(--space-40);
 		min-height: min(
 			calc(var(--size-font) * 35.75),
-			100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-16)
+			100svh - var(--header-top) - var(--page-margin) - var(--header-button) - var(--space-16)
 		);
 		box-sizing: border-box;
 		padding: var(--space-24);
@@ -545,10 +518,10 @@
 		}
 	}
 
-	/* One page margin from the top and right edges of the screen. */
+	/* Centred in the header band, one page margin from the right edge. */
 	.toggle {
 		position: absolute;
-		top: var(--page-margin);
+		top: var(--header-top);
 		right: var(--grid-margin);
 		pointer-events: auto;
 	}
@@ -557,7 +530,7 @@
 		.panel {
 			min-height: min(
 				calc(var(--size-font) * 32),
-				100svh - var(--page-margin) * 2 - var(--size-font) * 2.125 - var(--space-16)
+				100svh - var(--header-top) - var(--page-margin) - var(--header-button) - var(--space-16)
 			);
 		}
 		.thumb {

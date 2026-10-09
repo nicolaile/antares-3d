@@ -18,6 +18,7 @@
 	import { onMount } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import { gsap, ScrollTrigger, initScroll, destroyScroll, getLenis, prefersReducedMotion } from '$lib/scroll';
+	import { freezeHeader } from '$lib/header.svelte';
 	import type { Picture as Source } from 'vite-imagetools';
 
 	let { phrase, items }: { phrase: string; items: { word: string; image: { src: Source; alt: string } }[] } = $props();
@@ -132,8 +133,13 @@
 				const distance = Math.abs(window.scrollY - target);
 				if (distance < 2) return;
 				const duration = gsap.utils.clamp(SNAP.min, SNAP.max, SNAP.min + (distance / h()) * (SNAP.max - SNAP.min));
+				// The page moving itself isn't the visitor scrolling: the header holds.
 				settling = true;
-				const done = () => (settling = false);
+				freezeHeader(true);
+				const done = () => {
+					settling = false;
+					freezeHeader(false);
+				};
 				if (lenis) lenis.scrollTo(target, { duration, easing: gsap.parseEase(SNAP.ease), onComplete: done });
 				else window.scrollTo({ top: target, behavior: 'smooth' });
 			}
@@ -141,6 +147,7 @@
 			const onInput = () => {
 				if (settling) {
 					settling = false;
+					freezeHeader(false);
 					lenis?.scrollTo(window.scrollY, { immediate: true, force: true });
 				}
 				later();
@@ -171,6 +178,7 @@
 			cleanups.push(() => {
 				clearTimeout(timer);
 				listeners.forEach(([type, fn]) => window.removeEventListener(type, fn, { capture: true }));
+				if (settling) freezeHeader(false);
 			});
 		}, section);
 
@@ -183,7 +191,7 @@
 </script>
 
 <section class="slides" bind:this={section}>
-	<div class="stage" data-tone="dark" bind:this={stage}>
+	<div class="stage" data-tone="dark" data-header="light" bind:this={stage}>
 		<div class="frame" bind:this={frame}>
 			{#each items as item, i (i)}
 				<div class="slide" bind:this={slides[i]} aria-hidden={i !== current}>

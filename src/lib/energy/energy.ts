@@ -164,9 +164,9 @@ type Stop = { x: number; rgb: [number, number, number]; a: number };
 
 /**
  * Colour from the tail (0) to the head (1), fading out towards the tail. On
- * the light stage the heat stays orange; on dark it runs from a pink tail
- * (#FF63CB) through orange (#FF751F) up to white-hot (#F9F9F9), which only
- * reads because the glow adds light there rather than covering.
+ * the light stage the heat stays orange; on dark it runs from a faint pink
+ * wisp (#FF63CB) into orange (#FF751F) early, up to white-hot (#F9F9F9),
+ * which only reads because the glow adds light there rather than covering.
  * Each route's temperature then cools it towards COOL, so hot pipes glow
  * orange and cold ones read grey-white.
  */
@@ -177,10 +177,12 @@ export const RAMPS: Record<Theme, Stop[]> = {
 		{ x: 0.7, rgb: [255, 117, 31], a: 0.9 },
 		{ x: 1, rgb: [255, 132, 78], a: 1 }
 	],
+	// As the CAD's trails run it (DEFAULT_TRAIL_LOOK): the pink only a faint
+	// wisp at the very tail, orange from under a third of the way along.
 	dark: [
 		{ x: 0, rgb: [255, 99, 203], a: 0 },
-		{ x: 0.35, rgb: [255, 99, 203], a: 0.6 },
-		{ x: 0.7, rgb: [255, 117, 31], a: 1 },
+		{ x: 0.15, rgb: [255, 99, 203], a: 0.18 },
+		{ x: 0.3, rgb: [255, 117, 31], a: 1 },
 		{ x: 1, rgb: [249, 249, 249], a: 1 }
 	]
 };

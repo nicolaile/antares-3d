@@ -1,13 +1,12 @@
 /**
  * Articles: one per update, at /updates/<slug>. Each takes its headline and
  * date from updates.ts and its body, the live copy, from articleBodies.ts.
- * The hero is the article design's photo on every story for now.
+ * The hero is the story's own image from the updates list, so the
+ * article opens on the picture its card shows.
  */
 import type { Picture } from 'vite-imagetools';
 import { slug, updates } from './updates';
 import { bodies } from './articleBodies';
-// The hero runs eight columns (928px at 1440).
-import heroImage from '$lib/assets/images/article/article-thumbnail.jpg?w=2072;1392;928;464&enhanced';
 
 export type Image = { src: Picture; alt: string };
 
@@ -43,10 +42,8 @@ export const articles: Article[] = updates.items.map((item) => ({
 	slug: slug(item.label),
 	title: item.label,
 	date: item.date,
-	image: {
-		src: heroImage,
-		alt: 'An engineer at a Nakamura-Tome lathe on the floor of an empty factory hall'
-	},
+	// Every item has one (updates.ts gives the rest a stand-in).
+	image: item.image!,
 	body: bodies[slug(item.label)] ?? []
 }));
 

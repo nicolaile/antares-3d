@@ -4,17 +4,23 @@
 	line about it centred at the top, a video of it in the middle, sitting on the card's foot, and a
 	short line with a call to action in the bottom-left corner. The video
 	plays once, when you first scroll down to the card, and holds on its
-	last frame. It loads only as the card nears, not with the page. On phones the copy follows the video.
+	last frame. It loads only as the card nears, not with the page. A
+	cut-out image can stand in for the video, centred in the space under the
+	title. On phones the copy follows the video or image.
 -->
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import Button from '$lib/components/Button.svelte';
+	import Picture from '$lib/components/Picture.svelte';
+	import WipBadge from '$lib/components/WipBadge.svelte';
+	import type { Picture as PictureSource } from 'vite-imagetools';
 	import type { Link } from '$lib/content/site';
 
 	let {
 		title,
 		subtitle,
 		video,
+		image,
 		text,
 		link
 	}: {
@@ -22,16 +28,19 @@
 		/** Under the name, in grey. */
 		subtitle?: string;
 		/** A muted clip of the product, played once; `start` (seconds) skips a dark lead-in. */
-		video: { src: string; label: string; start?: number };
+		video?: { src: string; label: string; start?: number };
+		/** A cut-out of the product (transparent PNG), in the video's place; `wip` tags it as a stand-in. */
+		image?: { src: PictureSource; alt: string; wip?: boolean };
 		text: string;
 		link: Link;
 	} = $props();
 
-	let player: HTMLVideoElement;
+	let player = $state<HTMLVideoElement>();
 	/** The card is near: the clip gets its source, and starts loading. */
 	let near = $state(false);
 
 	onMount(() => {
+		if (!player) return;
 		const card = player.closest('section')!;
 		// Loads the clip a screen and a half before the card, so it's ready
 		// by the time it's reached, without weighing on the page's own load.
@@ -51,7 +60,7 @@
 				seen.disconnect();
 				near = true;
 				await tick();
-				player.play().catch(() => {});
+				player?.play().catch(() => {});
 			},
 			{ threshold: 0.15 }
 		);
@@ -69,15 +78,22 @@
 		{title}
 		{#if subtitle}<span class="subtitle">{subtitle}</span>{/if}
 	</h2>
-	<video
-		class="video"
-		src={near ? (video.start ? `${video.src}#t=${video.start}` : video.src) : undefined}
-		aria-label={video.label}
-		muted
-		playsinline
-		preload="auto"
-		bind:this={player}
-	></video>
+	{#if image}
+		<div class="still" style:aspect-ratio="{image.src.img.w} / {image.src.img.h}">
+			<Picture src={image.src} alt={image.alt} ratio="{image.src.img.w} / {image.src.img.h}" fit="contain" sizes="(max-width: 767px) 100vw, 50vw" />
+			{#if image.wip}<WipBadge label="3D model · WIP" />{/if}
+		</div>
+	{:else if video}
+		<video
+			class="video"
+			src={near ? (video.start ? `${video.src}#t=${video.start}` : video.src) : undefined}
+			aria-label={video.label}
+			muted
+			playsinline
+			preload="auto"
+			bind:this={player}
+		></video>
+	{/if}
 	<div class="copy">
 		<p class="text type-caption">{text}</p>
 		<Button {...link} />
@@ -123,6 +139,17 @@
 		object-fit: contain;
 	}
 
+	/* The cut-out, centred in the space under the title, with room around
+	   it: 80% of that height. */
+	.still {
+		position: relative;
+		align-self: center;
+		height: 80%;
+	}
+	.still :global(.picture) {
+		height: 100%;
+	}
+
 	/* Three columns of the twelve, from the card's bottom-left corner. */
 	.copy {
 		position: absolute;
@@ -148,6 +175,11 @@
 			height: auto;
 			margin-top: var(--space-24);
 			margin-bottom: 0;
+		}
+		.still {
+			width: 80%;
+			height: auto;
+			margin-top: var(--space-24);
 		}
 		.copy {
 			position: static;

@@ -70,6 +70,7 @@
 	import { onMount, untrack } from 'svelte';
 	import FeatureTab from '$lib/components/FeatureTab.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
+	import WipBadge from '$lib/components/WipBadge.svelte';
 	import CadStage from '$lib/components/CadStage.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import Controls from '$lib/components/Controls.svelte';
@@ -87,9 +88,12 @@
 	let {
 		features,
 		models,
-		scale
+		scale,
+		wip = false
 	}: {
 		features: Feature[];
+		/** Tags the 3D models as stand-ins (WipBadge, under the model). */
+		wip?: boolean;
 		/** The scale rule's label beside the model, e.g. its height. */
 		scale?: string;
 		/** Each model's files and setup. */
@@ -677,6 +681,9 @@
 				<span class="rule-label type-caption" bind:this={ruleLabelEl}>{scale}</span>
 			</div>
 		{/if}
+
+		<!-- Under the model, centred on the panel's foot: on the model it's about, not the panel. -->
+		{#if wip}<WipBadge label="3D model · WIP" corner="bottom" />{/if}
 
 		<div class="steps">
 			<button type="button" class="step" aria-label="Previous feature" onclick={() => step(-1)}>{@html chevronLeft}</button>

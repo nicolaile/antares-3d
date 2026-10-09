@@ -46,7 +46,8 @@
 				<SectionHeader {title} {aside} />
 			</Cell>
 			<Cell subgrid>
-				<ReactorExplorer {features} {models} {scale} />
+				<!-- The models aren't final yet. -->
+				<ReactorExplorer {features} {models} {scale} wip />
 			</Cell>
 		</Cell>
 

@@ -737,7 +737,8 @@
 		/* 6px at 1440, between the tabs and down to the panel alike. */
 		--gap: calc(var(--size-font) * 0.375);
 		row-gap: var(--gap);
-		height: 92svh;
+		/* The strip and panel together, a touch under a screen. */
+		height: 86svh;
 	}
 
 	/* The strip: card tabs a little over a fifth of the row wide (335px at

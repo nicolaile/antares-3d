@@ -19,19 +19,8 @@ import slide06 from '$lib/assets/images/company/slideshow-06.jpg?w=2040;1384;692
 import iterativeBackground from '$lib/assets/images/company/Iterative-01.jpg?w=1856;928;464&enhanced';
 import iterativeImage from '$lib/assets/images/company/Iterative-02.jpg?w=948;474;237&enhanced';
 // 338px cards at 1440; the sources are 1014px wide.
-import portrait1 from '$lib/assets/images/company/profiles/1.jpg?w=1014;676;338&enhanced';
-import portrait2 from '$lib/assets/images/company/profiles/2.jpg?w=1014;676;338&enhanced';
-import portrait3 from '$lib/assets/images/company/profiles/3.jpg?w=1014;676;338&enhanced';
-import portrait4 from '$lib/assets/images/company/profiles/4.jpg?w=1014;676;338&enhanced';
-import portrait5 from '$lib/assets/images/company/profiles/5.jpg?w=1014;676;338&enhanced';
-import portrait6 from '$lib/assets/images/company/profiles/6.jpg?w=1014;676;338&enhanced';
-import portrait7 from '$lib/assets/images/company/profiles/7.jpg?w=1014;676;338&enhanced';
-import portrait8 from '$lib/assets/images/company/profiles/8.jpg?w=1014;676;338&enhanced';
-import portrait9 from '$lib/assets/images/company/profiles/9.jpg?w=1014;676;338&enhanced';
-import portrait10 from '$lib/assets/images/company/profiles/10.jpg?w=1014;676;338&enhanced';
-import portrait11 from '$lib/assets/images/company/profiles/11.jpg?w=1014;676;338&enhanced';
-import portrait12 from '$lib/assets/images/company/profiles/12.jpg?w=1014;676;338&enhanced';
-import portrait13 from '$lib/assets/images/company/profiles/13.jpg?w=1014;676;338&enhanced';
+// Every portrait is the same stand-in for now; 676px is as wide as it comes.
+import portrait from '$lib/assets/images/career/employee.jpg?w=676;338&enhanced';
 
 /** One person in the leadership grid. */
 export type Person = {
@@ -63,80 +52,80 @@ export const company = {
 			{
 				name: 'Jordan Bramble',
 				role: 'CEO & Co-Founder',
-				image: { src: portrait1, alt: 'Portrait of Jordan Bramble' },
+				image: { src: portrait, alt: 'Portrait of Jordan Bramble' },
 				bio:
 					'Jordan Bramble leads Antares as CEO and Co-Founder, guiding the company’s mission to deliver reliable fission power for the toughest environments on Earth and beyond. Since launching Antares in 2023, he has overseen more than $130 million in fundraising and built the foundation for the company’s next-generation power systems, designed for applications ranging from remote defense installations to lunar surface missions. Jordan’s background spans multidisciplinary engineering, entrepreneurship, and federal policy via the White House Office of Management and Budget. He holds degrees in Systems Engineering, Physics, and Statistics from George Mason University and Georgetown University, and is driven by the belief that nuclear power is a key enabler for resilience, space exploration, space superiority, and next-generation missile defense.'
 			},
 			{
 				name: 'Rian Bahran',
 				role: 'Chief Nuclear Officer',
-				image: { src: portrait2, alt: 'Portrait of Rian Bahran' },
+				image: { src: portrait, alt: 'Portrait of Rian Bahran' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Mark Massie',
 				role: 'Chief Engineer',
-				image: { src: portrait3, alt: 'Portrait of Mark Massie' },
+				image: { src: portrait, alt: 'Portrait of Mark Massie' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Will Madsen',
 				role: 'Head of Mission Engineering',
-				image: { src: portrait4, alt: 'Portrait of Will Madsen' },
+				image: { src: portrait, alt: 'Portrait of Will Madsen' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Nader Satvat',
 				role: 'Head of Nuclear Engineering',
-				image: { src: portrait5, alt: 'Portrait of Nader Satvat' },
+				image: { src: portrait, alt: 'Portrait of Nader Satvat' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Reuven Fridmar',
 				role: 'Head of Talent',
-				image: { src: portrait6, alt: 'Portrait of Reuven Fridmar' },
+				image: { src: portrait, alt: 'Portrait of Reuven Fridmar' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Tom Mancinelli',
 				role: 'Head of Strategy & Policy',
-				image: { src: portrait7, alt: 'Portrait of Tom Mancinelli' },
+				image: { src: portrait, alt: 'Portrait of Tom Mancinelli' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Alec Todryk',
 				role: 'Head of Finance',
-				image: { src: portrait8, alt: 'Portrait of Alec Todryk' },
+				image: { src: portrait, alt: 'Portrait of Alec Todryk' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Christian Kalin',
 				role: 'Head of Operations',
-				image: { src: portrait9, alt: 'Portrait of Christian Kalin' },
+				image: { src: portrait, alt: 'Portrait of Christian Kalin' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Doug Crawford',
 				role: 'Head of Manufacturing & Test Engineering',
-				image: { src: portrait10, alt: 'Portrait of Doug Crawford' },
+				image: { src: portrait, alt: 'Portrait of Doug Crawford' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Scott Walsh',
 				role: 'Head of Reactor Hardware Engineering',
-				image: { src: portrait11, alt: 'Portrait of Scott Walsh' },
+				image: { src: portrait, alt: 'Portrait of Scott Walsh' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Jason Andrus',
 				role: 'Head of Nuclear Ops & Regulatory',
-				image: { src: portrait12, alt: 'Portrait of Jason Andrus' },
+				image: { src: portrait, alt: 'Portrait of Jason Andrus' },
 				bio: placeholderBio
 			},
 			{
 				name: 'Matt Griffin',
 				role: 'Head of Nuclear Affairs',
-				image: { src: portrait13, alt: 'Portrait of Matt Griffin' },
+				image: { src: portrait, alt: 'Portrait of Matt Griffin' },
 				bio: placeholderBio
 			}
 		] satisfies Person[]

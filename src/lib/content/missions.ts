@@ -14,8 +14,11 @@ import heatPipes from '$lib/assets/images/landing/heat-pipes.jpg?w=1014;676;338&
 import spaceReactor from '$lib/assets/images/landing/special-purpose-reactors.jpg?w=1014;676;338&enhanced';
 import underwaterSmall from '$lib/assets/images/mission/underwater.jpg?w=1014;676;338&enhanced';
 // The specs card's image, three columns.
-import specsImage from '$lib/assets/images/article/article-thumbnail.jpg?w=1020;680;340&enhanced';
+// 672px is as wide as it comes.
+import specsImage from '$lib/assets/images/mission/download-spec.jpg?w=672;336&enhanced';
 import r1Reveal from '$lib/assets/images/mission/mark-0-reveal-web.mp4';
+// A still of R1 in the reveal's place, for now.
+import reactor from '$lib/assets/images/mission/reactor.png?w=1638;1200;800&enhanced';
 
 const placeholder =
 	'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.';
@@ -63,6 +66,7 @@ export const missions = {
 		subtitle: 'Purpose-designed modular power for defense-critical assets',
 		// The clip's first 0.85s is black: start where the light comes in.
 		video: { src: r1Reveal, label: 'The R1 microreactor, turning in the light', start: 0.85 },
+		image: { src: reactor, alt: 'The R1 microreactor', wip: true },
 		text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud. Ut enim ad minim.',
 		link: { label: 'Start a mission', href: footer.nav.find((l) => l.label === 'Contact')?.href ?? '#' }
 	},

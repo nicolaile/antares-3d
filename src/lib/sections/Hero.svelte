@@ -23,12 +23,23 @@
 	let {
 		title,
 		text,
-		image
+		image,
+		video
 	}: {
 		title: string;
 		text: string;
 		image: { src: PictureSource; alt: string };
+		/**
+		 * Plays in the image's place, muted and on a loop, the image its
+		 * poster until it's ready. Held on its first frame with reduced motion.
+		 */
+		video?: string;
 	} = $props();
+
+	let clip = $state<HTMLVideoElement>();
+	$effect(() => {
+		if (clip && prefersReducedMotion()) clip.pause();
+	});
 
 	let brand: HTMLElement;
 	let mark: HTMLElement;
@@ -126,7 +137,22 @@
 	<!-- Dark for the menu button, but the header bar over it stays white. -->
 	<div class="mask" data-tone="dark" data-header="light" bind:this={mask}>
 		<div class="photo" bind:this={photo}>
-			<Picture {...image} ratio="auto" sizes="100vw" loading="eager" priority />
+			{#if video}
+				<video
+					class="clip"
+					src={video}
+					poster={image.src.img.src}
+					aria-label={image.alt}
+					autoplay
+					muted
+					loop
+					playsinline
+					preload="auto"
+					bind:this={clip}
+				></video>
+			{:else}
+				<Picture {...image} ratio="auto" sizes="100vw" loading="eager" priority />
+			{/if}
 		</div>
 	</div>
 </section>
@@ -218,6 +244,12 @@
 	}
 	.photo :global(.picture) {
 		height: 100%;
+	}
+	.clip {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
 	}
 
 	@media screen and (max-width: 767px) {

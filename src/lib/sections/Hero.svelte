@@ -31,14 +31,27 @@
 		image: { src: PictureSource; alt: string };
 		/**
 		 * Plays in the image's place, muted and on a loop, the image its
-		 * poster until it's ready. Held on its first frame with reduced motion.
+		 * poster until it's ready; paused while the hero is off screen, so it
+		 * isn't decoding frames nobody sees. Held on its first frame with
+		 * reduced motion.
 		 */
 		video?: string;
 	} = $props();
 
 	let clip = $state<HTMLVideoElement>();
 	$effect(() => {
-		if (clip && prefersReducedMotion()) clip.pause();
+		const v = clip;
+		if (!v) return;
+		if (prefersReducedMotion()) {
+			v.pause();
+			return;
+		}
+		const seen = new IntersectionObserver(([entry]) => {
+			if (entry.isIntersecting) v.play().catch(() => {});
+			else v.pause();
+		});
+		seen.observe(v);
+		return () => seen.disconnect();
 	});
 
 	let brand: HTMLElement;

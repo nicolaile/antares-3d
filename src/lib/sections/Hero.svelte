@@ -5,9 +5,10 @@
 
 	On scroll the image's mask rises with the page while the photo inside
 	moves slower, a parallax. The wordmark rides up with it, shrinking to
-	12px tall, until it reaches the top-left corner — level with the menu
-	button — and stays there for the rest of the page. (The latest updates
-	live in the menu.)
+	20px tall, until it reaches the top-left corner — level with the menu
+	button — and stays there for the rest of the page, sliding out of the way
+	as the visitor scrolls down and back as they scroll up. (The latest
+	updates live in the menu.)
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -17,6 +18,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import Wordmark from '$lib/components/Wordmark.svelte';
 	import { initScroll, destroyScroll, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
+	import { header, slideWithHeader } from '$lib/header.svelte';
 
 	let {
 		title,
@@ -32,15 +34,17 @@
 	let mark: HTMLElement;
 	let mask: HTMLElement;
 	let photo: HTMLElement;
+	/** In the corner and pinned there: from then on it hides and returns with the header, as BrandMark does. */
+	let rested = $state(false);
 
 	onMount(() => {
 		initScroll();
 		const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
-		/** The wordmark's height once it's in the corner, in units: --wordmark-rest (12px at 1440). */
-		const REST = 0.75;
+		/** The wordmark's height once it's in the corner, in units: --wordmark-rest (20px at 1440). */
+		const REST = 1.25;
 		// Where the wordmark comes to rest: centred on the 34px menu button,
-		// which sits one page margin (--page-margin, 1.25 units) in from the top.
-		const restTop = () => unit() * (1.25 + (2.125 - REST) / 2);
+		// which is centred in the 68px header band (--header-height, 4.25 units).
+		const restTop = () => unit() * (4.25 / 2 - REST / 2);
 
 		const ctx = gsap.context(() => {
 			// Rides the page up with the image, then holds in the corner. It
@@ -51,7 +55,8 @@
 				start: () => `bottom ${restTop() + unit() * REST}px`,
 				end: 'max',
 				pin: true,
-				pinSpacing: false
+				pinSpacing: false,
+				onToggle: (self) => (rested = self.isActive)
 			});
 			// Shrinks the whole way up, from its hero size down to REST tall,
 			// landing at the moment it pins. Scaled from its bottom-left
@@ -101,9 +106,12 @@
 		<Row align="end" gap={40}>
 			<Cell span={6} mobile={{ span: 12 }}>
 				<div class="brand" bind:this={brand}>
-					<a class="home" href="/" aria-label="Antares home" bind:this={mark}>
-						<Wordmark />
-					</a>
+					<!-- Slides with the header; the link inside scales on its own. -->
+					<div {@attach slideWithHeader(() => rested && header.hidden)}>
+						<a class="home" href="/" aria-label="Antares home" bind:this={mark}>
+							<Wordmark />
+						</a>
+					</div>
 				</div>
 			</Cell>
 			<Cell start={10} span={3} tablet={{ start: 8, span: 5 }} mobile={{ span: 12 }}>
@@ -115,7 +123,8 @@
 		</Row>
 	</div>
 
-	<div class="mask" data-tone="dark" bind:this={mask}>
+	<!-- Dark for the menu button, but the header bar over it stays white. -->
+	<div class="mask" data-tone="dark" data-header="light" bind:this={mask}>
 		<div class="photo" bind:this={photo}>
 			<Picture {...image} ratio="auto" sizes="100vw" loading="eager" priority />
 		</div>
@@ -129,14 +138,15 @@
 		position: relative;
 	}
 
-	/* 356px tall at 1440, its content sitting on the bottom edge. */
+	/* 308px tall at 1440, its content sitting on the bottom edge. */
 	.intro {
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
 		box-sizing: border-box;
-		height: calc(var(--size-font) * 22.25);
-		padding: 0 var(--grid-margin) var(--space-32);
+		height: calc(var(--size-font) * 19.25);
+		/* 24px between the wordmark (and blurb) and the image. */
+		padding: 0 var(--grid-margin) var(--space-24);
 	}
 
 	/* Above the page and footer once pinned, below the menu (z-index 50).
@@ -153,11 +163,11 @@
 	:global(.pin-spacer:has(> .brand)) {
 		mix-blend-mode: difference;
 	}
-	/* 48px tall at 1440 (12px once it has shrunk into the corner). */
+	/* 72px tall at 1440 (20px once it has shrunk into the corner). */
 	.home {
 		display: block;
 		width: fit-content;
-		height: calc(var(--size-font) * 3);
+		height: calc(var(--size-font) * 4.5);
 		color: inherit;
 		transform-origin: 0 100%;
 	}
@@ -166,15 +176,29 @@
 		outline-offset: 4px;
 	}
 
+	/* The space the line height leaves under the text is trimmed off, and
+	   8px of padding set in its place: its last baseline 8px above the
+	   wordmark's bottom edge, 32px above the image. */
 	.blurb {
 		display: grid;
 		margin: 0;
+		padding-bottom: var(--space-8);
+		text-box: trim-end cap alphabetic;
 	}
+	/* 16px (body default), breaking where the copy does, 8px above the text. */
 	.title {
+		margin-bottom: var(--space-8);
 		color: var(--grey-950);
+		white-space: pre-line;
 	}
+	/* 14px, at the caption's size and leading; a little narrower than its
+	   column, 296px at 1440. */
 	.text {
+		max-width: calc(var(--size-font) * 18.5);
 		color: var(--grey-700);
+		font-size: var(--type-caption-size);
+		line-height: var(--type-caption-leading);
+		letter-spacing: var(--type-caption-tracking);
 	}
 
 	/* Full bleed. The photo is 40% taller than its mask and starts raised
@@ -202,10 +226,10 @@
 			height: auto;
 			padding-top: var(--space-120);
 		}
-		/* The wordmark is about 10.9 times as wide as it is tall: 30px tall
-		   keeps it inside a phone's width (about 326px at 390). */
+		/* The wordmark is about 5 times as wide as it is tall: 52px tall
+		   keeps it inside a phone's width (about 257px at 390). */
 		.home {
-			height: calc(var(--size-font) * 1.875);
+			height: calc(var(--size-font) * 3.25);
 		}
 	}
 </style>

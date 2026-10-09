@@ -17,6 +17,7 @@
 		aside,
 		features,
 		models,
+		scale,
 		diagram,
 		views
 	}: {
@@ -25,24 +26,27 @@
 		features: Feature[];
 		/** The CAD models' files and setup (ReactorExplorer). */
 		models: Partial<Record<CadModel, CadModelSetup>>;
+		/** The scale rule's label beside the model. */
+		scale?: string;
 		/** Accessible description of the energy diagram. */
 		diagram: { alt: string };
 		/** Beside the drawing, at the left: a title over a line. */
-		views: { title: string; text: string };
+		views: { text: string };
 	} = $props();
 
-	const REVEAL = '.header .title, .header .aside, .explorer > .tabs, .explorer > .detail, .explorer > .viewport';
+	const REVEAL = '.header .title, .header .aside, .explorer > .tabs, .explorer > .viewport';
 </script>
 
 <section class="band" data-tone="dark">
 	<Row gap={80}>
 		<!-- In turn: the title, the line under it, the tabs, then the model (which turns in, too). -->
-		<Cell subgrid gap={120} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
+		<!-- 160px between the heading's aside and the tabs. -->
+		<Cell subgrid gap={160} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
 			<Cell subgrid>
-				<SectionHeader {title} {aside} align="center" />
+				<SectionHeader {title} {aside} />
 			</Cell>
 			<Cell subgrid>
-				<ReactorExplorer {features} {models} />
+				<ReactorExplorer {features} {models} {scale} />
 			</Cell>
 		</Cell>
 
@@ -60,8 +64,7 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-		/* Room above the centred heading, so it opens the band rather than sitting on its edge. */
-		padding: var(--space-80) var(--grid-margin) var(--space-64);
+			padding: var(--space-32) var(--grid-margin) var(--space-64);
 		background: var(--grey-850);
 		color: var(--grey-0);
 	}

@@ -5,10 +5,13 @@
 	import '$lib/styles/typography.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
-	import { onNavigate } from '$app/navigation';
+	import { onNavigate, afterNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { getLenis } from '$lib/scroll';
 	import Menu from '$lib/modules/Menu.svelte';
 	import BrandMark from '$lib/modules/BrandMark.svelte';
+	import HeaderBar from '$lib/modules/HeaderBar.svelte';
+	import { trackHeader, updateHeader } from '$lib/header.svelte';
 	import { menu } from '$lib/content/site';
 	let { children } = $props();
 
@@ -25,6 +28,10 @@
 		getLenis()?.scrollTo(0, { immediate: true, force: true });
 		window.scrollTo(0, 0);
 	});
+
+	/** The header follows the scroll on every page, and starts out showing on each new one. */
+	onMount(trackHeader);
+	afterNavigate(() => updateHeader(true));
 
 	/** Remembered across visits, so the tools stay how you left them. */
 	const KEY = 'antares:tools';
@@ -53,6 +60,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<HeaderBar />
 <Menu {...menu} current={page.url.pathname} />
 
 <!-- Home's hero carries its own wordmark into this corner. -->

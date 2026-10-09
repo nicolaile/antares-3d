@@ -39,10 +39,10 @@ export const LOOK: Partial<RenderParams> = {
 	gradientOffset: 1,
 	gradientTrack: 0,
 
-	// Studio: on. The backdrop matches the R1 band (grey-850, #121212), so
-	// the model stands on the band itself rather than in a box inside it.
-	sweepLight: '#121212',
-	sweepDark: '#121212',
+	// Studio: on. The backdrop matches the R1 explorer's panel (grey-825,
+	// #1a1a1a), so the model stands on the panel itself.
+	sweepLight: '#1a1a1a',
+	sweepDark: '#1a1a1a',
 	sweepAngle: 0,
 	sweepMid: 0.49,
 	sweepSpread: 1,

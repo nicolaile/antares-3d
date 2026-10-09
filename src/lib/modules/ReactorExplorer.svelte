@@ -1,8 +1,9 @@
 <!--
 	@component
-	The features as a numbered strip of tabs (01–07) across the top, the
-	open one widened to carry its title and description, and the CAD under
-	it across the full width: each feature names the model it's shown on
+	The features as a strip of numbered card tabs across the top, scrolling
+	sideways when they overflow, and under it a panel with the open
+	feature's title and description in its corner, a scale rule beside the
+	model, and arrows to step through the features. The CAD fills the panel: each feature names the model it's shown on
 	(Mark-0 for the reactor, the power conversion system after), and the
 	stage cuts between them, one model at a time. Each feature has its
 	point on its model (cadPoints.ts, unmarked), and the model turns to
@@ -78,12 +79,19 @@
 	import type { ModelViewer } from '$lib/three/ModelViewer';
 	import { CAD_POINTS } from '$lib/three/cadPoints';
 	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { InertiaPlugin } from 'gsap/InertiaPlugin';
+	import { SplitText } from 'gsap/SplitText';
+	import chevronLeft from '$lib/assets/icons/chevron-left.svg?raw';
+	import chevronRight from '$lib/assets/icons/chevron-right.svg?raw';
 
 	let {
 		features,
-		models
+		models,
+		scale
 	}: {
 		features: Feature[];
+		/** The scale rule's label beside the model, e.g. its height. */
+		scale?: string;
 		/** Each model's files and setup. */
 		models: Partial<Record<CadModel, CadModelSetup>>;
 	} = $props();
@@ -207,8 +215,181 @@
 		if (incoming) fade.to(incoming, { ...showVars(incoming), duration: 0.6 * k, ease: 'power1.out' }, HANDOFF.in * k);
 	});
 
+	let tabsEl: HTMLOListElement;
+	/** A drag just ended: the click it ends on isn't a pick. */
+	let dragged = false;
+
+	/** How far the strip scrolls to bring tab `i` to its left edge, on the grid line. */
+	const scrollTo = (i: number) => {
+		const tabs = tabsEl.children as HTMLCollectionOf<HTMLElement>;
+		return tabs[i].offsetLeft - tabs[0].offsetLeft;
+	};
+	const maxScroll = () => tabsEl.scrollWidth - tabsEl.clientWidth;
+
 	function select(i: number) {
-		if (i !== active) active = i;
+		if (i === active) return;
+		active = i;
+		// The strip eases the picked tab to the middle every time (as far as
+		// its ends allow), so the strip always answers the same way. It takes
+		// over from a fling or an earlier pick still under way.
+		const tab = tabsEl.children[i] as HTMLElement;
+		// (The strip is positioned, so a tab's offsetLeft is measured in it.)
+		const middle = tab.offsetLeft - (tabsEl.clientWidth - tab.offsetWidth) / 2;
+		gsap.to(tabsEl, {
+			scrollLeft: gsap.utils.clamp(0, maxScroll(), middle),
+			duration: prefersReducedMotion() ? 0 : 0.7,
+			ease: 'expo.out',
+			overwrite: 'auto'
+		});
+	}
+	const step = (d: number) => select((active + d + features.length) % features.length);
+
+	/**
+	 * The open feature's title and description, in the panel's corner. A
+	 * pick fades the old words away quickly, then the new ones come in line
+	 * by line: each rises a little as it fades up, the title first, the
+	 * description's lines just after, so the text settles rather than
+	 * appears. Picked again mid-change, the change
+	 * under way gives way to the new one.
+	 */
+	let detailEl: HTMLDivElement;
+	/**
+	 * The feature the panel's words are for: catches up with `active` once
+	 * the old words are out. Written in by hand, not by the template:
+	 * SplitText swaps the text nodes out for its lines and back, and Svelte
+	 * would go on updating the ones it made, no longer on the page.
+	 */
+	let said = untrack(() => active);
+	const firstWords = untrack(() => ({ title: features[active].title, text: features[active].text }));
+	let words: gsap.core.Timeline | gsap.core.Tween | null = null;
+	let split: SplitText | null = null;
+	$effect(() => {
+		const next = active;
+		untrack(() => {
+			if (next === said && !words) return;
+			const blocks = [...detailEl.children] as HTMLElement[];
+			const reduce = prefersReducedMotion();
+			words?.kill();
+			split?.revert();
+			split = null;
+			words = gsap.to(blocks, {
+				autoAlpha: 0,
+				duration: 0.2,
+				ease: 'power2.in',
+				onComplete: () => {
+					said = next;
+					blocks[0].textContent = features[next].title;
+					blocks[1].textContent = features[next].text;
+					reveal(blocks, reduce);
+				}
+			});
+		});
+	});
+	function reveal(blocks: HTMLElement[], reduce: boolean) {
+		gsap.registerPlugin(SplitText);
+		gsap.set(blocks, { autoAlpha: 1 });
+		if (reduce) {
+			words = gsap.fromTo(blocks, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2, onComplete: () => (words = null) });
+			return;
+		}
+		split = SplitText.create(blocks, { type: 'lines' });
+		words = gsap.fromTo(
+			split.lines,
+			{ autoAlpha: 0, y: 10 },
+			{
+				autoAlpha: 1,
+				y: 0,
+				duration: 0.9,
+				ease: 'power3.out',
+				stagger: 0.07,
+				// Back to plain text once it's in, so it rewraps with the panel.
+				onComplete: () => {
+					split?.revert();
+					split = null;
+					words = null;
+				}
+			}
+		);
+	}
+
+	/** Arrow keys step along the strip, focus following the open tab. */
+	function onTabKey(e: KeyboardEvent) {
+		const to = { ArrowRight: active + 1, ArrowLeft: active - 1, Home: 0, End: features.length - 1 }[e.key];
+		if (to === undefined) return;
+		e.preventDefault();
+		const i = (to + features.length) % features.length;
+		select(i);
+		(tabsEl.children[i]?.querySelector('button') as HTMLElement | null)?.focus({ preventScroll: true });
+	}
+
+	/**
+	 * With a mouse, the strip drags: flung, it glides on (InertiaPlugin) and
+	 * settles with a tab's edge on the grid line. A drag never picks the tab
+	 * it ends on. Touch keeps the browser's own swipe, which already feels
+	 * right there. (Draggable's scroll mode wraps the tabs in a div of its
+	 * own, which the strip's layout and Svelte both need not to happen.)
+	 * Returns the cleanup.
+	 */
+	function dragStrip() {
+		if (!matchMedia('(pointer: fine)').matches) return () => {};
+		gsap.registerPlugin(InertiaPlugin);
+		/** Where the nearest tab edge is to scroll position `x` (or the strip's end). */
+		const settle = (x: number) => {
+			const stops = [...features.keys()].map(scrollTo).filter((s) => s < maxScroll()).concat(maxScroll());
+			return stops.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+		};
+		let from: { x: number; scroll: number } | null = null;
+		/** The last few moves, for the speed it's let go at. */
+		let trail: { x: number; t: number }[] = [];
+		const down = (e: PointerEvent) => {
+			if (e.pointerType !== 'mouse' || e.button !== 0) return;
+			gsap.killTweensOf(tabsEl);
+			from = { x: e.clientX, scroll: tabsEl.scrollLeft };
+			trail = [{ x: e.clientX, t: e.timeStamp }];
+		};
+		const move = (e: PointerEvent) => {
+			if (!from) return;
+			const dx = e.clientX - from.x;
+			if (!dragged && Math.abs(dx) < 6) return;
+			if (!dragged) {
+				dragged = true;
+				tabsEl.setPointerCapture(e.pointerId);
+				tabsEl.classList.add('dragging');
+			}
+			tabsEl.scrollLeft = from.scroll - dx;
+			trail = [...trail, { x: e.clientX, t: e.timeStamp }].filter((p) => e.timeStamp - p.t < 100);
+		};
+		const up = (e: PointerEvent) => {
+			if (!from) return;
+			from = null;
+			if (!dragged) return;
+			tabsEl.classList.remove('dragging');
+			if (tabsEl.hasPointerCapture(e.pointerId)) tabsEl.releasePointerCapture(e.pointerId);
+			const first = trail[0];
+			const dt = (e.timeStamp - first.t) / 1000;
+			// px/s, the scroll's way round: dragging left scrolls right.
+			const velocity = dt > 0 ? -(e.clientX - first.x) / dt : 0;
+			if (prefersReducedMotion()) gsap.to(tabsEl, { scrollLeft: settle(tabsEl.scrollLeft), duration: 0.2 });
+			else
+				gsap.to(tabsEl, {
+					// The glide's length follows the fling: 0.4s for a nudge, up to 1.4s.
+					inertia: { scrollLeft: { velocity, end: settle, min: 0, max: maxScroll() }, duration: { min: 0.4, max: 1.4 } },
+					ease: 'expo.out'
+				});
+			// The click this drag ends on still fires; it isn't a pick.
+			requestAnimationFrame(() => (dragged = false));
+		};
+		tabsEl.addEventListener('pointerdown', down);
+		tabsEl.addEventListener('pointermove', move);
+		tabsEl.addEventListener('pointerup', up);
+		tabsEl.addEventListener('pointercancel', up);
+		return () => {
+			tabsEl.removeEventListener('pointerdown', down);
+			tabsEl.removeEventListener('pointermove', move);
+			tabsEl.removeEventListener('pointerup', up);
+			tabsEl.removeEventListener('pointercancel', up);
+			gsap.killTweensOf(tabsEl);
+		};
 	}
 
 	/**
@@ -264,6 +445,8 @@
 	const TURN_IN = { from: -Math.PI / 2, duration: 2.4, ease: 'power3.out' };
 	let viewportEl: HTMLDivElement;
 	let revealed = false;
+	/** The section has come into view: the rule waits for it before drawing. */
+	let seen = $state(false);
 	let turnedIn = false;
 	let turnIn: gsap.core.Tween | null = null;
 	$effect(() => {
@@ -277,10 +460,55 @@
 	}
 	function onRevealed() {
 		revealed = true;
+		seen = true;
 		if (viewer && !turnedIn) spinIn(viewer);
 	}
 
+	/**
+	 * The scale rule frames the reactor's height on the first feature only.
+	 * Coming in, its line draws down from the top, ticks and all, and the
+	 * label fades up beside the top once the line is under way; leaving, it
+	 * fades. It waits for the section to come into view, and for the model
+	 * to be back on stage when returning from another one.
+	 */
+	const RULE_ON = 0;
+	let ruleEl = $state<HTMLDivElement>();
+	let ruleLabelEl = $state<HTMLSpanElement>();
+	let ruleTl: gsap.core.Timeline | null = null;
+	let ruleShown = false;
+	$effect(() => {
+		const show = seen && active === RULE_ON;
+		const el = ruleEl;
+		const label = ruleLabelEl;
+		if (!el || !label) return;
+		untrack(() => {
+			// Clipped from the bottom up; open above and to the right so the
+			// label, which sits across the top edge, isn't cut.
+			const shut = 'inset(-50% -100vw 100% -50%)';
+			const open = 'inset(-50% -100vw 0% -50%)';
+			if (ruleTl === null && !ruleShown && !show) {
+				gsap.set(el, { autoAlpha: 0, clipPath: shut });
+				return;
+			}
+			if (show === ruleShown) return;
+			ruleShown = show;
+			ruleTl?.kill();
+			const reduce = prefersReducedMotion();
+			if (show) {
+				ruleTl = gsap
+					.timeline({ delay: reduce ? 0 : HANDOFF.in })
+					.set(el, { autoAlpha: 1, clipPath: reduce ? open : shut })
+					.set(label, { autoAlpha: 0, y: reduce ? 0 : 6 })
+					.to(el, { clipPath: open, duration: reduce ? 0 : 1.1, ease: 'power3.inOut' }, 0)
+					.to(label, { autoAlpha: 1, y: 0, duration: reduce ? 0.2 : 0.6, ease: 'power3.out' }, reduce ? 0 : 0.45);
+			} else {
+				ruleTl = gsap.timeline().to(el, { autoAlpha: 0, duration: 0.25, ease: 'power1.in' }).set(el, { clipPath: shut });
+			}
+		});
+	});
+
 	onMount(() => {
+		const undrag = dragStrip();
 		viewportEl.addEventListener('reveal', onRevealed, { once: true });
 		const grab = () => turnIn?.kill();
 		viewportEl.addEventListener('pointerdown', grab);
@@ -291,23 +519,18 @@
 			viewportEl.removeEventListener('reveal', onRevealed);
 			viewportEl.removeEventListener('pointerdown', grab);
 			turnIn?.kill();
+			undrag();
 		};
 	});
 
 </script>
 
 <div class="explorer">
-	<ol class="tabs" style:--count={features.length} onpointerover={onTabIntent} onfocusin={onTabIntent}>
+	<ol class="tabs" bind:this={tabsEl} onpointerover={onTabIntent} onfocusin={onTabIntent} onkeydown={onTabKey}>
 		{#each features as feature, i (feature.title)}
-			<FeatureTab index={i} title={feature.title} text={feature.text} open={i === active} onselect={() => select(i)} />
+			<FeatureTab index={i} title={feature.title} open={i === active} onselect={() => !dragged && select(i)} />
 		{/each}
 	</ol>
-
-	<!-- Phones: the open feature under the strip, too narrow to sit in its tab. -->
-	<p class="detail type-body-default">
-		<span>{features[active].title}</span>
-		<span class="detail-text">{features[active].text}</span>
-	</p>
 
 	<div class="viewport" bind:this={viewportEl}>
 		<!-- Every model stays mounted, so switching never reloads one; those
@@ -353,6 +576,23 @@
 			{/if}
 		{/each}
 
+		<div class="detail" bind:this={detailEl}>
+			<!-- The opening feature's words; each pick writes its own in (see `reveal`). -->
+			<h3 class="detail-title type-body-default">{firstWords.title}</h3>
+			<p class="detail-text type-caption">{firstWords.text}</p>
+		</div>
+
+		{#if scale}
+			<div class="rule" aria-hidden="true" bind:this={ruleEl}>
+				<span class="rule-label type-caption" bind:this={ruleLabelEl}>{scale}</span>
+			</div>
+		{/if}
+
+		<div class="steps">
+			<button type="button" class="step" aria-label="Previous feature" onclick={() => step(-1)}>{@html chevronLeft}</button>
+			<button type="button" class="step" aria-label="Next feature" onclick={() => step(1)}>{@html chevronRight}</button>
+		</div>
+
 		<div class="pause" data-tool>
 			<IconButton label={paused ? 'Resume rotation' : 'Pause rotation'} pressed={paused} onclick={() => (paused = !paused)}>
 				<svg viewBox="0 0 12 12" aria-hidden="true">
@@ -392,44 +632,153 @@
 	}
 
 	/* The strip and the stage together fill the screen: the stage takes
-	   whatever the strip leaves. */
+	   whatever the strip leaves, a touch short so the panel's foot shows. */
 	.explorer {
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr);
-		height: 100svh;
+		/* 6px at 1440, between the tabs and down to the panel alike. */
+		--gap: calc(var(--size-font) * 0.375);
+		row-gap: var(--gap);
+		height: 92svh;
 	}
 
-	/* The strip: a hairline across the row, the tabs hung from it, 38px
-	   tall at 1440 (a 22px badge, 8px clear above and below). Widths in the
-	   strip's own units: a closed tab 5 base units (80px at 1440), the open
-	   one four and a half of the page's columns (516px at 1440), room for
-	   the longest title at 16px. */
+	/* The strip: card tabs a little over a fifth of the row wide (335px at
+	   1440), so the last ones run off the edge and the strip scrolls. It
+	   runs out to both edges of the screen, padded back in so the first tab
+	   starts on the grid line: scrolled, the tabs slide off the screen's
+	   edge rather than being cut at the column's. */
 	.tabs {
-		--strip-height: calc(var(--size-font) * 2.375);
-		--closed-width: calc(var(--size-font) * 5);
-		--open-width: calc((100cqw - 11 * var(--grid-gutter)) / 12 * 4.5 + 4 * var(--grid-gutter));
-		container-type: inline-size;
+		--tab-width: calc(var(--size-font) * 21);
 		position: relative;
 		z-index: 1;
 		display: flex;
-		margin: 0;
-		padding: 0;
-		border-top: 1px solid var(--grey-775);
+		gap: var(--gap);
+		margin: 0 calc(var(--grid-margin) * -1);
+		padding: 0 var(--grid-margin);
+		scroll-padding-inline: var(--grid-margin);
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
 		list-style: none;
 	}
-	.detail {
+	/* A mouse drags it (the script settles it on a tab); touch swipes it
+	   natively, settling on a tab. */
+	@media (pointer: fine) {
+		.tabs {
+			cursor: grab;
+		}
+		.tabs:global(.dragging),
+		.tabs:global(.dragging) :global(*) {
+			cursor: grabbing;
+		}
+	}
+	@media (pointer: coarse) {
+		.tabs {
+			scroll-snap-type: x proximity;
+		}
+	}
+	.tabs::-webkit-scrollbar {
 		display: none;
 	}
 
-	/* The model framed in its middle, on the band itself. Its top edge
-	   fades rather than cuts: what runs up under the strip and
-	   the open tab's description melts into the band instead of stopping at a
-	   line, and the text reads clear over it. */
+	/* The panel: a lifted card the model sits in, the feature in its top
+	   corner, the steps in its bottom one. */
 	.viewport {
 		position: relative;
 		overflow: hidden;
-		mask-image: linear-gradient(to bottom, transparent, black calc(var(--size-font) * 9));
+		border-radius: var(--stage-radius);
+		background: var(--grey-825);
+	}
+	.detail {
+		position: absolute;
+		top: var(--space-64);
+		left: var(--space-16);
+		z-index: 1;
+		width: calc(var(--size-font) * 20);
+		pointer-events: none;
+	}
+	.detail-title,
+	.detail-text {
+		margin: 0;
+	}
+	.detail-text {
+		margin-top: var(--space-16);
+		color: var(--grey-400);
+	}
+
+	/* The scale rule, right of the model: a vertical hairline with ticks
+	   and its label at the top, framing the vessel's height. */
+	.rule {
+		--tick: calc(var(--size-font) * 0.625);
+		position: absolute;
+		top: 15%;
+		bottom: 15%;
+		left: 67%;
+		width: var(--tick);
+		border-left: 1px solid var(--grey-500);
+		background: repeating-linear-gradient(to bottom, var(--grey-500) 0 1px, transparent 1px 20%) left / var(--tick) calc(100% + 1px) no-repeat;
+		pointer-events: none;
+	}
+	.rule::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: calc(var(--size-font) * 3);
+		border-top: 1px solid var(--grey-500);
+	}
+	.rule::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: var(--tick);
+		border-top: 1px solid var(--grey-500);
+	}
+	.rule-label {
+		position: absolute;
+		top: 0;
+		left: calc(var(--size-font) * 3.5);
+		translate: 0 -50%;
+		color: var(--grey-300);
+		white-space: nowrap;
+	}
+
+	.steps {
+		position: absolute;
+		left: var(--space-16);
+		bottom: var(--space-16);
+		z-index: 1;
+		display: flex;
+		gap: var(--space-8);
+	}
+	.step {
+		display: grid;
+		place-items: center;
+		width: calc(var(--size-font) * 1.5);
+		height: calc(var(--size-font) * 1.5);
+		padding: 0;
+		border: 0;
+		border-radius: var(--stage-radius);
+		background: var(--grey-775);
+		color: var(--grey-0);
+		cursor: pointer;
+		transition: background 0.25s ease;
+	}
+	.step:hover {
+		background: var(--grey-750);
+	}
+	.step:focus-visible {
+		outline: 1px solid var(--grey-0);
+		outline-offset: 2px;
+	}
+	.step :global(svg) {
+		width: calc(var(--size-font) * 0.875);
+		height: auto;
+	}
+	.step :global(path) {
+		stroke: currentColor;
 	}
 	/* Each model and each panel fill the stage, stacked; GSAP fades between
 	   them (see the script). Panels start hidden: the page opens on a model. */
@@ -496,43 +845,41 @@
 
 	.pause {
 		position: absolute;
-		right: 0;
-		bottom: var(--space-24);
+		right: var(--space-16);
+		bottom: var(--space-16);
 	}
 
-	/* Phones: the tabs share the row equally, numbers only, and the open
-	   feature reads under them. */
+	/* Phones: narrower tabs, still scrolling; the panel square, the
+	feature over the model's top. */
 	@media screen and (max-width: 767px) {
 		.explorer {
 			grid-template-rows: none;
 			height: auto;
 		}
 		.tabs {
-			--closed-width: calc(100cqw / var(--count));
-			--open-width: var(--closed-width);
-		}
-		.tabs :global(.copy) {
-			display: none;
-		}
-		.detail {
-			display: grid;
-			margin: var(--space-16) 0 0;
-		}
-		.detail-text {
-			color: var(--grey-400);
+			--tab-width: calc(var(--size-font) * 14);
 		}
 		.viewport {
 			height: auto;
-			aspect-ratio: 1;
+			aspect-ratio: 3 / 4.4;
 		}
-		/* No room beside the image: the figure takes the top corner. */
+		.detail {
+			top: var(--space-16);
+			width: auto;
+			right: var(--space-16);
+		}
+		/* The model starts under the description, not behind it. */
+		.layer {
+			top: calc(var(--size-font) * 9);
+		}
+		.rule {
+			display: none;
+		}
+		/* No room beside the image: the figure takes the bottom corner. */
 		.figure {
-			top: 0;
-			left: 0;
-		}
-		.pause {
-			top: var(--space-24);
-			bottom: auto;
+			top: auto;
+			bottom: var(--space-64);
+			left: var(--space-16);
 		}
 	}
 </style>

@@ -70,7 +70,7 @@
 	}
 </script>
 
-<section class="capabilities" aria-labelledby="{id}-label">
+<section class="capabilities" class:headed={intro} aria-labelledby="{id}-label">
 	{#if intro}
 		<Row>
 			<Cell span={3} tablet={{ span: 5 }}>
@@ -145,6 +145,10 @@
 		border: 1px solid var(--grey-200);
 		border-radius: var(--card-radius);
 		list-style: none;
+	}
+	/* Under the heading and intro, 56px at 1440 (between the 48 and 64 steps). */
+	.headed .list {
+		margin-top: calc(var(--size-font) * 3.5);
 	}
 	.item + .item {
 		border-top: 1px solid var(--grey-200);

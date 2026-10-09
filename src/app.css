@@ -62,7 +62,13 @@
 	--card-padding: calc(var(--size-font) * 1.25);
 	/* The wordmark at rest in the top-left corner: 12px tall at 1440. Home's
 	   hero shrinks to it; BrandMark holds it on every other page. */
-	--wordmark-rest: calc(var(--size-font) * 0.75);
+	--wordmark-rest: calc(var(--size-font) * 1.25);
+	/* The header: a 68px band at 1440 (the bar behind it, when it shows),
+	   the 34px menu button centred in it, 17px from the top, and the
+	   wordmark centred on the same line. */
+	--header-height: calc(var(--size-font) * 4.25);
+	--header-button: calc(var(--size-font) * 2.125);
+	--header-top: calc((var(--header-height) - var(--header-button)) / 2);
 	/* The controls toggle, and the explorer's pause button. */
 	--toggle-size: calc(var(--size-font) * 2);
 }

@@ -1,114 +1,29 @@
 <!--
 	@component
-	One tab in the R1 feature strip: a number on a grey badge in the top
-	left of a narrow cell, divided from its neighbours by a hairline. Open,
-	the cell widens, the badge turns orange with the title beside it, and
-	the description hangs below the strip, in line with the badge. The strip
-	decides which tab is open.
+	One tab in the R1 feature strip: a card with a number on a grey badge
+	and the feature's title beside it. Open, the badge turns orange. The
+	strip decides which tab is open, and the open feature's description
+	reads in the stage below, not here.
 -->
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
-
 	let {
 		index,
 		title,
-		text,
 		open = false,
 		onselect
 	}: {
 		/** Zero-based; shown as 1, 2, … */
 		index: number;
 		title: string;
-		text: string;
 		open?: boolean;
 		onselect: () => void;
 	} = $props();
-
-	const number = $derived(String(index + 1));
-
-	let tab: HTMLLIElement;
-	let copyEl: HTMLSpanElement;
-	let tl: gsap.core.Timeline | null = null;
-
-	/** A width variable in px, resolved inside the strip. */
-	function px(name: string) {
-		const probe = document.createElement('span');
-		probe.style.cssText = `position:absolute;visibility:hidden;width:var(${name})`;
-		tab.appendChild(probe);
-		const w = probe.getBoundingClientRect().width;
-		probe.remove();
-		return w;
-	}
-
-	/**
-	 * Hovered, a closed tab pushes out just far enough to show its title
-	 * beside the badge, and draws back in when the pointer leaves.
-	 */
-	function peek(show: boolean) {
-		if (open || prefersReducedMotion()) return;
-		tl?.kill();
-		const title = copyEl.firstElementChild as HTMLElement;
-		const to = show
-			? copyEl.getBoundingClientRect().left - tab.getBoundingClientRect().left + title.offsetWidth + parseFloat(getComputedStyle(copyEl.parentElement!).paddingLeft) * 2.5
-			: px('--closed-width');
-		tl = gsap
-			.timeline({ onComplete: () => { if (!show) gsap.set(tab, { clearProps: 'width' }); } })
-			.to(tab, show ? { width: to, duration: 0.45, ease: 'expo.out' } : { width: to, duration: 0.4, ease: 'power3.inOut' }, 0)
-			.to(copyEl, show ? { autoAlpha: 1, duration: 0.3, ease: 'sine.out' } : { autoAlpha: 0, duration: 0.2, ease: 'sine.in' }, show ? 0.08 : 0);
-	}
-
-	/** The state last animated to. */
-	let target = untrack(() => open);
-
-	/**
-	 * The width runs the same length and curve both ways, so the tab closing
-	 * and the tab opening move in lockstep and the strip keeps its length.
-	 * Widths come from the strip's stylesheet (--closed-width, --open-width,
-	 * in its container units), read at the moment.
-	 */
-	const WIDTH = { duration: 0.5, ease: 'power3.inOut' };
-
-	/** The tab's width before `open` changed the layout, read ahead of the DOM update. */
-	let from = 0;
-	$effect.pre(() => {
-		if (open !== target && tab) from = tab.getBoundingClientRect().width;
-	});
-
-	$effect(() => {
-		const next = open;
-		if (next === target) return;
-		target = next;
-		tl?.kill();
-
-		if (prefersReducedMotion()) {
-			gsap.set(tab, { clearProps: 'width' });
-			gsap.set(copyEl, { autoAlpha: next ? 1 : 0 });
-			return;
-		}
-		const to = px(next ? '--open-width' : '--closed-width');
-		tl = gsap
-			.timeline({ onComplete: () => gsap.set(tab, { clearProps: 'width' }) })
-			.fromTo(tab, { width: from }, { width: to, ...WIDTH }, 0);
-		// The copy follows the width in, and leaves before it narrows.
-		// Already peeking from a hover, the title stays put and carries on.
-		if (next) tl.to(copyEl, { autoAlpha: 1, duration: 0.4, ease: 'power2.out' }, gsap.getProperty(copyEl, 'opacity') ? 0 : WIDTH.duration * 0.45);
-		else tl.to(copyEl, { autoAlpha: 0, duration: 0.15, ease: 'power2.in' }, 0);
-
-		return () => tl?.kill();
-	});
 </script>
 
-<li class="tab" class:open bind:this={tab}>
-	<button type="button" class="face" aria-expanded={open} onclick={onselect}
-		onpointerenter={() => peek(true)}
-		onpointerleave={() => peek(false)}
-	>
-		<span class="number type-annotation type-tabular">{number}</span>
-		<span class="copy" bind:this={copyEl} style:visibility={untrack(() => (open ? null : 'hidden'))}>
-			<span class="title type-body-default">{title}</span>
-			<span class="text type-body-default">{text}</span>
-		</span>
+<li class="tab" class:open>
+	<button type="button" class="face" aria-pressed={open} onclick={onselect}>
+		<span class="number type-annotation type-tabular">{index + 1}</span>
+		<span class="title type-body-default">{title}</span>
 	</button>
 </li>
 
@@ -116,49 +31,39 @@
 	.tab {
 		--badge: calc(var(--size-font) * 1.375);
 		flex: none;
-		width: var(--closed-width);
-		height: var(--strip-height);
-		box-sizing: border-box;
-		border-left: 1px solid var(--grey-775);
-		/* Sideways the tab trims its copy as it narrows; downwards the open
-		   description hangs below the strip. */
-		overflow-x: clip;
-	}
-	.tab.open {
-		width: var(--open-width);
-	}
-	/* A hovered closed tab peeks its title only, not the description. */
-	.tab:not(.open) .text {
-		display: none;
+		width: var(--tab-width);
+		scroll-snap-align: start;
 	}
 
-	/* The badge sits in the top-left corner, as far in from the hairline
-	   as from the strip's top and bottom (8px at 1440), open or closed; the
-	   title beside it. */
+	/* 48px tall at 1440: the badge 13px in from the card's edges, the
+	   title beside it on one line. */
 	.face {
-		--inset: calc((var(--strip-height) - var(--badge)) / 2);
-		position: relative;
 		display: flex;
-		align-items: flex-start;
-		gap: var(--space-24);
+		align-items: center;
+		gap: var(--space-16);
 		width: 100%;
-		height: 100%;
+		height: calc(var(--size-font) * 3);
 		box-sizing: border-box;
-		padding: var(--inset);
+		padding: 0 calc((var(--size-font) * 3 - var(--badge)) / 2);
 		border: 0;
-		background: none;
+		border-radius: var(--stage-radius);
+		background: var(--grey-825);
 		color: var(--grey-0);
 		text-align: left;
+		white-space: nowrap;
 		cursor: pointer;
+		transition: background 0.25s ease;
+	}
+	.face:hover {
+		background: var(--grey-800);
 	}
 	.face:focus-visible {
 		outline: 1px solid var(--grey-0);
 		outline-offset: -1px;
 	}
 
-	/* Grey while closed, the accent once open. Swaps at once, no
-	   transition: fading the fill and the number together passes through a
-	   moment where they're the same shade, and the number flickers. */
+	/* Grey while closed, the accent once open. Swaps at once: fading the
+	   fill and the number together flickers the number. */
 	.number {
 		flex: none;
 		display: grid;
@@ -168,27 +73,15 @@
 		border-radius: var(--stage-radius);
 		background: var(--grey-775);
 	}
-	.open .number {
+	.face:hover .number {
+		background: var(--grey-750);
+	}
+	.open .number,
+	.open .face:hover .number {
 		background: var(--accent-500);
 	}
-
-	/* The title on one line, 16px, centred on the badge. */
-	.copy {
-		display: flex;
-		flex: none;
-		align-items: center;
-		height: var(--badge);
-		white-space: nowrap;
+	.title {
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-	/* Below the strip, in line with the badge: 320px wide at 1440, a fixed
-	   measure so it never rewraps as the tab widens. */
-	.text {
-		position: absolute;
-		top: calc(100% + var(--space-24));
-		left: var(--inset);
-		width: calc(var(--size-font) * 20);
-		color: var(--grey-400);
-		white-space: normal;
-	}
-
 </style>

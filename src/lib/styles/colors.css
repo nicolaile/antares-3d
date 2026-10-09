@@ -36,6 +36,8 @@
 	--grey-775: #343535;
 	/** Raised surfaces on dark: the cards and stage inside a dark band. Also article body copy, a step softer than primary text. */
 	--grey-800: #242424;
+	/** The R1 explorer's containers on dark: its tab cards and model panel. */
+	--grey-825: #1a1a1a;
 	/** Dark backgrounds: the R1 band and the diagram's stage, the Updates page and its footer. */
 	--grey-850: #121212;
 	/** Primary text and active fills. Warm, never pure black. */

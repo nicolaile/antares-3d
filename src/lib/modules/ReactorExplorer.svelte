@@ -216,6 +216,29 @@
 	});
 
 	let tabsEl: HTMLOListElement;
+	/**
+	 * Whether there are tabs scrolled out of view on either side: on screens
+	 * wider than the content column, where the strip stops at the panel's
+	 * edges, those edges fade (see the styles).
+	 */
+	const more = { left: false, right: false };
+	function edges() {
+		const left = tabsEl.scrollLeft > 1;
+		const right = tabsEl.scrollLeft < maxScroll() - 1;
+		if (left === more.left && right === more.right) return;
+		more.left = left;
+		more.right = right;
+		// 48px at 1440, eased in or out as tabs go out of view or come back.
+		const fade = parseFloat(getComputedStyle(document.body).fontSize) * 3;
+		gsap.to(tabsEl, {
+			'--fade-left': `${left ? fade : 0}px`,
+			'--fade-right': `${right ? fade : 0}px`,
+			duration: 0.35,
+			ease: 'power2.out',
+			overwrite: 'auto'
+		});
+	}
+
 	/** A drag just ended: the click it ends on isn't a pick. */
 	let dragged = false;
 
@@ -338,44 +361,98 @@
 			const stops = [...features.keys()].map(scrollTo).filter((s) => s < maxScroll()).concat(maxScroll());
 			return stops.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
 		};
-		let from: { x: number; scroll: number } | null = null;
+		/**
+		 * The drag works on a position of its own, `at`, which may run past
+		 * the strip's ends: within them it's the scroll; past them the tabs
+		 * stretch on with growing resistance (`pull`) and spring back on
+		 * release. While dragging it eases toward the pointer on GSAP's
+		 * ticker, frame by frame and trailing it by a hair, so it glides
+		 * rather than stepping with every mouse event.
+		 */
+		const at = { x: 0 };
+		/** How far the tabs stretch for `over` px dragged past an end: never more than STRETCH. */
+		const STRETCH = parseFloat(getComputedStyle(document.body).fontSize) * 6;
+		const pull = (over: number) => Math.sign(over) * STRETCH * (1 - 1 / ((Math.abs(over) / STRETCH) * 0.55 + 1));
+		const apply = () => {
+			const scroll = gsap.utils.clamp(0, maxScroll(), at.x);
+			tabsEl.scrollLeft = scroll;
+			tabsEl.style.setProperty('--pull', `${-pull(at.x - scroll)}px`);
+		};
+		/** Where the pointer has taken the drag; `at` closes on it each frame. */
+		let target = 0;
+		/** Share of the gap closed per frame at 60fps: about 0.2s to all but catch up. */
+		const CATCH = 0.3;
+		const chase = (_t: number, delta: number) => {
+			const k = 1 - Math.pow(1 - CATCH, delta / (1000 / 60));
+			at.x += (target - at.x) * k;
+			if (Math.abs(target - at.x) < 0.1) at.x = target;
+			apply();
+		};
+		const startChase = () => gsap.ticker.add(chase);
+		const stopChase = () => gsap.ticker.remove(chase);
+		/** The spring back from past an end. */
+		let spring: gsap.core.Tween | null = null;
+
+		/** The pointer's x and the drag position when the drag took hold. */
+		let from: { x: number; at: number } | null = null;
+		let pressed = false;
+		let pressX = 0;
 		/** The last few moves, for the speed it's let go at. */
 		let trail: { x: number; t: number }[] = [];
 		const down = (e: PointerEvent) => {
 			if (e.pointerType !== 'mouse' || e.button !== 0) return;
 			gsap.killTweensOf(tabsEl);
-			from = { x: e.clientX, scroll: tabsEl.scrollLeft };
+			spring?.kill();
+			stopChase();
+			at.x = target = tabsEl.scrollLeft;
+			pressed = true;
+			pressX = e.clientX;
+			from = null;
 			trail = [{ x: e.clientX, t: e.timeStamp }];
 		};
 		const move = (e: PointerEvent) => {
-			if (!from) return;
-			const dx = e.clientX - from.x;
-			if (!dragged && Math.abs(dx) < 6) return;
-			if (!dragged) {
+			if (!pressed) return;
+			if (!from) {
+				if (Math.abs(e.clientX - pressX) < 6) return;
+				// Measured from where it takes hold, 6px along from the press, so
+				// the strip doesn't lurch to catch up the threshold (but keeps
+				// all of a fast first move past it).
+				from = { x: pressX + Math.sign(e.clientX - pressX) * 6, at: at.x };
 				dragged = true;
 				tabsEl.setPointerCapture(e.pointerId);
 				tabsEl.classList.add('dragging');
+				startChase();
 			}
-			tabsEl.scrollLeft = from.scroll - dx;
+			target = from.at - (e.clientX - from.x);
 			trail = [...trail, { x: e.clientX, t: e.timeStamp }].filter((p) => e.timeStamp - p.t < 100);
 		};
 		const up = (e: PointerEvent) => {
+			if (!pressed) return;
+			pressed = false;
 			if (!from) return;
 			from = null;
-			if (!dragged) return;
 			tabsEl.classList.remove('dragging');
 			if (tabsEl.hasPointerCapture(e.pointerId)) tabsEl.releasePointerCapture(e.pointerId);
-			const first = trail[0];
-			const dt = (e.timeStamp - first.t) / 1000;
-			// px/s, the scroll's way round: dragging left scrolls right.
-			const velocity = dt > 0 ? -(e.clientX - first.x) / dt : 0;
-			if (prefersReducedMotion()) gsap.to(tabsEl, { scrollLeft: settle(tabsEl.scrollLeft), duration: 0.2 });
-			else
-				gsap.to(tabsEl, {
-					// The glide's length follows the fling: 0.4s for a nudge, up to 1.4s.
-					inertia: { scrollLeft: { velocity, end: settle, min: 0, max: maxScroll() }, duration: { min: 0.4, max: 1.4 } },
-					ease: 'expo.out'
-				});
+			stopChase();
+			const max = maxScroll();
+			const reduce = prefersReducedMotion();
+			if (at.x < 0 || at.x > max) {
+				// Stretched past an end: springs back to it.
+				spring = gsap.to(at, { x: gsap.utils.clamp(0, max, at.x), duration: reduce ? 0.2 : 0.7, ease: 'expo.out', onUpdate: apply });
+			} else {
+				const first = trail[0];
+				const dt = (e.timeStamp - first.t) / 1000;
+				// px/s, the scroll's way round: dragging left scrolls right.
+				const velocity = dt > 0 ? -(e.clientX - first.x) / dt : 0;
+				apply();
+				if (reduce) gsap.to(tabsEl, { scrollLeft: settle(at.x), duration: 0.2 });
+				else
+					gsap.to(tabsEl, {
+						// The glide's length follows the fling: 0.4s for a nudge, up to 1.4s.
+						inertia: { scrollLeft: { velocity, end: settle, min: 0, max }, duration: { min: 0.4, max: 1.4 } },
+						ease: 'expo.out'
+					});
+			}
 			// The click this drag ends on still fires; it isn't a pick.
 			requestAnimationFrame(() => (dragged = false));
 		};
@@ -389,6 +466,8 @@
 			tabsEl.removeEventListener('pointerup', up);
 			tabsEl.removeEventListener('pointercancel', up);
 			gsap.killTweensOf(tabsEl);
+			spring?.kill();
+			stopChase();
 		};
 	}
 
@@ -509,6 +588,9 @@
 
 	onMount(() => {
 		const undrag = dragStrip();
+		edges();
+		const resized = new ResizeObserver(edges);
+		resized.observe(tabsEl);
 		viewportEl.addEventListener('reveal', onRevealed, { once: true });
 		const grab = () => turnIn?.kill();
 		viewportEl.addEventListener('pointerdown', grab);
@@ -520,13 +602,21 @@
 			viewportEl.removeEventListener('pointerdown', grab);
 			turnIn?.kill();
 			undrag();
+			resized.disconnect();
 		};
 	});
 
 </script>
 
 <div class="explorer">
-	<ol class="tabs" bind:this={tabsEl} onpointerover={onTabIntent} onfocusin={onTabIntent} onkeydown={onTabKey}>
+	<ol
+		class="tabs"
+		bind:this={tabsEl}
+		onpointerover={onTabIntent}
+		onfocusin={onTabIntent}
+		onkeydown={onTabKey}
+		onscroll={edges}
+	>
 		{#each features as feature, i (feature.title)}
 			<FeatureTab index={i} title={feature.title} open={i === active} onselect={() => !dragged && select(i)} />
 		{/each}
@@ -673,9 +763,32 @@
 			cursor: grabbing;
 		}
 	}
+	/* Stretched past an end by a drag (the script's --pull). */
+	.tabs > :global(.tab) {
+		translate: var(--pull, 0px) 0;
+	}
 	@media (pointer: coarse) {
 		.tabs {
 			scroll-snap-type: x proximity;
+		}
+	}
+	/* Wider than the content column (1920, --content-max), the screen's
+	   edges no longer line up with anything: the strip stops where the
+	   panel does, and fades out over 48px (at 1440) on any side where tabs
+	   run on out of view, so it reads as scrolling on rather than cut. The
+	   script eases the fades (--fade-left, --fade-right) in and out. */
+	@media screen and (min-width: 1921px) {
+		.tabs {
+			margin-inline: 0;
+			padding-inline: 0;
+			scroll-padding-inline: 0;
+			mask-image: linear-gradient(
+				to right,
+				transparent,
+				#000 var(--fade-left, 0px),
+				#000 calc(100% - var(--fade-right, 0px)),
+				transparent
+			);
 		}
 	}
 	.tabs::-webkit-scrollbar {

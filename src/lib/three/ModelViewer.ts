@@ -52,6 +52,10 @@ const OPEN_AT = 0.08;
 /** The tone curves the look can take (`tone`). */
 const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMapping, agx: THREE.AgXToneMapping } as const;
 export type Tone = keyof typeof TONES;
+/** The canvas's pixel ratio at most: a retina screen's own. The frame itself is drawn at `maxPixelRatio`. */
+const OUTPUT_PIXEL_RATIO = 2;
+/** How sharply the last pass sharpens the frame it scales up, 0–1 (SweepPass `sharpen`). */
+const SHARPEN = 0.6;
 /** How many pixels a level of detail's error may come to on screen (`chooseLod`). */
 const LOD_PIXELS = 1;
 /** Roughness detail over the finishes (scripts/surface-detail.mjs). */
@@ -423,6 +427,8 @@ export interface RenderParams {
 	tone: Tone;
 	/** 0/1: lit by the studio renders' soft boxes (createSoftboxEnvironment) rather than the HDR. */
 	softbox: number;
+	/** How sharply the frame is sharpened as it's scaled up to the screen, 0–1. */
+	sharpen: number;
 	/** How much of the surface detail shows, 0–1 (roughness varying across a finish). */
 	detail: number;
 	/** The surface detail's tile, metres. */
@@ -1311,7 +1317,12 @@ export class ModelViewer {
 		// scene's own depth is the beauty target's (a 2× screen's worth of
 		// memory saved: 16 MB at 2770×1478).
 		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, depth: false, powerPreference: 'high-performance' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2));
+		// The canvas at the screen's own resolution (a retina screen's 2); the
+		// frame drawn at `maxPixelRatio` (and adaptive quality's steps below
+		// it), scaled up and sharpened by the last pass (SweepPass), as an
+		// upscaler would, rather than left for the browser to blur up.
+		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, OUTPUT_PIXEL_RATIO));
+		this.renderRatio = Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2);
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 		this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1412,7 +1423,7 @@ export class ModelViewer {
 		// Adaptive quality's steps, least seen first: occlusion at half
 		// resolution (its upsample keeps the edges; only fine gaps soften),
 		// then the pixel ratio down, then occlusion off.
-		const ratio = this.renderer.getPixelRatio();
+		const ratio = this.renderRatio;
 		const ao = opts.ao === false ? 0 : (opts.aoScale ?? 1);
 		const ratios = [ratio, ...PIXEL_RATIOS.filter((r) => r < ratio - 0.01)];
 		this.ladder = [{ ratio, ao }];
@@ -1446,6 +1457,7 @@ export class ModelViewer {
 			// transparent canvas. Enabled by the toggle in load(), once the
 			// material exists for the preset and the shade term.
 			this.sweep = new SweepPass(opts.studio ?? {});
+			this.sweep.sharpen = SHARPEN;
 			this.composer.addPass(this.sweep);
 		}
 
@@ -1853,6 +1865,7 @@ export class ModelViewer {
 			exposure: this.renderer.toneMappingExposure,
 			tone: (Object.keys(TONES) as Tone[]).find((k) => TONES[k] === this.renderer.toneMapping) ?? 'aces',
 			softbox: this.softbox ? 1 : 0,
+			sharpen: this.sweep?.sharpen ?? 0,
 			bloom: this.bloom?.strength ?? 0,
 			bloomThreshold: this.bloom?.threshold ?? 1,
 			ao: this.gtao?.blendIntensity ?? 0,
@@ -1937,7 +1950,8 @@ export class ModelViewer {
 			'environment',
 			'exposure',
 			'tone',
-			'softbox'
+			'softbox',
+			'sharpen'
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
@@ -2023,6 +2037,9 @@ export class ModelViewer {
 				break;
 			case 'exposure':
 				this.renderer.toneMappingExposure = n;
+				break;
+			case 'sharpen':
+				if (this.sweep) this.sweep.sharpen = n;
 				break;
 			case 'softbox':
 				this.setSoftbox(n > 0);
@@ -2316,8 +2333,8 @@ export class ModelViewer {
 
 	/** Where adaptive quality stands: its step, the pixel ratio, the drawing buffer's size. */
 	get quality() {
-		const { width, height } = this.renderer.domElement;
-		return { step: this.pace.step, steps: this.ladder.length, ratio: this.renderer.getPixelRatio(), ao: this.aoScale, width, height };
+		const { width, height } = this.composer.renderTarget1;
+		return { step: this.pace.step, steps: this.ladder.length, ratio: this.renderRatio, ao: this.aoScale, width, height };
 	}
 
 	/** Holds adaptive quality at step `i` (0, the full frame), for measuring like with like. */
@@ -2666,20 +2683,24 @@ export class ModelViewer {
 		this.updateFov();
 		this.canvasRect = this.container.getBoundingClientRect();
 		this.renderer.setSize(w, h, false);
-		this.composer.setSize(w, h);
+		// The frame in whole pixels: at a pixel ratio of 1.5 an odd width came
+		// to a half pixel, which the targets dropped and the passes didn't,
+		// stretching the frame by a hair.
+		const rw = Math.round(w * this.renderRatio);
+		const rh = Math.round(h * this.renderRatio);
+		this.composer.setPixelRatio(1);
+		this.composer.setSize(rw, rh);
+		if (this.sweep) {
+			const out = this.renderer.getDrawingBufferSize(this.outputSize);
+			this.sweep.outputSize(out.x, out.y);
+		}
 		// composer.setSize just sized occlusion to the full frame; scale it back.
 		const aoScale = this.aoScale;
-		if (this.gtao && aoScale > 0 && aoScale < 1) {
-			const pr = this.renderer.getPixelRatio();
-			this.gtao.setSize(Math.round(w * pr * aoScale), Math.round(h * pr * aoScale));
-		}
+		if (this.gtao && aoScale > 0 && aoScale < 1) this.gtao.setSize(Math.round(rw * aoScale), Math.round(rh * aoScale));
 		this.invalidate();
 		// composer.setSize just pushed bloom to full resolution — put it back to
 		// half. Full-res bloom is where its blocky mip artifacts come from.
-		if (this.bloom) {
-			const pr = this.renderer.getPixelRatio();
-			this.bloom.setSize(Math.round((w * pr) / 2), Math.round((h * pr) / 2));
-		}
+		if (this.bloom) this.bloom.setSize(Math.round(rw / 2), Math.round(rh / 2));
 	}
 
 	/** The coarser levels of detail the model has, metres (`foldLods`); none for most files. */
@@ -2700,7 +2721,7 @@ export class ModelViewer {
 	private chooseLod() {
 		if (!this.lodErrors.length || this.asleep) return;
 		const nearest = Math.max(this.fitRadius * 0.05, this.camera.position.distanceTo(this.root.position) - this.fitRadius);
-		const pixel = (2 * nearest * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / this.renderer.domElement.height;
+		const pixel = (2 * nearest * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / this.composer.renderTarget1.height;
 		let level = 0;
 		this.lodErrors.forEach((error, i) => {
 			if (error <= pixel * LOD_PIXELS) level = i + 1;
@@ -2939,13 +2960,15 @@ export class ModelViewer {
 		this.pace.step = i;
 		const { ratio, ao } = this.ladder[i];
 		this.aoScale = ao;
-		this.renderer.setPixelRatio(ratio);
-		this.composer.setPixelRatio(ratio);
+		this.renderRatio = ratio;
 		if (this.gtao) this.gtao.enabled = ao > 0;
 		this.syncPasses();
 		this.resize();
 	}
 
+	private outputSize = new THREE.Vector2();
+	/** The pixel ratio the frame is drawn at (the canvas's is the screen's, OUTPUT_PIXEL_RATIO at most). */
+	private renderRatio = 1;
 	/** The steps adaptive quality goes down through, from the full frame. */
 	private ladder: { ratio: number; ao: number }[] = [];
 	/** The occlusion's resolution, a share of the frame's (`aoScale`, then adaptive quality's). */

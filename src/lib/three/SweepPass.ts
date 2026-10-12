@@ -116,7 +116,9 @@ export class SweepPass extends ShaderPass {
 				uGrain: { value: 0.08 },
 				uGrainSize: { value: 2.5 },
 				uGrainSpeed: { value: 0 },
-				uTime: { value: 0 }
+				uTime: { value: 0 },
+				uSharpen: { value: 0 },
+				uTexel: { value: new THREE.Vector2(1, 1) }
 			},
 			vertexShader: /* glsl */ `
 				varying vec2 vUv;
@@ -140,6 +142,8 @@ export class SweepPass extends ShaderPass {
 				uniform float uGrainSize;
 				uniform float uGrainSpeed;
 				uniform float uTime;
+				uniform float uSharpen;
+				uniform vec2 uTexel;
 				varying vec2 vUv;
 
 				${SWEEP_GLSL}
@@ -154,8 +158,34 @@ export class SweepPass extends ShaderPass {
 					return fract( ( p3.x + p3.y ) * p3.z );
 				}
 
+				// The frame, scaled up to the screen (drawn smaller: the viewer's
+				// pixel ratio) and sharpened as it goes: AMD's contrast-adaptive
+				// sharpening (FidelityFX CAS) on the scaled-up image, its four
+				// neighbours a screen pixel away. Edges get back the crispness
+				// the scaling took, by as much as their contrast leaves room for,
+				// so nothing rings and flat areas stay flat. On luma, one weight
+				// for all four channels, so colour and coverage move together.
+				vec4 frame( vec2 uv ) {
+					vec4 c = texture2D( tDiffuse, uv );
+					if ( uSharpen <= 0.0 ) return c;
+					vec4 n = texture2D( tDiffuse, uv + vec2( 0.0, uTexel.y ) );
+					vec4 s = texture2D( tDiffuse, uv - vec2( 0.0, uTexel.y ) );
+					vec4 e = texture2D( tDiffuse, uv + vec2( uTexel.x, 0.0 ) );
+					vec4 w = texture2D( tDiffuse, uv - vec2( uTexel.x, 0.0 ) );
+					float lc = dot( c.rgb, LUMA );
+					float ln = dot( n.rgb, LUMA );
+					float ls = dot( s.rgb, LUMA );
+					float le = dot( e.rgb, LUMA );
+					float lw = dot( w.rgb, LUMA );
+					float lo = min( lc, min( min( ln, ls ), min( le, lw ) ) );
+					float hi = max( lc, max( max( ln, ls ), max( le, lw ) ) );
+					float amp = sqrt( clamp( min( lo, 1.0 - hi ) / max( hi, 1e-4 ), 0.0, 1.0 ) );
+					float k = -amp / mix( 8.0, 5.0, uSharpen );
+					return clamp( ( c + ( n + s + e + w ) * k ) / ( 1.0 + 4.0 * k ), 0.0, 1.0 );
+				}
+
 				void main() {
-					vec4 src = texture2D( tDiffuse, vUv );
+					vec4 src = frame( vUv );
 
 					vec3 bg = sweepToSrgb( sweepLinear( vUv ) );
 					// Dither: breaks the 8-bit steps in the dark end.
@@ -203,6 +233,19 @@ export class SweepPass extends ShaderPass {
 	/** The gradient uniforms, for the material's bounce term to share. */
 	get sweepUniforms(): SweepUniforms {
 		return this.uniforms as unknown as SweepUniforms;
+	}
+
+	/** How sharply the frame is sharpened as it's scaled up to the screen (`frame`), 0 for not at all. */
+	set sharpen(v: number) {
+		this.uniforms.uSharpen.value = v;
+	}
+	get sharpen() {
+		return this.uniforms.uSharpen.value as number;
+	}
+
+	/** The canvas's size, device pixels: one of its pixels is how far the sharpening looks. */
+	outputSize(width: number, height: number) {
+		(this.uniforms.uTexel.value as THREE.Vector2).set(1 / width, 1 / height);
 	}
 
 	/** Called by the composer on resize, in device pixels. */

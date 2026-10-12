@@ -24,11 +24,21 @@ export const LOOK: Partial<RenderParams> = {
 	coatRoughness: 0.5,
 	materialEnv: 0.8,
 
-	// Light
+	// Each part its own finish, as in the studio renders (the landing's
+	// models, scripts/bake-surface.mjs), mapped onto this lighter look at 60%,
+	// with a little roughness detail over them.
+	finish: 0.6,
+	finishFloor: 0.6,
+	polymer: 0.06,
+	detail: 0.35,
+	detailTile: 1.2,
+
+	// Light. The environment up from 0.3: the bake's occlusion takes its
+	// light out of the crevices, so the open surfaces keep theirs.
 	key: 9,
 	rim: 0,
 	ambient: 0,
-	environment: 0.3,
+	environment: 0.45,
 	exposure: 1.13,
 
 	// Gradient map: off, kept tuned for when it's switched on.
@@ -61,6 +71,10 @@ export const LOOK: Partial<RenderParams> = {
 	studioGrainSize: 1,
 	studioGrainSpeed: 0,
 
-	// Post
-	ao: 1
+	// Occlusion: the bake's (within each group, ray-traced), most of it on
+	// the light from the surroundings and a little on the key's; the
+	// screen-space pass, at 0.6 now, for contact between groups.
+	bakedAO: 1,
+	bakedDirect: 0.15,
+	ao: 0.6
 };

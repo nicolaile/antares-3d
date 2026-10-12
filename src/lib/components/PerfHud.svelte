@@ -55,7 +55,7 @@
 				];
 			});
 		}, 1000);
-		(window as unknown as Record<string, unknown>).__perf = { run: (l: string) => run(target, l) };
+		(window as unknown as Record<string, unknown>).__perf = { run: (l: string, o?: Parameters<typeof run>[2]) => run(target, l, o) };
 		return () => {
 			clearInterval(id);
 			delete (window as unknown as Record<string, unknown>).__perf;

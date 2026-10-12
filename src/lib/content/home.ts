@@ -74,9 +74,10 @@ const close = (distance: number, below = 0): Shot => ({
 /**
  * The CAD on the stage, one model at a time: Mark-0 for the reactor
  * (01–04), the power conversion system from the exchanger on (05–07).
- * Each as its web groups (scripts/split-web-model.mjs).
+ * Each as its web groups (scripts/split-web-model.mjs), baked for the
+ * landing (scripts/bake-surface.mjs: static/models/landing/).
  */
-const cad = (model: string, groups: string[]) => groups.map((g) => `/models/cad/web/${model}/${g}.glb`);
+const cad = (model: string, groups: string[]) => groups.map((g) => `/models/landing/${model}/${g}.glb`);
 
 const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': { files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']) },

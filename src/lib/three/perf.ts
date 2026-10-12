@@ -9,11 +9,12 @@
  * From a fresh load of the page with ?perf, in the console:
  *
  *   await __perf.run('baseline')
+ *   await __perf.run('no-bake', { params: { bakedAO: 0 } })
  *
  * or the Run button on the readout (PerfHud). Same window size each time:
  * the report records it and the compare flags a mismatch.
  */
-import type { ModelViewer, ViewProfile } from '$lib/three/ModelViewer';
+import type { ModelViewer, RenderParams, ViewProfile } from '$lib/three/ModelViewer';
 
 /** What a run needs of the explorer (ReactorExplorer, with ?perf). */
 export type PerfTarget = {
@@ -98,7 +99,11 @@ async function save(label: string, file: string, body: Blob | string) {
  * its full step, then from the last feature round to it again, so every
  * feature is reached from the same one each time. `log` hears progress.
  */
-export async function run(target: PerfTarget, label: string, { capture = true, log = console.info } = {}): Promise<PerfReport> {
+export async function run(
+	target: PerfTarget,
+	label: string,
+	{ capture = true, log = console.info, params = {} as Partial<RenderParams> } = {}
+): Promise<PerfReport> {
 	if (!/^[\w-]+$/.test(label)) throw new Error('label: letters, digits, - and _ only');
 	target.setPaused(true);
 	const order = [target.count - 1, ...Array.from({ length: target.count }, (_, i) => i)];
@@ -122,6 +127,8 @@ export async function run(target: PerfTarget, label: string, { capture = true, l
 			for (const each of target.viewers()) each.resetSpin();
 		}
 		v.holdStep(0);
+		// A look to try against another run's (`params`), on each viewer as it comes on.
+		for (const [k, value] of Object.entries(params)) v.setParam(k as keyof RenderParams, value as number | string);
 		const settled = await settle(v);
 		// The first stop only sets up where the run starts from.
 		if (n === 0) continue;

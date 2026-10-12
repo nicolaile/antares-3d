@@ -47,6 +47,10 @@ export type MaterialPreset = 'satin' | 'metal' | 'glass' | 'diffusion';
 
 /** Half the height of a group's glow front (`setGlow`'s sweep), metres. */
 const GLOW_SOFT = 0.25;
+/** Metres apart at which a group's pieces are shaded each by itself alone (`syncOpen`). */
+const OPEN_AT = 0.08;
+/** Roughness detail over the finishes (scripts/surface-detail.mjs). */
+const DETAIL_URL = '/textures/surface-detail.webp';
 
 /**
  * A group's glow from within (its emissive), by height in the authored
@@ -95,6 +99,108 @@ function glowFromWithin(
 				float lit = mix( above, 1.0 - above, uGlowUp );
 				float band = ( vGlowY - uGlowFront ) / uGlowSoft;
 				totalEmissiveRadiance *= lit + exp( -band * band ) * uGlowCrest;
+			}`
+		);
+}
+
+/**
+ * The bake (scripts/bake-surface.mjs, the `_surf` attribute): occlusion and
+ * finish per vertex.
+ *
+ * Its finish (z, w) is the approved studio renders' for the part's CAD
+ * material: a shade, a roughness, and metal or not. The renders' shades
+ * are far darker than this look, so they're mapped onto it from
+ * `uFinishFloor` (the darkest, as a share of the look's colour) up to the
+ * look's colour itself; non-metals (moulded parts) take `uPolymer` of it,
+ * as a dark plastic. `uFinish` blends from the one shared finish (0) to these.
+ *
+ * And over it, the surface's own detail (static/textures/surface-detail.webp,
+ * scripts/surface-detail.mjs): roughness that varies across a finish as real
+ * metal's does, brushed streaks on the polished parts and handling smudges on
+ * the rest, `uDetail` of it. Projected from the three axes in each part's own
+ * frame (`uLocalScale` to metres, a tile every `uDetailTile`), so it sticks to
+ * a piece as it moves, and mipmapped, so it never sparkles from afar.
+ *
+ * Its occlusion:
+ * ray-traced per vertex, by everything in the group (y) and by the
+ * vertex's own part alone (x), blended from the one to the other as the
+ * group comes apart or opens (`uOpen`), so pieces moved away stop shading
+ * each other. It darkens the light from the surroundings, the environment's
+ * reflections most of all on this metal (`computeSpecularOcclusion`, as
+ * three's own aoMap), and a share of the key's (`uBakedDirect`): the key
+ * stands in for a softbox, and a crevice stays dark under one.
+ */
+function bakedSurface(
+	shader: THREE.WebGLProgramParametersWithUniforms,
+	uniforms: {
+		uOpen: { value: number };
+		uBakedAO: { value: number };
+		uBakedDirect: { value: number };
+		uBakedView: { value: number };
+		uFinish: { value: number };
+		uFinishFloor: { value: number };
+		uPolymer: { value: number };
+		uDetail: { value: number };
+		uDetailTile: { value: number };
+		tDetail: { value: THREE.Texture };
+		uLocalScale: { value: number };
+	}
+) {
+	Object.assign(shader.uniforms, uniforms);
+	shader.vertexShader = shader.vertexShader
+		.replace('#include <common>', '#include <common>\nattribute vec4 _surf;\nvarying vec4 vSurf;\nuniform float uLocalScale;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;')
+		.replace(
+			'#include <begin_vertex>',
+			'#include <begin_vertex>\nvSurf = _surf;\nvDetailAt = position * uLocalScale;\nvDetailNormal = normal;'
+		);
+	shader.fragmentShader = shader.fragmentShader
+		.replace(
+			'#include <common>',
+			'#include <common>\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;'
+		)
+		.replace(
+			'#include <metalnessmap_fragment>',
+			/* glsl */ `#include <metalnessmap_fragment>
+			{
+				// w: roughness in its top seven bits, non-metal in the low one.
+				float code = floor( vSurf.w * 255.0 + 0.5 );
+				float dielectric = mod( code, 2.0 );
+				float shade = mix( uFinishFloor, 1.0, vSurf.z );
+				diffuseColor.rgb *= mix( 1.0, mix( shade, uPolymer, dielectric ), uFinish );
+				float rough = floor( code / 2.0 ) / 127.0;
+				roughnessFactor = mix( roughnessFactor, rough, uFinish );
+				metalnessFactor = mix( metalnessFactor, 0.0, uFinish * dielectric );
+				// Surface detail, from the three axes, weighted to the one the surface faces.
+				vec3 facing = pow( abs( normalize( vDetailNormal ) ), vec3( 4.0 ) );
+				facing /= facing.x + facing.y + facing.z;
+				vec3 at = vDetailAt / uDetailTile;
+				vec2 detail =
+					texture2D( tDetail, at.yz ).rg * facing.x +
+					texture2D( tDetail, at.xz ).rg * facing.y +
+					texture2D( tDetail, at.xy ).rg * facing.z - 0.5;
+				// Brushed streaks on the polished finishes, smudges on the rest.
+				float brushed = smoothstep( 0.34, 0.24, rough ) * ( 1.0 - dielectric );
+				// The streaks at half: whole, they read as ribs on a turned part.
+				roughnessFactor = clamp( roughnessFactor + uDetail * mix( detail.y, detail.x * 0.5, brushed ) * 0.3, 0.04, 1.0 );
+			}`
+		)
+		// Tuning: the bake alone, as grey (`bakedView`).
+		.replace('#include <dithering_fragment>', '#include <dithering_fragment>\nif ( uBakedView > 0.5 ) gl_FragColor = vec4( vec3( mix( vSurf.y, vSurf.x, uOpen ) ), 1.0 );')
+		.replace(
+			'#include <aomap_fragment>',
+			/* glsl */ `#include <aomap_fragment>
+			{
+				float baked = mix( 1.0, mix( vSurf.y, vSurf.x, uOpen ), uBakedAO );
+				reflectedLight.indirectDiffuse *= baked;
+				float bakedNV = saturate( dot( geometryNormal, geometryViewDir ) );
+				reflectedLight.indirectSpecular *= computeSpecularOcclusion( bakedNV, baked, material.roughness );
+				float direct = mix( 1.0, baked, uBakedDirect );
+				reflectedLight.directDiffuse *= direct;
+				reflectedLight.directSpecular *= direct;
+				#if defined( USE_CLEARCOAT )
+					clearcoatSpecularIndirect *= baked;
+					clearcoatSpecularDirect *= direct;
+				#endif
 			}`
 		);
 }
@@ -288,6 +394,22 @@ export interface RenderParams {
 	studioGrainSpeed: number;
 	/** 0/1: the real key light follows the shade direction, so cast shadows agree with the terminator. */
 	studioKey: number;
+	/** How much of the bake's occlusion shows, 0–1 (`bakedSurface`). */
+	bakedAO: number;
+	/** How much of it darkens the key's light too, 0–1. */
+	bakedDirect: number;
+	/** 0/1: shows the bake alone, as grey, for tuning it. */
+	bakedView: number;
+	/** 0–1: one shared finish (0) to each part its own, as in the studio renders (`bakedSurface`). */
+	finish: number;
+	/** The darkest of those finishes, as a share of the look's colour. */
+	finishFloor: number;
+	/** Moulded parts' colour, as a share of the look's. */
+	polymer: number;
+	/** How much of the surface detail shows, 0–1 (roughness varying across a finish). */
+	detail: number;
+	/** The surface detail's tile, metres. */
+	detailTile: number;
 }
 
 /**
@@ -403,6 +525,8 @@ export class ModelViewer {
 			/** Split into pieces (`explode`): the sectors' pattern, the first's angle in the axis's plane (x to z). */
 			fold?: number;
 			phase?: number;
+			/** How far open it is, for its baked occlusion (`syncOpen`). */
+			open: { value: number };
 		}
 	>();
 
@@ -469,7 +593,19 @@ export class ModelViewer {
 		if (state.up !== undefined) g.up = state.up;
 		this.syncGroup(g);
 		for (const piece of g.pieces) this.placePiece(piece, g);
+		this.syncOpen(g);
 		this.invalidate();
+	}
+
+	/**
+	 * How far open a group is, for its baked occlusion (`bakedSurface`): its
+	 * pieces apart by OPEN_AT or more, or its cut fully open, and it's shaded
+	 * by each part alone. Lifting the whole group (`up`) opens nothing.
+	 */
+	private syncOpen(g: { cut: number; out: number; pieces: Piece[]; open: { value: number } }) {
+		let apart = Math.abs(g.out);
+		for (const p of g.pieces) apart = Math.max(apart, Math.abs(p.lift ?? 0));
+		g.open.value = Math.max(g.cut, Math.min(1, apart / OPEN_AT));
 	}
 
 	/** A piece where its group's taking apart and its own lift put it. */
@@ -495,6 +631,7 @@ export class ModelViewer {
 		if (!g || !piece) return;
 		piece.lift = lift;
 		this.placePiece(piece, g);
+		this.syncOpen(g);
 		this.invalidate();
 	}
 
@@ -599,11 +736,24 @@ export class ModelViewer {
 				uGlowFrame: this.glowFrame
 			};
 			material.userData.glow = glow;
+			// The bake's occlusion, where the files carry it (the landing's do).
+			let baked = false;
+			node.traverse((o) => {
+				if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.getAttribute('_surf')) baked = true;
+			});
+			// The part's own frame to metres, for its surface detail.
+			let scale = 1;
+			node.updateWorldMatrix(true, true);
+			node.traverse((o) => {
+				if ((o as THREE.Mesh).isMesh) scale = o.matrixWorld.getMaxScaleOnAxis();
+			});
+			const surface = { uOpen: { value: 0 }, uLocalScale: { value: scale }, ...this.baked };
 			material.onBeforeCompile = (shader, renderer) => {
 				base.call(material, shader, renderer);
 				glowFromWithin(shader, glow);
+				if (baked) bakedSurface(shader, surface);
 			};
-			material.customProgramCacheKey = () => baseKey.call(material) + '|glow';
+			material.customProgramCacheKey = () => baseKey.call(material) + '|glow' + (baked ? '|baked' : '');
 			const planes = [new THREE.Plane(), new THREE.Plane()];
 			material.clippingPlanes = planes;
 			material.clipIntersection = true;
@@ -633,7 +783,7 @@ export class ModelViewer {
 			}
 			// Unsplit, the group lifts as one.
 			if (!pieces.length) pieces.push(piece(node, new THREE.Vector3()));
-			const g = { node, material, planes, level: 1, cut: 0, out: 0, up: 0, pieces, fold: split?.fold, phase };
+			const g = { node, material, planes, level: 1, cut: 0, out: 0, up: 0, pieces, fold: split?.fold, phase, open: surface.uOpen };
 			this.groups.set(name, g);
 			this.syncGroup(g);
 		}
@@ -1374,7 +1524,7 @@ export class ModelViewer {
 	}
 
 	async load(): Promise<THREE.Group> {
-		const [model] = await Promise.all([this.loadModel(), this.loadEnvironment(), this.addOptionalPasses()]);
+		const [model] = await Promise.all([this.loadModel(), this.loadEnvironment(), this.addOptionalPasses(), this.loadDetail()]);
 		if (this.disposed) return model;
 
 		// One shared material for every part: one shader program, and one
@@ -1411,9 +1561,8 @@ export class ModelViewer {
 		else if (this.opts.mergeMeshes !== false) mergeStaticMeshes(model, this.material);
 		if (this.disposed) return model;
 		// The part index (carving and splitting, done now) and the CAD's
-		// colours ride along in the files but no shader reads them, and three
-		// uploads every attribute a geometry has: a quarter of the model's
-		// GPU memory for nothing.
+		// colours (in the files /cad loads) ride along but no shader reads
+		// them, and three uploads every attribute a geometry has.
 		model.traverse((o) => {
 			const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
 			if (!(o as THREE.Mesh).isMesh || !g) return;
@@ -1591,6 +1740,22 @@ export class ModelViewer {
 	 * Prefers the HDRI (a real studio with soft boxes and contrast); falls back
 	 * to a procedural strip-light room when none is configured.
 	 */
+	/** The surface detail texture (`bakedSurface`); without it, surfaces stay as they are. */
+	private async loadDetail() {
+		try {
+			const texture = await new THREE.TextureLoader().loadAsync(DETAIL_URL);
+			if (this.disposed) return texture.dispose();
+			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+			texture.colorSpace = THREE.NoColorSpace;
+			// Sharp at the glancing angles a turning cylinder shows most of.
+			texture.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+			this.baked.tDetail.value.dispose();
+			this.baked.tDetail.value = texture;
+		} catch {
+			// Not essential: the finishes stand without it.
+		}
+	}
+
 	private async loadEnvironment() {
 		if (this.opts.hdr) {
 			const tex = await new RGBELoader().loadAsync(this.opts.hdr, (e) => this.report('hdr', e));
@@ -1672,7 +1837,15 @@ export class ModelViewer {
 			studioBounce: this.shade?.uBounce.value ?? 0,
 			studioGrainSize: this.sweep?.grainSize ?? 1,
 			studioGrainSpeed: this.sweep?.grainSpeed ?? 0,
-			studioKey: this.studioKeyFollow ? 1 : 0
+			studioKey: this.studioKeyFollow ? 1 : 0,
+			bakedAO: this.baked.uBakedAO.value,
+			bakedDirect: this.baked.uBakedDirect.value,
+			bakedView: this.baked.uBakedView.value,
+			finish: this.baked.uFinish.value,
+			finishFloor: this.baked.uFinishFloor.value,
+			polymer: this.baked.uPolymer.value,
+			detail: this.baked.uDetail.value,
+			detailTile: this.baked.uDetailTile.value
 		};
 	}
 
@@ -1721,6 +1894,7 @@ export class ModelViewer {
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
+		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked'))) keys.push('bakedAO', 'bakedDirect', 'bakedView', 'finish', 'finishFloor', 'polymer', 'detail', 'detailTile');
 		if (this.grain) keys.push('grain');
 		if (this.contact) keys.push('shadow');
 		if (this.gradient) {
@@ -1811,6 +1985,30 @@ export class ModelViewer {
 				break;
 			case 'ao':
 				if (this.gtao) this.gtao.blendIntensity = n;
+				break;
+			case 'bakedAO':
+				this.baked.uBakedAO.value = n;
+				break;
+			case 'bakedDirect':
+				this.baked.uBakedDirect.value = n;
+				break;
+			case 'bakedView':
+				this.baked.uBakedView.value = n;
+				break;
+			case 'finish':
+				this.baked.uFinish.value = n;
+				break;
+			case 'finishFloor':
+				this.baked.uFinishFloor.value = n;
+				break;
+			case 'polymer':
+				this.baked.uPolymer.value = n;
+				break;
+			case 'detail':
+				this.baked.uDetail.value = n;
+				break;
+			case 'detailTile':
+				this.baked.uDetailTile.value = n;
 				break;
 			case 'grain':
 				if (this.grain) this.grain.uniforms.uAmount.value = n;
@@ -2017,6 +2215,20 @@ export class ModelViewer {
 		this.asleep = false;
 		this.resize();
 	}
+
+	/** The bake's occlusion, shared by every group (`bakedSurface`). */
+	private baked = {
+		uBakedAO: { value: 1 },
+		uBakedDirect: { value: 0.6 },
+		uBakedView: { value: 0 },
+		uFinish: { value: 1 },
+		uFinishFloor: { value: 0.45 },
+		uPolymer: { value: 0.06 },
+		uDetail: { value: 1 },
+		uDetailTile: { value: 0.35 },
+		// Mid-grey (no change) until the texture arrives (`loadDetail`).
+		tDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) as THREE.Texture }
+	};
 
 	/** Set while `profile` runs: the ticker's frames stay out of its timing. */
 	private profiling = false;
@@ -2503,6 +2715,7 @@ export class ModelViewer {
 		for (const pass of this.overlayPasses) this.composer.removePass(pass);
 		this.composer.dispose();
 		this.envRT?.dispose();
+		this.baked.tDetail.value.dispose();
 		this.pmrem.dispose();
 		this.renderer.dispose();
 		// The context goes now, not whenever the canvas is collected: a page

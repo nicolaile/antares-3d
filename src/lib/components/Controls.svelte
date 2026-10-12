@@ -18,6 +18,11 @@
 			title: 'Material',
 			rows: [
 				{ key: 'color', label: 'Colour', kind: 'color' },
+				{ key: 'finish', label: 'Finishes', min: 0, max: 1, step: 0.05 },
+				{ key: 'finishFloor', label: 'Darkest', min: 0, max: 1, step: 0.01 },
+				{ key: 'polymer', label: 'Plastic', min: 0, max: 1, step: 0.01 },
+				{ key: 'detail', label: 'Detail', min: 0, max: 2, step: 0.05 },
+				{ key: 'detailTile', label: 'Detail tile', min: 0.05, max: 1.5, step: 0.05 },
 				{ key: 'roughness', label: 'Roughness', min: 0, max: 1, step: 0.01 },
 				{ key: 'metalness', label: 'Metalness', min: 0, max: 1, step: 0.01 },
 				{ key: 'clearcoat', label: 'Clearcoat', min: 0, max: 1, step: 0.01 },
@@ -78,6 +83,9 @@
 				{ key: 'bloom', label: 'Bloom', min: 0, max: 1, step: 0.01 },
 				{ key: 'bloomThreshold', label: 'Threshold', min: 0.7, max: 1, step: 0.005 },
 				{ key: 'ao', label: 'Occlusion', min: 0, max: 2, step: 0.05 },
+				{ key: 'bakedAO', label: 'Baked AO', min: 0, max: 1, step: 0.05 },
+				{ key: 'bakedDirect', label: 'AO on key', min: 0, max: 1, step: 0.05 },
+				{ key: 'bakedView', label: 'Show bake', kind: 'toggle' },
 				{ key: 'grain', label: 'Grain', min: 0, max: 0.12, step: 0.005 },
 				{ key: 'shadow', label: 'Shadow', min: 0, max: 1, step: 0.01 }
 			]

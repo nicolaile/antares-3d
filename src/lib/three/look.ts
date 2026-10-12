@@ -29,7 +29,7 @@ export const LOOK: Partial<RenderParams> = {
 	// with a little roughness detail over them.
 	finish: 0.6,
 	finishFloor: 0.6,
-	polymer: 0.06,
+	polymer: 1,
 	detail: 0.35,
 	detailTile: 1.2,
 

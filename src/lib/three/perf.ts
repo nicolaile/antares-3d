@@ -133,6 +133,7 @@ export async function run(
 		// The first stop only sets up where the run starts from.
 		if (n === 0) continue;
 		const profile = await v.profile();
+		if (profile && profile.width < 16) log(`[perf] ${label} ${i + 1}: the viewer was asleep, its frame isn't the view`);
 		report.gpu ||= gpuName(v);
 		v.root.updateMatrixWorld();
 		const pose = [...v.camera.position.toArray(), ...v.target.toArray(), v.camera.fov, ...v.root.matrixWorld.elements];

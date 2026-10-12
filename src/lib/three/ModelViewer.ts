@@ -49,6 +49,9 @@ export type MaterialPreset = 'satin' | 'metal' | 'glass' | 'diffusion';
 const GLOW_SOFT = 0.25;
 /** Metres apart at which a group's pieces are shaded each by itself alone (`syncOpen`). */
 const OPEN_AT = 0.08;
+/** The tone curves the look can take (`tone`). */
+const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMapping, agx: THREE.AgXToneMapping } as const;
+export type Tone = keyof typeof TONES;
 /** Roughness detail over the finishes (scripts/surface-detail.mjs). */
 const DETAIL_URL = '/textures/surface-detail.webp';
 
@@ -111,8 +114,9 @@ function glowFromWithin(
  * material: a shade, a roughness, and metal or not. The renders' shades
  * are far darker than this look, so they're mapped onto it from
  * `uFinishFloor` (the darkest, as a share of the look's colour) up to the
- * look's colour itself; non-metals (moulded parts) take `uPolymer` of it,
- * as a dark plastic. `uFinish` blends from the one shared finish (0) to these.
+ * look's colour itself, `uFinish` of the way from the one shared finish.
+ * Non-metals (the graphite core, moulded parts) are wholly themselves, at
+ * their measured albedo (`uPolymer` scales it).
  *
  * And over it, the surface's own detail (static/textures/surface-detail.webp,
  * scripts/surface-detail.mjs): roughness that varies across a finish as real
@@ -165,11 +169,16 @@ function bakedSurface(
 				// w: roughness in its top seven bits, non-metal in the low one.
 				float code = floor( vSurf.w * 255.0 + 0.5 );
 				float dielectric = mod( code, 2.0 );
-				float shade = mix( uFinishFloor, 1.0, vSurf.z );
-				diffuseColor.rgb *= mix( 1.0, mix( shade, uPolymer, dielectric ), uFinish );
 				float rough = floor( code / 2.0 ) / 127.0;
-				roughnessFactor = mix( roughnessFactor, rough, uFinish );
-				metalnessFactor = mix( metalnessFactor, 0.0, uFinish * dielectric );
+				// A non-metal (graphite, a moulded part) is that material whole, at
+				// its measured albedo (z, over the renders' brightest, 0.27): half a
+				// metal is neither. Metals' shades map onto this look's colour.
+				float strength = mix( uFinish, min( 1.0, uFinish * 4.0 ), dielectric );
+				vec3 metal = diffuseColor.rgb * mix( uFinishFloor, 1.0, vSurf.z );
+				vec3 plain = vec3( vSurf.z * 0.27 * uPolymer );
+				diffuseColor.rgb = mix( diffuseColor.rgb, mix( metal, plain, dielectric ), strength );
+				roughnessFactor = mix( roughnessFactor, rough, strength );
+				metalnessFactor = mix( metalnessFactor, 0.0, strength * dielectric );
 				// Surface detail, from the three axes, weighted to the one the surface faces.
 				vec3 facing = pow( abs( normalize( vDetailNormal ) ), vec3( 4.0 ) );
 				facing /= facing.x + facing.y + facing.z;
@@ -404,8 +413,10 @@ export interface RenderParams {
 	finish: number;
 	/** The darkest of those finishes, as a share of the look's colour. */
 	finishFloor: number;
-	/** Moulded parts' colour, as a share of the look's. */
+	/** Non-metals' albedo (graphite, moulded parts), as a share of what's measured. */
 	polymer: number;
+	/** The tone curve: ACES filmic (the look's), Khronos PBR Neutral, or AgX. */
+	tone: Tone;
 	/** How much of the surface detail shows, 0–1 (roughness varying across a finish). */
 	detail: number;
 	/** The surface detail's tile, metres. */
@@ -1808,6 +1819,7 @@ export class ModelViewer {
 			ambient: this.lights.hemi.intensity,
 			environment: this.scene.environmentIntensity,
 			exposure: this.renderer.toneMappingExposure,
+			tone: (Object.keys(TONES) as Tone[]).find((k) => TONES[k] === this.renderer.toneMapping) ?? 'aces',
 			bloom: this.bloom?.strength ?? 0,
 			bloomThreshold: this.bloom?.threshold ?? 1,
 			ao: this.gtao?.blendIntensity ?? 0,
@@ -1890,7 +1902,8 @@ export class ModelViewer {
 			'rim',
 			'ambient',
 			'environment',
-			'exposure'
+			'exposure',
+			'tone'
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
@@ -1976,6 +1989,10 @@ export class ModelViewer {
 				break;
 			case 'exposure':
 				this.renderer.toneMappingExposure = n;
+				break;
+			case 'tone':
+				// The passes that tone map read it each frame (OutputPass, the occlusion's composite).
+				this.renderer.toneMapping = TONES[value as Tone] ?? THREE.ACESFilmicToneMapping;
 				break;
 			case 'bloom':
 				if (this.bloom) this.bloom.strength = n;
@@ -2223,7 +2240,7 @@ export class ModelViewer {
 		uBakedView: { value: 0 },
 		uFinish: { value: 1 },
 		uFinishFloor: { value: 0.45 },
-		uPolymer: { value: 0.06 },
+		uPolymer: { value: 1 },
 		uDetail: { value: 1 },
 		uDetailTile: { value: 0.35 },
 		// Mid-grey (no change) until the texture arrives (`loadDetail`).

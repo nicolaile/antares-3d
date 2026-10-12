@@ -20,7 +20,7 @@
 				{ key: 'color', label: 'Colour', kind: 'color' },
 				{ key: 'finish', label: 'Finishes', min: 0, max: 1, step: 0.05 },
 				{ key: 'finishFloor', label: 'Darkest', min: 0, max: 1, step: 0.01 },
-				{ key: 'polymer', label: 'Plastic', min: 0, max: 1, step: 0.01 },
+				{ key: 'polymer', label: 'Non-metal', min: 0, max: 3, step: 0.05 },
 				{ key: 'detail', label: 'Detail', min: 0, max: 2, step: 0.05 },
 				{ key: 'detailTile', label: 'Detail tile', min: 0.05, max: 1.5, step: 0.05 },
 				{ key: 'roughness', label: 'Roughness', min: 0, max: 1, step: 0.01 },

@@ -9,7 +9,7 @@
 //
 //   x  occlusion by the vertex's own part alone
 //   y  occlusion by everything in its group (its file)
-//   z  its finish's shade, 0–1 (see below)
+//   z  its finish's shade: albedo over the classic look's brightest (0.27)
 //   w  its finish's roughness (7 bits) and whether it's a non-metal (low bit)
 //
 // The viewer blends from y to x as a group comes apart or is cut open, so
@@ -56,6 +56,20 @@ const FINISHES = {
 	anodised: { share: 0.3, albedo: 1.0, roughness: [0.3, 0.42], dielectric: false },
 	polymer: { share: 0.15, albedo: 0.8, roughness: [0.55, 0.75], dielectric: true }
 };
+/**
+ * render.py's real finishes, for parts whose classic draw doesn't fit what
+ * they are (OVERRIDES): measured albedo (`abs`) rather than a scale.
+ */
+const REAL = {
+	// Nuclear-grade graphite: dark grey, matte, a faint sheen.
+	graphite: { abs: [0.08, 0.11], roughness: [0.7, 0.82], dielectric: true }
+};
+/**
+ * Per model, per group, CAD materials given a real finish in place of
+ * their classic one: the core's fuel blocks are graphite (render.py's
+ * PARTS core, mat_0; the drive motors share the colour, in another group).
+ */
+const OVERRIDES = { 'mark-0': { f3_core: { mat_0: 'graphite' } } };
 /** The classic look's albedo range, before a finish's scale; the brightest shade it can give, for 0–1. */
 const ALBEDO = [0.02, 0.09];
 const BRIGHTEST = ALBEDO[1] * 3;
@@ -124,7 +138,8 @@ async function main() {
 				const world = node.getWorldMatrix();
 				for (const prim of mesh.listPrimitives()) {
 					from += prim.getAttribute('POSITION').getCount();
-					await bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names: names[model] });
+					const overrides = OVERRIDES[model]?.[file.replace('.glb', '')];
+					await bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names: names[model], overrides });
 					to += prim.getAttribute('POSITION').getCount();
 				}
 			}
@@ -313,7 +328,7 @@ async function pool(P, index, part, radius) {
 }
 
 /** Reads a primitive, subdivides it where it needs, bakes it, and writes `_SURF` in place of COLOR_0. */
-async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names }) {
+async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names, overrides }) {
 	const mesh = readMesh(prim, world);
 	const original = mesh.world();
 	const workers = await pool(original.P, mesh.index, original.part, radius);
@@ -416,7 +431,10 @@ async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, 
 				colour.getElement(i, el);
 				const key = el.map((c) => (Math.round(c * 100) / 100).toFixed(2)).join(',');
 				let f = finishOf.get(key);
-				if (!f) finishOf.set(key, (f = finishFor(names?.get(key) ?? `rgb:${key}`)));
+				if (!f) {
+					const name = names?.get(key) ?? `rgb:${key}`;
+					finishOf.set(key, (f = finishFor(name, overrides?.[name])));
+				}
 				surf[i * 4 + 2] = f[0];
 				surf[i * 4 + 3] = f[1];
 			}
@@ -549,7 +567,13 @@ async function work() {
  * A CAD material's finish, as render.py's classic look picks it (its
  * `lit_material_classic`): the bytes for z and w.
  */
-function finishFor(key) {
+function finishFor(key, real) {
+	if (real) {
+		const f = REAL[real];
+		const shade = f.abs[0] + (f.abs[1] - f.abs[0]) * unitHash(key, 'albedo');
+		const rough = f.roughness[0] + (f.roughness[1] - f.roughness[0]) * unitHash(key, 'rough');
+		return [Math.round((shade / BRIGHTEST) * 255), (Math.round(rough * 127) << 1) | (f.dielectric ? 1 : 0)];
+	}
 	let u = unitHash(key, 'finish') * Object.values(FINISHES).reduce((s, f) => s + f.share, 0);
 	let finish = FINISHES.polymer;
 	for (const f of Object.values(FINISHES)) {

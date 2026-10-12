@@ -312,7 +312,11 @@
 					loaded = true;
 					onready?.(v);
 					offTick = onTick(() => {
-						if (visible) v.render();
+						if (!visible) return;
+						// On stage, awake, whatever order the hand-off's calls came in
+						// (a run once caught a viewer still asleep there): a no-op when it is.
+						if (!asleep) v.wake();
+						v.render();
 					});
 
 					// Reveal: the poster already shows this exact frame, so the live

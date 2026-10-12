@@ -16,32 +16,36 @@ export const LOOK: Partial<RenderParams> = {
 	// value below has to land on top of that. Object order is apply order.
 	studio: 1,
 
-	// Material
+	// Material: a light satin coating, mostly matte, as the black studio
+	// renders' parts read (renders/mark-0-black), so the key's light falls
+	// off across a surface into black instead of a metal mirroring its
+	// surroundings evenly.
 	color: '#dedede',
-	roughness: 0.55,
-	metalness: 1,
+	roughness: 0.45,
+	metalness: 0.15,
 	clearcoat: 0.3,
-	coatRoughness: 0.5,
+	coatRoughness: 0.35,
 	materialEnv: 1.2,
 
 	// Each part its own finish, as in the studio renders (the landing's
-	// models, scripts/bake-surface.mjs), mapped onto this lighter look at 60%,
-	// with a little roughness detail over them.
-	finish: 0.6,
+	// models, scripts/bake-surface.mjs), at 30%: the housings stay near
+	// white, as in the renders, with a little roughness detail over them.
+	finish: 0.3,
 	finishFloor: 0.6,
 	polymer: 1,
 	detail: 0.35,
 	detailTile: 1.2,
 
-	// Light: the studio renders' soft boxes (a big key overhead, a tall strip
-	// either side behind, round the camera) as the environment, so the metal
-	// reflects broad soft light rather than one hard highlight; the
-	// directional key down from 9, kept for the shadows it casts.
+	// Light: the black studio renders' rig (render.py 'studio-black', round
+	// the camera): a soft box far round at camera-right as the directional
+	// key (its shadows; `shadeAzimuth`/`shadeElevation` below aim it), two
+	// strips behind at camera-left tracing that silhouette, a faint wash from
+	// above, on black (ModelViewer's SOFTBOXES).
 	softbox: 1,
-	key: 5,
+	key: 12,
 	rim: 0,
 	ambient: 0,
-	environment: 6,
+	environment: 1,
 	exposure: 1.13,
 
 	// Gradient map: off, kept tuned for when it's switched on.
@@ -62,8 +66,10 @@ export const LOOK: Partial<RenderParams> = {
 	sweepCurve: 1.4,
 	sweepLift: 0,
 	sweepFalloff: 0.55,
-	shadeAzimuth: 35,
-	shadeElevation: 39,
+	// The key's direction in view terms (round the view, towards the camera):
+	// the rig's key, 80° round at camera-right and 30° up.
+	shadeAzimuth: 30,
+	shadeElevation: 9,
 	shadeCoverage: 0.54,
 	shadeSoftness: 0.72,
 	shadeDepth: 0.26,
@@ -79,5 +85,12 @@ export const LOOK: Partial<RenderParams> = {
 	// screen-space pass, at 0.6 now, for contact between groups.
 	bakedAO: 1,
 	bakedDirect: 0.15,
-	ao: 0.6
+	ao: 0.6,
+
+	// The renders' finish in post: machined edges catching the light and
+	// creases holding shadow (screen space, from the occlusion's normals),
+	// then their print grade (contrast, split tone, saturation).
+	edges: 1,
+	cavity: 0.5,
+	grade: 1
 };

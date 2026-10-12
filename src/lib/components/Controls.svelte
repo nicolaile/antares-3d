@@ -86,6 +86,10 @@
 				{ key: 'bakedAO', label: 'Baked AO', min: 0, max: 1, step: 0.05 },
 				{ key: 'bakedDirect', label: 'AO on key', min: 0, max: 1, step: 0.05 },
 				{ key: 'bakedView', label: 'Show bake', kind: 'toggle' },
+				{ key: 'edges', label: 'Edges', min: 0, max: 2, step: 0.05 },
+				{ key: 'cavity', label: 'Cavity', min: 0, max: 1, step: 0.05 },
+				{ key: 'grade', label: 'Print grade', min: 0, max: 1, step: 0.05 },
+				{ key: 'sharpen', label: 'Sharpen', min: 0, max: 1, step: 0.05 },
 				{ key: 'grain', label: 'Grain', min: 0, max: 0.12, step: 0.005 },
 				{ key: 'shadow', label: 'Shadow', min: 0, max: 1, step: 0.01 }
 			]

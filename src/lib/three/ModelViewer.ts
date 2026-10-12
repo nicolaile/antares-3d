@@ -54,6 +54,8 @@ const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMap
 export type Tone = keyof typeof TONES;
 /** The canvas's pixel ratio at most: a retina screen's own. The frame itself is drawn at `maxPixelRatio`. */
 const OUTPUT_PIXEL_RATIO = 2;
+/** The black studio renders' print (scripts/render/mark-0-black.json, render.py's grade; SweepPass `setGrade`). */
+const PRINT = { saturation: 0.6, tint: '#f2f6f8', contrast: 0.3, blackPoint: 0, shadows: '#c4cfdf', highlights: '#f6f8fa' };
 /** How sharply the last pass sharpens the frame it scales up, 0–1 (SweepPass `sharpen`). */
 const SHARPEN = 0.6;
 /** How many pixels a level of detail's error may come to on screen (`chooseLod`). */
@@ -154,6 +156,7 @@ function bakedSurface(
 		uDetailTile: { value: number };
 		tDetail: { value: THREE.Texture };
 		uLocalScale: { value: number };
+		uEnvDiffuse: { value: number };
 	}
 ) {
 	Object.assign(shader.uniforms, uniforms);
@@ -164,9 +167,21 @@ function bakedSurface(
 			'#include <begin_vertex>\nvSurf = _surf;\nvDetailAt = position * uLocalScale;\nvDetailNormal = normal;'
 		);
 	shader.fragmentShader = shader.fragmentShader
+		// The environment map's diffuse light off while the soft boxes' own
+		// (a light probe, `syncProbe`) stands in: three takes it from the
+		// map's blurriest level, wider than a real surface's cosine, so the
+		// strips behind lit the front and nothing fell away to black.
+		// (The chunk expanded here: includes are only resolved after this hook.)
+		.replace(
+			'#include <lights_fragment_maps>',
+			THREE.ShaderChunk.lights_fragment_maps.replace(
+				'iblIrradiance += getIBLIrradiance( geometryNormal );',
+				'iblIrradiance += getIBLIrradiance( geometryNormal ) * uEnvDiffuse;'
+			)
+		)
 		.replace(
 			'#include <common>',
-			'#include <common>\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;'
+			'#include <common>\nuniform float uEnvDiffuse;\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;'
 		)
 		.replace(
 			'#include <metalnessmap_fragment>',
@@ -429,6 +444,12 @@ export interface RenderParams {
 	softbox: number;
 	/** How sharply the frame is sharpened as it's scaled up to the screen, 0–1. */
 	sharpen: number;
+	/** How much of the black studio renders' print grade, 0–1. */
+	grade: number;
+	/** Machined edges brightened, as the renders' edge polish (screen space, with occlusion). */
+	edges: number;
+	/** Crevices darkened along their creases. */
+	cavity: number;
 	/** How much of the surface detail shows, 0–1 (roughness varying across a finish). */
 	detail: number;
 	/** The surface detail's tile, metres. */
@@ -1381,6 +1402,9 @@ export class ModelViewer {
 		this.lights = { key, rim, hemi };
 
 		this.scene.add(this.root);
+		// The soft boxes' diffuse light (`syncProbe`), dark until they're on.
+		this.light.intensity = 0;
+		this.scene.add(this.light);
 
 		// Post: scene (multisampled) -> AO -> bloom -> tone map + sRGB.
 		// OutputPass owns tone mapping, so the scene pass sees linear HDR.
@@ -1783,8 +1807,88 @@ export class ModelViewer {
 	/** Lit by the soft boxes (`softbox`), their environment built the first time. */
 	private softbox = false;
 	private softboxRT: THREE.WebGLRenderTarget | null = null;
+	/**
+	 * The soft boxes' diffuse light, as spherical harmonics (three's light
+	 * probe): what a matte surface facing each way receives from them, the
+	 * way the raspberry lights its fruit. The key's own comes from the
+	 * directional key, which casts its shadows; the rest are summed over
+	 * their area, as bright as in the environment map, round the camera.
+	 */
+	private light = new THREE.LightProbe();
+	private probeYaw = NaN;
+	private syncProbe(yaw: number) {
+		if (Math.abs(yaw - this.probeYaw) < 1e-4) return;
+		this.probeYaw = yaw;
+		const sh = this.light.sh;
+		sh.zero();
+		const basis = this.shBasis;
+		const [c, right, up, d] = this.probeVecs;
+		const radianceOf = (b: (typeof SOFTBOXES)[number]) => (b.power * b.distance * b.distance) / (b.width * b.length);
+		const key = radianceOf(SOFTBOXES[0]);
+		const K = 6;
+		// The broad ones only: a strip's light is too small for nine numbers to
+		// hold, and spread into a glow from every side (its own light instead:
+		// `syncStrips`).
+		for (const box of SOFTBOXES.slice(1).filter((b) => !isStrip(b))) {
+			const az = THREE.MathUtils.degToRad(box.azimuth);
+			const el = THREE.MathUtils.degToRad(box.elevation);
+			c.set(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).multiplyScalar(box.distance);
+			right.set(0, 1, 0).cross(c).normalize();
+			up.crossVectors(c, right).normalize();
+			// Each of K×K patches: its radiance times the solid angle it fills.
+			const weight = ((radianceOf(box) / key) * box.width * box.length) / (K * K * box.distance * box.distance);
+			for (let i = 0; i < K; i++)
+				for (let j = 0; j < K; j++) {
+					d.copy(c)
+						.addScaledVector(right, ((i + 0.5) / K - 0.5) * box.width)
+						.addScaledVector(up, ((j + 0.5) / K - 0.5) * box.length)
+						.normalize()
+						.applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw);
+					THREE.SphericalHarmonics3.getBasisAt(d, basis);
+					for (let k = 0; k < 9; k++) sh.coefficients[k].addScalar(basis[k] * weight);
+				}
+		}
+	}
+	private shBasis = new Array<number>(9).fill(0);
+
+	/**
+	 * The rig's strips (the rims and the side strip) as directional lights,
+	 * round the camera with the rest: a strip lights what faces it and
+	 * nothing else, the bright edge it traces down a silhouette. Each as
+	 * strong against the key as render.py has it (power for power); their
+	 * reflections stay the environment map's.
+	 */
+	private strips: THREE.DirectionalLight[] = [];
+	private syncStrips(yaw: number) {
+		const boxes = SOFTBOXES.filter(isStrip);
+		while (this.strips.length < boxes.length) {
+			const light = new THREE.DirectionalLight(0xffffff, 0);
+			this.scene.add(light, light.target);
+			this.strips.push(light);
+		}
+		const key = this.lights.key;
+		boxes.forEach((box, i) => {
+			const light = this.strips[i];
+			const az = THREE.MathUtils.degToRad(box.azimuth);
+			const el = THREE.MathUtils.degToRad(box.elevation);
+			light.visible = this.softbox && key.visible;
+			light.intensity = (key.intensity * box.power) / SOFTBOXES[0].power;
+			light.target.position.copy(this.target);
+			light.position
+				.set(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az))
+				.applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw)
+				.multiplyScalar(this.radius)
+				.add(this.target);
+			light.target.updateMatrixWorld();
+		});
+	}
+	private probeVecs = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+
 	private setSoftbox(on: boolean) {
 		this.softbox = on;
+		this.baked.uEnvDiffuse.value = on ? 0 : 1;
+		this.light.intensity = on ? this.scene.environmentIntensity : 0;
+		if (on) this.probeYaw = NaN;
 		if (on && !this.softboxRT) {
 			const env = createSoftboxEnvironment();
 			this.softboxRT = this.pmrem.fromScene(env, 0, 0.1, 100);
@@ -1866,6 +1970,9 @@ export class ModelViewer {
 			tone: (Object.keys(TONES) as Tone[]).find((k) => TONES[k] === this.renderer.toneMapping) ?? 'aces',
 			softbox: this.softbox ? 1 : 0,
 			sharpen: this.sweep?.sharpen ?? 0,
+			grade: this.gradeAmount,
+			edges: this.gtao?.ridge ?? 0,
+			cavity: this.gtao?.valley ?? 0,
 			bloom: this.bloom?.strength ?? 0,
 			bloomThreshold: this.bloom?.threshold ?? 1,
 			ao: this.gtao?.blendIntensity ?? 0,
@@ -1951,7 +2058,10 @@ export class ModelViewer {
 			'exposure',
 			'tone',
 			'softbox',
-			'sharpen'
+			'sharpen',
+			'grade',
+			'edges',
+			'cavity'
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
@@ -2034,12 +2144,23 @@ export class ModelViewer {
 				break;
 			case 'environment':
 				this.scene.environmentIntensity = n;
+				if (this.softbox) this.light.intensity = n;
 				break;
 			case 'exposure':
 				this.renderer.toneMappingExposure = n;
 				break;
 			case 'sharpen':
 				if (this.sweep) this.sweep.sharpen = n;
+				break;
+			case 'edges':
+				if (this.gtao) this.gtao.ridge = n;
+				break;
+			case 'cavity':
+				if (this.gtao) this.gtao.valley = n;
+				break;
+			case 'grade':
+				this.gradeAmount = n;
+				this.gtao?.setGrade({ amount: n, ...PRINT });
 				break;
 			case 'softbox':
 				this.setSoftbox(n > 0);
@@ -2399,6 +2520,7 @@ export class ModelViewer {
 		uPolymer: { value: 1 },
 		uDetail: { value: 1 },
 		uDetailTile: { value: 0.35 },
+		uEnvDiffuse: { value: 1 },
 		// Mid-grey (no change) until the texture arrives (`loadDetail`).
 		tDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) as THREE.Texture }
 	};
@@ -2745,8 +2867,11 @@ export class ModelViewer {
 		// The soft boxes stay where render.py puts them: round the camera.
 		if (this.softbox) {
 			const c = this.camera.position;
-			this.scene.environmentRotation.set(0, Math.atan2(c.x - this.target.x, c.z - this.target.z), 0);
+			const yaw = Math.atan2(c.x - this.target.x, c.z - this.target.z);
+			this.scene.environmentRotation.set(0, yaw, 0);
+			this.syncProbe(yaw);
 		}
+		this.syncStrips(this.softbox ? Math.atan2(this.camera.position.x - this.target.x, this.camera.position.z - this.target.z) : 0);
 		this.root.rotation.set(
 			this.scrollRotation.x + this.userRotation.x,
 			this.scrollRotation.y + this.userRotation.y + this.autoRotation,
@@ -2967,6 +3092,7 @@ export class ModelViewer {
 	}
 
 	private outputSize = new THREE.Vector2();
+	private gradeAmount = 0;
 	/** The pixel ratio the frame is drawn at (the canvas's is the screen's, OUTPUT_PIXEL_RATIO at most). */
 	private renderRatio = 1;
 	/** The steps adaptive quality goes down through, from the full frame. */
@@ -3219,7 +3345,17 @@ class SceneGTAOPass extends GTAOPass {
 			uIntensity: { value: 1 },
 			cameraNear: { value: 0.1 },
 			cameraFar: { value: 100 },
-			toneMappingExposure: { value: 1 }
+			toneMappingExposure: { value: 1 },
+			tNormal: { value: null },
+			uRidge: { value: 0 },
+			uValley: { value: 0 },
+			uGrade: { value: 0 },
+			uSaturation: { value: 1 },
+			uTint: { value: new THREE.Color(1, 1, 1) },
+			uContrast: { value: 0 },
+			uBlackPoint: { value: 0 },
+			uShadowTone: { value: new THREE.Color(1, 1, 1) },
+			uHighTone: { value: new THREE.Color(1, 1, 1) }
 		},
 		vertexShader: /* glsl */ `
 			varying vec2 vUv;
@@ -3233,6 +3369,17 @@ class SceneGTAOPass extends GTAOPass {
 			uniform sampler2D tDiffuse;
 			uniform sampler2D tAO;
 			uniform sampler2D tDepth;
+			uniform sampler2D tNormal;
+			uniform float uRidge;
+			uniform float uValley;
+			uniform float uGrade;
+			uniform float uSaturation;
+			uniform vec3 uTint;
+			uniform float uContrast;
+			uniform float uBlackPoint;
+			uniform vec3 uShadowTone;
+			uniform vec3 uHighTone;
+			const vec3 LUMA = vec3( 0.2126, 0.7152, 0.0722 );
 			uniform float uIntensity;
 			uniform float cameraNear;
 			uniform float cameraFar;
@@ -3282,9 +3429,66 @@ class SceneGTAOPass extends GTAOPass {
 				return total > 1e-6 ? sum / total : nearest;
 			}
 
+			vec3 toLinear( vec3 d ) {
+				return mix( d / 12.92, pow( ( d + 0.055 ) / 1.055, vec3( 2.4 ) ), step( 0.04045, d ) );
+			}
+			vec3 toDisplay( vec3 x ) {
+				return mix( x * 12.92, 1.055 * pow( x, vec3( 1.0 / 2.4 ) ) - 0.055, step( 0.0031308, x ) );
+			}
+
+			// The black studio renders' print (render.py's grade, after the tone
+			// curve, in its order): saturation and a cool tint on the light, then
+			// in display terms the blacks pinned and an S-curve, so the mid
+			// tones part into deep shadow and bright highlight, then split
+			// toning, shadows a cool steel and highlights a near-white. On the
+			// model's own colour (un-premultiplied), not the panel behind it; before
+			// the overlays (the energy trails keep their colours).
+			vec3 grade( vec3 d ) {
+				vec3 x = toLinear( d );
+				float grey = dot( x, LUMA );
+				x = ( grey + ( x - grey ) * uSaturation ) * uTint;
+				d = clamp( ( toDisplay( x ) - uBlackPoint ) / ( 1.0 - uBlackPoint ), 0.0, 1.0 );
+				d += ( d * d * ( 3.0 - 2.0 * d ) - d ) * uContrast;
+				x = toLinear( d );
+				float lum = dot( d, LUMA );
+				x *= mix( uShadowTone, uHighTone, lum );
+				return toDisplay( x );
+			}
+
+			// How the surface turns here, from the view normals a pixel either
+			// side: spreading apart (positive) over a convex edge, closing in
+			// (negative) in a crevice. A neighbour across a silhouette, on
+			// another surface, counts as this pixel's own normal.
+			float bend() {
+				vec2 px = 1.0 / vec2( textureSize( tNormal, 0 ) );
+				float z = viewZ( vUv );
+				float tolerance = abs( z ) * 0.02;
+				vec3 c = unpackRGBToNormal( texture2D( tNormal, vUv ).rgb );
+				vec3 n[ 4 ];
+				vec2 at[ 4 ];
+				at[ 0 ] = vec2( px.x, 0.0 );
+				at[ 1 ] = vec2( -px.x, 0.0 );
+				at[ 2 ] = vec2( 0.0, px.y );
+				at[ 3 ] = vec2( 0.0, -px.y );
+				for ( int i = 0; i < 4; i ++ ) {
+					vec2 uv = vUv + at[ i ];
+					n[ i ] = abs( viewZ( uv ) - z ) > tolerance ? c : unpackRGBToNormal( texture2D( tNormal, uv ).rgb );
+				}
+				return ( n[ 0 ].x - n[ 1 ].x ) + ( n[ 2 ].y - n[ 3 ].y );
+			}
+
 			void main() {
 				vec4 scene = texture2D( tDiffuse, vUv );
 				gl_FragColor = vec4( scene.rgb * mix( vec3( 1.0 ), occlusion(), uIntensity ), scene.a );
+				// Machined edges catch the light and crevices hold shadow, as the
+				// renders' edge polish and bevels have them: a sharp turn only
+				// (a cylinder's facets turn too gently to count), a pixel wide.
+				if ( uRidge > 0.0 || uValley > 0.0 ) {
+					float b = bend();
+					float ridge = smoothstep( 0.35, 0.9, b );
+					float valley = smoothstep( 0.35, 0.9, -b );
+					gl_FragColor.rgb = gl_FragColor.rgb * ( 1.0 - uValley * valley ) + ridge * uRidge * ( gl_FragColor.rgb + 0.03 * scene.a );
+				}
 				// OutputPass's work, when this pass does it too (finish).
 				#if defined( ACES_FILMIC_TONE_MAPPING )
 					gl_FragColor.rgb = ACESFilmicToneMapping( gl_FragColor.rgb );
@@ -3297,6 +3501,10 @@ class SceneGTAOPass extends GTAOPass {
 				#endif
 				#ifdef SRGB_TRANSFER
 					gl_FragColor = sRGBTransferOETF( gl_FragColor );
+					if ( uGrade > 0.0 && gl_FragColor.a > 0.0 ) {
+						vec3 own = clamp( gl_FragColor.rgb / gl_FragColor.a, 0.0, 1.0 );
+						gl_FragColor.rgb = mix( own, grade( own ), uGrade ) * gl_FragColor.a;
+					}
 				#endif
 			}`,
 		depthTest: false,
@@ -3325,6 +3533,9 @@ class SceneGTAOPass extends GTAOPass {
 		u.tDiffuse.value = this.source ?? readBuffer.texture;
 		this.finishLike(this.finish ? renderer : null);
 		u.toneMappingExposure.value = renderer.toneMappingExposure;
+		u.tNormal.value = this.normals.texture;
+		u.uRidge.value = this.ridge;
+		u.uValley.value = this.valley;
 		u.tAO.value = this.pdRenderTarget.texture;
 		u.tDepth.value = this.depthTexture;
 		u.uIntensity.value = this.blendIntensity;
@@ -3335,6 +3546,26 @@ class SceneGTAOPass extends GTAOPass {
 	}
 	private quad = new FullScreenQuad(this.composite);
 
+	/**
+	 * The print grade (`grade` in the composite), as render.py's
+	 * look_settings give it, on the finished frame (when it finishes it):
+	 * `amount` 0 leaves it as drawn. Colours as `#rrggbb`, taken as sRGB.
+	 */
+	setGrade(g: { amount: number; saturation: number; tint: string; contrast: number; blackPoint: number; shadows: string; highlights: string }) {
+		const u = this.composite.uniforms;
+		u.uGrade.value = g.amount;
+		u.uSaturation.value = g.saturation;
+		u.uContrast.value = g.contrast;
+		u.uBlackPoint.value = g.blackPoint;
+		// render.py's srgb_to_linear(colour) / srgb_to_linear('#ffffff'): three's Color.set linearises.
+		(u.uTint.value as THREE.Color).set(g.tint);
+		(u.uShadowTone.value as THREE.Color).set(g.shadows);
+		(u.uHighTone.value as THREE.Color).set(g.highlights);
+	}
+
+	/** Edges brightened and crevices darkened (`bend`), 0 for neither. */
+	ridge = 0;
+	valley = 0;
 	/** The scene to shade, when not the composer's read buffer: the beauty target's own, saving the copy into it. */
 	source: THREE.Texture | null = null;
 	/** Tone maps and encodes as it shades, as OutputPass would next: one full-screen pass, not two. */
@@ -3839,35 +4070,44 @@ function createStudioEnvironment(): THREE.Scene {
 	return env;
 }
 
+/** A strip, not a soft box: too narrow for the light probe (`syncProbe`), lit by a light of its own (`syncStrips`). */
+const isStrip = (b: { width: number }) => b.width < 0.2;
+
 /**
- * The approved studio renders' light (scripts/render/render.py, RIGS
- * 'studio-classic'): a big soft box overhead and a little to one side for
- * broad, even form, and a tall strip either side behind to cut the
- * silhouette out. Camera-relative, as render.py places them (`azimuth` 0
- * the camera's side, degrees round to the right; sizes and distance in
- * units of the subject's radius).
+ * The black studio renders' light (render.py RIGS 'studio-black', which
+ * the reference frames, renders/mark-0-black, were lit with; the -v2 set's
+ * json rig came after): one smallish soft box far round at camera-right,
+ * so the right side lights and the rest falls away; two strips behind at
+ * camera-left tracing that side's silhouette; a faint wash from above; on
+ * black, nothing in front at camera-left. Camera-relative, as render.py
+ * places them (`azimuth` 0 the camera's side, degrees round to the right;
+ * sizes and `distance`, 3 unless given, in subject radii). The first is
+ * the key: the directional key stands for it (`shadeAzimuth` 30,
+ * `shadeElevation` 9 is the same direction in its terms).
  */
 const SOFTBOXES = [
-	{ azimuth: 25, elevation: 55, width: 3, length: 3, power: 0.5 },
-	{ azimuth: 140, elevation: 25, width: 0.15, length: 3, power: 1.0 },
-	{ azimuth: -140, elevation: 25, width: 0.15, length: 3, power: 0.8 }
+	{ azimuth: 80, elevation: 30, distance: 2.2, width: 0.5, length: 1.0, power: 1.0 },
+	{ azimuth: -150, elevation: 20, distance: 3, width: 0.1, length: 3, power: 1.6 },
+	{ azimuth: -165, elevation: 12, distance: 3, width: 0.05, length: 3, power: 0.9 },
+	{ azimuth: 20, elevation: 70, distance: 3, width: 2.5, length: 2.5, power: 0.06 }
 ];
 
 /**
  * SOFTBOXES as an environment, for the metal to reflect and the surfaces
- * to be lit by: each a panel at three radii, in a dark room (the landing's
- * panel, near black), with the camera's side along +z (`softbox` turns it
- * with the camera). A panel's brightness is render.py's: its power is what
- * the subject receives at any size, so what a reflection of it shows, its
- * radiance, is power over area: the key broad and soft, the strips thin
- * and bright. Normalised so the key is 1; `environment` scales the lot.
+ * to be lit by: each a panel where render.py puts it, in a black room, with
+ * the camera's side along +z (`softbox` turns it with the camera). A
+ * panel's brightness is render.py's: its power is what the subject receives
+ * at any size and distance (Blender's energy scaled by distance squared),
+ * so what a reflection of it shows, its radiance, is power times distance
+ * squared over area: the key broad and soft, the strips thin and bright.
+ * Normalised so the key is 1; `environment` scales the lot.
  * Monochrome: the parts' colour is the finishes'.
  */
 function createSoftboxEnvironment(): THREE.Scene {
 	const env = new THREE.Scene();
-	const room = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: 0x030303, side: THREE.BackSide }));
+	const room = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide }));
 	env.add(room);
-	const radianceOf = (b: (typeof SOFTBOXES)[number]) => b.power / (b.width * b.length);
+	const radianceOf = (b: (typeof SOFTBOXES)[number]) => (b.power * b.distance * b.distance) / (b.width * b.length);
 	const key = radianceOf(SOFTBOXES[0]);
 	for (const box of SOFTBOXES) {
 		const az = THREE.MathUtils.degToRad(box.azimuth);
@@ -3876,7 +4116,8 @@ function createSoftboxEnvironment(): THREE.Scene {
 			new THREE.PlaneGeometry(box.width, box.length),
 			new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(radianceOf(box) / key), side: THREE.DoubleSide })
 		);
-		panel.position.set(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).multiplyScalar(3);
+		// −x: the cube PMREM renders the scene into reads back mirrored left to right.
+		panel.position.set(-Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).multiplyScalar(box.distance);
 		panel.lookAt(0, 0, 0);
 		env.add(panel);
 	}

@@ -207,7 +207,8 @@ export class SweepPass extends ShaderPass {
 						float l = dot( clamp( rgb, 0.0, 1.0 ), LUMA );
 						// Lift out of true black, then taper off through the highlights.
 						float w = smoothstep( 0.0, 0.12, l ) * ( 1.0 - 0.8 * smoothstep( 0.5, 1.0, l ) );
-						rgb += n * uGrain * w;
+						// On the model only: the panel behind it is the page's, and stays clean.
+						rgb += n * uGrain * w * src.a;
 					}
 
 					gl_FragColor = vec4( rgb, 1.0 );

@@ -3,6 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { defineConfig } from 'vite';
 import { cadTags } from './scripts/vite-cad-tags.js';
+import { perfCaptures } from './scripts/vite-perf.js';
 
 export default defineConfig({
 	server: {
@@ -22,6 +23,8 @@ export default defineConfig({
 	plugins: [
 		// Dev only: lets the CAD tagging tool (/cad/tag) save into the repo.
 		cadTags(),
+		// Dev only: lets the R1 perf runs (perf.ts) save frames and timings.
+		perfCaptures(),
 		// Must run before sveltekit(): rewrites <enhanced:img> into a <picture>
 		// with WebP/AVIF sources at build time.
 		enhancedImages(),

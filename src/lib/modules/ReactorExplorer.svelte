@@ -75,6 +75,8 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import EnergyControls from '$lib/components/EnergyControls.svelte';
+	import PerfHud from '$lib/components/PerfHud.svelte';
+	import type { PerfTarget } from '$lib/three/perf';
 	import type { EnergyParams, TrailLook } from '$lib/energy/energy';
 	import type { EnergyTrails } from '$lib/three/EnergyTrails';
 	import type { ModelViewer } from '$lib/three/ModelViewer';
@@ -504,6 +506,18 @@
 	let showControls = $state(false);
 	// The energy tuning panel: hidden for now, ?controls only.
 	let showEnergyControls = $state(false);
+	// The 3D's live readout and measuring runs (PerfHud): ?perf only.
+	let showPerf = $state(false);
+	const perfTarget: PerfTarget = {
+		count: untrack(() => features.length),
+		select: (i) => select(i),
+		viewerFor: (i) => {
+			const m = features[i]?.model;
+			return m ? viewers[m] : undefined;
+		},
+		viewers: () => Object.values(viewers).filter((v): v is ModelViewer => !!v),
+		setPaused: (on) => (paused = on)
+	};
 	/**
 	 * The energy along each model's pipes, and its tuning (EnergyControls):
 	 * the panel tunes the model on stage, from that model's own settings.
@@ -601,6 +615,7 @@
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
 		showEnergyControls = new URLSearchParams(location.search).has('controls');
+		showPerf = new URLSearchParams(location.search).has('perf');
 		return () => {
 			viewportEl.removeEventListener('reveal', onRevealed);
 			viewportEl.removeEventListener('pointerdown', grab);
@@ -704,6 +719,10 @@
 		</div>
 	</div>
 </div>
+
+{#if showPerf}
+	<PerfHud {viewers} onStage={typeof onStage === 'string' ? onStage : null} target={perfTarget} />
+{/if}
 
 {#if showControls}
 	<Controls {viewer} />

@@ -7,6 +7,7 @@ import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 // Type-only: these three passes ship off and are imported on demand in
 // `addOptionalPasses`, so their shader source stays out of the bundle
@@ -97,6 +98,24 @@ function glowFromWithin(
 			}`
 		);
 }
+
+/** One view's frame, measured (`ModelViewer.profile`): GPU times in ms, memory in bytes. */
+export type ViewProfile = {
+	full: number;
+	shadow: number;
+	scene: number;
+	post: number;
+	calls: number;
+	triangles: number;
+	step: number;
+	steps: number;
+	ratio: number;
+	ao: number;
+	width: number;
+	height: number;
+	targets: { name: string; width: number; height: number; samples: number; bytes: number }[];
+	geometry: Record<string, number>;
+};
 
 export interface ModelViewerOptions {
 	/**
@@ -1895,6 +1914,145 @@ export class ModelViewer {
 		return this.renderer.info.render.calls;
 	}
 
+	/** The last frame drawn: its draw calls, triangles, and the CPU's time submitting it, ms (PerfHud). */
+	readonly lastFrame = { calls: 0, triangles: 0, cpu: 0 };
+
+	/** Where adaptive quality stands: its step, the pixel ratio, the drawing buffer's size. */
+	get quality() {
+		const { width, height } = this.renderer.domElement;
+		return { step: this.pace.step, steps: this.ladder.length, ratio: this.renderer.getPixelRatio(), ao: this.aoScale, width, height };
+	}
+
+	/** Holds adaptive quality at step `i` (0, the full frame), for measuring like with like. */
+	holdStep(i = 0) {
+		this.setStep(Math.min(i, this.ladder.length - 1));
+		this.pace.stepped = null;
+		this.pace.done = true;
+	}
+
+	/** Back to no slow turn at all, so a run of views comes out the same each time (perf.ts). */
+	resetSpin() {
+		this.autoRotation = 0;
+		this.invalidate();
+	}
+
+	/** The view as it stands, drawn now and read back as a PNG (perf.ts). */
+	snapshot() {
+		this.renderer.shadowMap.needsUpdate = true;
+		this.composer.render();
+		// Read in the same task as the draw, before the canvas is presented and cleared.
+		return new Promise<Blob | null>((resolve) => this.renderer.domElement.toBlob(resolve, 'image/png'));
+	}
+
+	/** Set while `profile` runs: the ticker's frames stay out of its timing. */
+	private profiling = false;
+
+	/**
+	 * Dev measuring (perf.ts): the GPU's time for this view's frame, ms, and
+	 * how it splits: `shadow`, the key's shadow map; `scene`, the model
+	 * drawn once; `post`, everything after it (occlusion, tone mapping,
+	 * overlays, the backdrop). Each the best of `trials` runs of `frames`
+	 * frames back to back, to the GPU's finish (as `probe`): good to a
+	 * tenth of a millisecond or so, the fence's polling spread over them. With the
+	 * render targets and geometry it holds, bytes.
+	 */
+	async profile(frames = 12, trials = 4): Promise<ViewProfile | null> {
+		const gl = this.renderer.getContext();
+		if (!(gl instanceof WebGL2RenderingContext) || this.disposed) return null;
+		const r = this.renderer;
+		const frame = (shadow: boolean) => () => {
+			r.shadowMap.needsUpdate = shadow;
+			this.composer.render();
+		};
+		const scene = () => {
+			r.shadowMap.needsUpdate = false;
+			r.setRenderTarget(this.beauty);
+			r.clear();
+			r.render(this.scene, this.camera);
+		};
+		// Not the GPU's timer queries: under ANGLE on Metal they count the
+		// GPU's idle time too (a bare clear read 2.7 ms, a frame 8–12 ms that
+		// fences put at 3).
+		const time = (draw: () => void) => gpuTime(gl, draw, () => this.disposed, frames, trials);
+		this.profiling = true;
+		try {
+			const full = await time(frame(true));
+			r.info.reset();
+			frame(true)();
+			const { calls, triangles } = r.info.render;
+			const noShadow = await time(frame(false));
+			const model = await time(scene);
+			r.setRenderTarget(null);
+			return {
+				full,
+				shadow: full - noShadow,
+				scene: model,
+				post: noShadow - model,
+				calls,
+				triangles,
+				...this.quality,
+				targets: this.targetBytes(),
+				geometry: this.geometryBytes()
+			};
+		} finally {
+			this.profiling = false;
+			this.invalidate();
+		}
+	}
+
+	/** Every render target the frame uses (shadow maps too), and roughly what each holds in GPU memory, bytes. */
+	private targetBytes() {
+		const found = new Map<THREE.WebGLRenderTarget, string>();
+		const add = (rt: unknown, name: string) => {
+			if ((rt as THREE.WebGLRenderTarget)?.isWebGLRenderTarget && !found.has(rt as THREE.WebGLRenderTarget)) found.set(rt as THREE.WebGLRenderTarget, name);
+		};
+		add(this.beauty, 'beauty');
+		add(this.composer.renderTarget1, 'composer 1');
+		add(this.composer.renderTarget2, 'composer 2');
+		for (const pass of this.composer.passes)
+			for (const [k, v] of Object.entries(pass)) {
+				const name = `${pass.constructor.name}.${k}`;
+				if (Array.isArray(v)) v.forEach((x, i) => add(x, `${name}[${i}]`));
+				else add(v, name);
+			}
+		this.scene.traverse((o) => {
+			const shadow = (o as THREE.DirectionalLight).shadow;
+			if (shadow) {
+				add(shadow.map, `${o.name || o.type} shadow`);
+				add(shadow.mapPass, `${o.name || o.type} shadow blur`);
+			}
+		});
+		return [...found].map(([rt, name]) => {
+			const tex = rt.texture;
+			const texel = (tex.type === THREE.FloatType ? 4 : tex.type === THREE.HalfFloatType ? 2 : 1) * (tex.format === THREE.RedFormat ? 1 : tex.format === THREE.RGFormat ? 2 : 4);
+			const samples = rt.samples;
+			// Multisampled: a sample buffer for colour and depth, resolved into the texture(s).
+			const color = texel * (rt.textures.length * (samples ? samples + 1 : 1));
+			const depth = rt.depthBuffer ? 4 * (samples ? samples + (rt.depthTexture ? 1 : 0) : 1) : 0;
+			return { name, width: rt.width, height: rt.height, samples, bytes: rt.width * rt.height * (color + depth) };
+		});
+	}
+
+	/** The model's vertex and index buffers on the GPU, bytes, by attribute (each buffer once, however many meshes share it). */
+	private geometryBytes() {
+		const seen = new Set<ArrayBufferLike | THREE.TypedArray>();
+		const by: Record<string, number> = {};
+		const count = (name: string, a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute | null) => {
+			if (!a) return;
+			const array = (a as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute ? (a as THREE.InterleavedBufferAttribute).data.array : (a as THREE.BufferAttribute).array;
+			if (seen.has(array)) return;
+			seen.add(array);
+			by[name] = (by[name] ?? 0) + array.byteLength;
+		};
+		this.scene.traverse((o) => {
+			const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+			if (!(o as THREE.Mesh).isMesh || !g) return;
+			for (const [name, a] of Object.entries(g.attributes)) count(name, a);
+			count('index', g.index);
+		});
+		return by;
+	}
+
 	/**
 	 * The lens: vertical field of view in degrees. Longer lenses (smaller
 	 * values) flatten perspective; pull the camera back to keep the framing.
@@ -1953,7 +2111,7 @@ export class ModelViewer {
 	}
 
 	render() {
-		if (this.disposed || this.contextLost) return;
+		if (this.disposed || this.contextLost || this.profiling) return;
 		if (this.opts.breathe !== false) {
 			// ~1% of the model's height over a 7s period. The contact shadow
 			// lightens as it rises, which is what sells the motion.
@@ -2019,7 +2177,11 @@ export class ModelViewer {
 		this.contact?.update(this.scene);
 		// One shadow pass per frame, consumed by the scene render.
 		this.renderer.shadowMap.needsUpdate = true;
+		const submit = performance.now();
 		this.composer.render();
+		this.lastFrame.cpu = performance.now() - submit;
+		this.lastFrame.calls = this.renderer.info.render.calls;
+		this.lastFrame.triangles = this.renderer.info.render.triangles;
 		this.framesDrawn++;
 		this.keepPace();
 	}
@@ -2083,28 +2245,7 @@ export class ModelViewer {
 		// frame's time is mostly the GPU waking up and the queue ahead of it
 		// (a fast GPU read as 15 ms for a 3 ms frame), four in a row its
 		// throughput. The better of two.
-		const time = async () => {
-			let best = Infinity;
-			for (let k = 0; k < 2; k++) {
-				await nextFrame();
-				if (this.disposed) return 0;
-				const t = performance.now();
-				// In two pairs, the page given the main thread between them (the
-				// GPU busy with the first meanwhile): four draws' submission in one
-				// task held a slow laptop's main thread for 70 ms.
-				for (let f = 0; f < 4; f++) {
-					draw();
-					if (f === 1) await yieldToMain();
-				}
-				const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-				if (!sync) return 0;
-				gl.flush();
-				while (gl.clientWaitSync(sync, 0, 0) === gl.TIMEOUT_EXPIRED && !this.disposed) await new Promise((r) => setTimeout(r, 1));
-				gl.deleteSync(sync);
-				best = Math.min(best, (performance.now() - t) / 4);
-			}
-			return best;
-		};
+		const time = () => gpuTime(gl, draw, () => this.disposed);
 		let ms = await time();
 		while (ms > SLOW_FRAME_MS * 0.8 && this.pace.step < this.ladder.length - 1 && !this.disposed) {
 			const from = this.pace.step;
@@ -2279,6 +2420,32 @@ type Piece = {
  *    the frame's resolution rather than stepping.
  *  - The stock pass's copy of the frame and its multiply folded into one draw.
  */
+/** GTAOPass's denoise noise (its `_generateNoise`), from a fixed seed rather than Math.random. */
+function seededNoise(size = 64) {
+	let seed = 0x5eed;
+	// mulberry32
+	const random = () => {
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+	const simplex = new SimplexNoise({ random });
+	const data = new Uint8Array(size * size * 4);
+	for (let i = 0; i < size; i++)
+		for (let j = 0; j < size; j++) {
+			const at = (i * size + j) * 4;
+			data[at] = (simplex.noise(i, j) * 0.5 + 0.5) * 255;
+			data[at + 1] = (simplex.noise(i + size, j) * 0.5 + 0.5) * 255;
+			data[at + 2] = (simplex.noise(i, j + size) * 0.5 + 0.5) * 255;
+			data[at + 3] = (simplex.noise(i + size, j + size) * 0.5 + 0.5) * 255;
+		}
+	const noise = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
+	noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
+	noise.needsUpdate = true;
+	return noise;
+}
+
 class SceneGTAOPass extends GTAOPass {
 	/** The view normals, rebuilt once a frame from the depth (`setGBuffer` with it). */
 	readonly normals = new THREE.WebGLRenderTarget(1, 1, {
@@ -2341,6 +2508,16 @@ class SceneGTAOPass extends GTAOPass {
 		blending: THREE.NoBlending
 	});
 	private normalQuad = new FullScreenQuad(this.rebuildNormals);
+
+	constructor(...args: ConstructorParameters<typeof GTAOPass>) {
+		super(...args);
+		// The denoise's noise, as GTAOPass makes it but from a fixed seed: its
+		// own draws on Math.random, so each load shaded the edges a little
+		// differently and no two captures of the same view matched (perf.ts).
+		this.pdNoiseTexture.dispose();
+		this.pdNoiseTexture = seededNoise();
+		this.pdMaterial.uniforms.tNoise.value = this.pdNoiseTexture;
+	}
 
 	private composite = new THREE.ShaderMaterial({
 		uniforms: {
@@ -2735,6 +2912,34 @@ function shareBounds(source: THREE.BufferGeometry, g: THREE.BufferGeometry) {
  */
 function nextFrame() {
 	return new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+/**
+ * The GPU's time for a frame, ms: `frames` of `draw` back to back, timed
+ * to the last one's finish with a fence, polled so the main thread isn't
+ * stalled; the best of `trials`. In two halves, the page given the main
+ * thread between them (the GPU busy with the first meanwhile): four draws'
+ * submission in one task held a slow laptop's main thread for 70 ms.
+ * The polling rounds up by a few milliseconds over the whole run.
+ */
+async function gpuTime(gl: WebGL2RenderingContext, draw: () => void, stop: () => boolean, frames = 4, trials = 2) {
+	let best = Infinity;
+	for (let k = 0; k < trials; k++) {
+		await nextFrame();
+		if (stop()) return 0;
+		const t = performance.now();
+		for (let f = 0; f < frames; f++) {
+			draw();
+			if (f === Math.floor(frames / 2) - 1) await yieldToMain();
+		}
+		const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+		if (!sync) return 0;
+		gl.flush();
+		while (gl.clientWaitSync(sync, 0, 0) === gl.TIMEOUT_EXPIRED && !stop()) await new Promise((r) => setTimeout(r, 1));
+		gl.deleteSync(sync);
+		best = Math.min(best, (performance.now() - t) / frames);
+	}
+	return best;
 }
 
 /**

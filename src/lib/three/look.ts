@@ -22,7 +22,7 @@ export const LOOK: Partial<RenderParams> = {
 	metalness: 1,
 	clearcoat: 0.3,
 	coatRoughness: 0.5,
-	materialEnv: 0.8,
+	materialEnv: 1.2,
 
 	// Each part its own finish, as in the studio renders (the landing's
 	// models, scripts/bake-surface.mjs), mapped onto this lighter look at 60%,
@@ -33,12 +33,15 @@ export const LOOK: Partial<RenderParams> = {
 	detail: 0.35,
 	detailTile: 1.2,
 
-	// Light. The environment up from 0.3: the bake's occlusion takes its
-	// light out of the crevices, so the open surfaces keep theirs.
-	key: 9,
+	// Light: the studio renders' soft boxes (a big key overhead, a tall strip
+	// either side behind, round the camera) as the environment, so the metal
+	// reflects broad soft light rather than one hard highlight; the
+	// directional key down from 9, kept for the shadows it casts.
+	softbox: 1,
+	key: 5,
 	rim: 0,
 	ambient: 0,
-	environment: 0.45,
+	environment: 6,
 	exposure: 1.13,
 
 	// Gradient map: off, kept tuned for when it's switched on.

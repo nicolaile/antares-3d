@@ -185,8 +185,12 @@
 					sections,
 					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
 					hdr: '/hdr/studio_small_09_512.hdr',
-					// Phones: GPUs pay per pixel, so fewer of them, and occlusion at half size.
-					maxPixelRatio: light ? 1.5 : 2,
+					// 1.5 at most, a retina screen's 2 included: the frame is bound by its
+					// pixels, and 1.5 draws 44% fewer (measured: 3.6 → 2.2 ms on an M4
+					// Max), the same image a touch softer once the browser scales it up
+					// (2.8/255 apart on average, nothing moved); 4× multisampling keeps
+					// the edges. Phones also take occlusion at half size.
+					maxPixelRatio: 1.5,
 					// Dev, ?visibility: the part indices kept for the visibility sampler (perf.ts).
 					keepParts: import.meta.env.DEV && new URLSearchParams(location.search).has('visibility'),
 					aoScale: light ? 0.5 : 1,

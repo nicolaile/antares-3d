@@ -421,6 +421,8 @@ export interface RenderParams {
 	polymer: number;
 	/** The tone curve: ACES filmic (the look's), Khronos PBR Neutral, or AgX. */
 	tone: Tone;
+	/** 0/1: lit by the studio renders' soft boxes (createSoftboxEnvironment) rather than the HDR. */
+	softbox: number;
 	/** How much of the surface detail shows, 0–1 (roughness varying across a finish). */
 	detail: number;
 	/** The surface detail's tile, metres. */
@@ -1766,6 +1768,21 @@ export class ModelViewer {
 	 * Prefers the HDRI (a real studio with soft boxes and contrast); falls back
 	 * to a procedural strip-light room when none is configured.
 	 */
+	/** Lit by the soft boxes (`softbox`), their environment built the first time. */
+	private softbox = false;
+	private softboxRT: THREE.WebGLRenderTarget | null = null;
+	private setSoftbox(on: boolean) {
+		this.softbox = on;
+		if (on && !this.softboxRT) {
+			const env = createSoftboxEnvironment();
+			this.softboxRT = this.pmrem.fromScene(env, 0, 0.1, 100);
+			disposeScene(env);
+		}
+		this.scene.environment = (on ? this.softboxRT?.texture : this.envRT?.texture) ?? null;
+		if (!on) this.scene.environmentRotation.set(0, 0, 0);
+		this.invalidate();
+	}
+
 	/** The surface detail texture (`bakedSurface`); without it, surfaces stay as they are. */
 	private async loadDetail() {
 		try {
@@ -1794,7 +1811,7 @@ export class ModelViewer {
 			this.envRT = this.pmrem.fromScene(envScene, 0.02);
 			disposeScene(envScene);
 		}
-		this.scene.environment = this.envRT.texture;
+		if (!this.softbox) this.scene.environment = this.envRT.texture;
 		this.invalidate();
 	}
 
@@ -1835,6 +1852,7 @@ export class ModelViewer {
 			environment: this.scene.environmentIntensity,
 			exposure: this.renderer.toneMappingExposure,
 			tone: (Object.keys(TONES) as Tone[]).find((k) => TONES[k] === this.renderer.toneMapping) ?? 'aces',
+			softbox: this.softbox ? 1 : 0,
 			bloom: this.bloom?.strength ?? 0,
 			bloomThreshold: this.bloom?.threshold ?? 1,
 			ao: this.gtao?.blendIntensity ?? 0,
@@ -1918,7 +1936,8 @@ export class ModelViewer {
 			'ambient',
 			'environment',
 			'exposure',
-			'tone'
+			'tone',
+			'softbox'
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
@@ -2004,6 +2023,9 @@ export class ModelViewer {
 				break;
 			case 'exposure':
 				this.renderer.toneMappingExposure = n;
+				break;
+			case 'softbox':
+				this.setSoftbox(n > 0);
 				break;
 			case 'tone':
 				// The passes that tone map read it each frame (OutputPass, the occlusion's composite).
@@ -2699,6 +2721,11 @@ export class ModelViewer {
 	/** Puts the model, camera, cuts and key where this frame has them (`render`, and the visibility sampler). */
 	private pose() {
 		this.chooseLod();
+		// The soft boxes stay where render.py puts them: round the camera.
+		if (this.softbox) {
+			const c = this.camera.position;
+			this.scene.environmentRotation.set(0, Math.atan2(c.x - this.target.x, c.z - this.target.z), 0);
+		}
 		this.root.rotation.set(
 			this.scrollRotation.x + this.userRotation.x,
 			this.scrollRotation.y + this.userRotation.y + this.autoRotation,
@@ -3010,6 +3037,7 @@ export class ModelViewer {
 		for (const pass of this.overlayPasses) this.composer.removePass(pass);
 		this.composer.dispose();
 		this.envRT?.dispose();
+		this.softboxRT?.dispose();
 		this.baked.tDetail.value.dispose();
 		this.pmrem.dispose();
 		this.renderer.dispose();
@@ -3785,6 +3813,50 @@ function createStudioEnvironment(): THREE.Scene {
 	panel([1, 22, 5], [4, 4, -20], 0xffe3c0, 2); // warm kicker behind
 	panel([30, 1, 18], [0, -16, 0], 0x9aa0a8, 1); // faint floor bounce
 
+	return env;
+}
+
+/**
+ * The approved studio renders' light (scripts/render/render.py, RIGS
+ * 'studio-classic'): a big soft box overhead and a little to one side for
+ * broad, even form, and a tall strip either side behind to cut the
+ * silhouette out. Camera-relative, as render.py places them (`azimuth` 0
+ * the camera's side, degrees round to the right; sizes and distance in
+ * units of the subject's radius).
+ */
+const SOFTBOXES = [
+	{ azimuth: 25, elevation: 55, width: 3, length: 3, power: 0.5 },
+	{ azimuth: 140, elevation: 25, width: 0.15, length: 3, power: 1.0 },
+	{ azimuth: -140, elevation: 25, width: 0.15, length: 3, power: 0.8 }
+];
+
+/**
+ * SOFTBOXES as an environment, for the metal to reflect and the surfaces
+ * to be lit by: each a panel at three radii, in a dark room (the landing's
+ * panel, near black), with the camera's side along +z (`softbox` turns it
+ * with the camera). A panel's brightness is render.py's: its power is what
+ * the subject receives at any size, so what a reflection of it shows, its
+ * radiance, is power over area: the key broad and soft, the strips thin
+ * and bright. Normalised so the key is 1; `environment` scales the lot.
+ * Monochrome: the parts' colour is the finishes'.
+ */
+function createSoftboxEnvironment(): THREE.Scene {
+	const env = new THREE.Scene();
+	const room = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: 0x030303, side: THREE.BackSide }));
+	env.add(room);
+	const radianceOf = (b: (typeof SOFTBOXES)[number]) => b.power / (b.width * b.length);
+	const key = radianceOf(SOFTBOXES[0]);
+	for (const box of SOFTBOXES) {
+		const az = THREE.MathUtils.degToRad(box.azimuth);
+		const el = THREE.MathUtils.degToRad(box.elevation);
+		const panel = new THREE.Mesh(
+			new THREE.PlaneGeometry(box.width, box.length),
+			new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(radianceOf(box) / key), side: THREE.DoubleSide })
+		);
+		panel.position.set(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).multiplyScalar(3);
+		panel.lookAt(0, 0, 0);
+		env.add(panel);
+	}
 	return env;
 }
 

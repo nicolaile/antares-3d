@@ -2113,7 +2113,7 @@ export class ModelViewer {
 			case 'studioKey':
 				this.studioKeyFollow = n > 0.5;
 				// Letting go of the key puts it back where the rig had it.
-				if (!this.studioKeyFollow && this.studioOn) this.lights.key.position.copy(this.keyHome);
+				if (!this.studioKeyFollow && this.studioOn) this.homeKey();
 				break;
 		}
 		// The groups' copies follow the shared material.
@@ -2127,6 +2127,108 @@ export class ModelViewer {
 	 * space, and it is re-done every frame because the scroll shots move the
 	 * camera. Distance is kept, so the shadow frustum set up in load() holds.
 	 */
+	/** The key back where the look puts it, aimed at the model's centre again (`fitShadow` moves its aim). */
+	private homeKey() {
+		const { key } = this.lights;
+		key.target.position.set(0, 0, 0);
+		key.target.updateMatrixWorld();
+		key.position.copy(this.keyHome);
+	}
+
+	/**
+	 * The key's shadow map, fitted on every tick to what's drawn: the
+	 * bounds of the meshes shown (pieces wherever they've been taken apart
+	 * to, groups put away left out), in the light's own frame, and across
+	 * the light no wider than the view (a directional light's shadows fall
+	 * along it, so nothing outside the view casts into it). It was the
+	 * model's longest side 2.2 times over, room once for a floor that's
+	 * gone: now the map's texels go to what the camera sees, about twice as
+	 * fine on the wide shots, several times on the close ones.
+	 * Its sides move in steps of a twentieth (shrinking only by two), and
+	 * its middle by whole texels of the light's grid, so a glide doesn't set
+	 * the shadow's edges crawling.
+	 * The light's direction stays as it is; only where it's aimed moves.
+	 * With a floor to shadow (`groundShadow`), the map keeps the fixed frame
+	 * set in `load`, which reaches it.
+	 */
+	private fitShadow() {
+		const { key } = this.lights;
+		if (!key.castShadow || this.fitRadius <= 0 || this.ground) return;
+		const { x, y, z: dir } = this.shadowAxes;
+		dir.subVectors(key.position, key.target.position);
+		if (dir.lengthSq() < 1e-12) return;
+		dir.normalize();
+		// The light's grid: its camera looks back along `dir`, up as near world up as it can.
+		x.crossVectors(this.camera.up, dir);
+		if (x.lengthSq() < 1e-8) x.set(1, 0, 0);
+		x.normalize();
+		y.crossVectors(dir, x);
+		// What's drawn, in the light's frame: each shown mesh's box corners.
+		const lo = this.shadowLo.set(Infinity, Infinity, Infinity);
+		const hi = this.shadowHi.set(-Infinity, -Infinity, -Infinity);
+		const box = this.shadowBox;
+		const p = this.shadowCentre;
+		this.root.traverseVisible((o) => {
+			const mesh = o as THREE.Mesh;
+			if (!mesh.isMesh || mesh.userData.depthFirst || !mesh.geometry.boundingBox) return;
+			box.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+			for (let c = 0; c < 8; c++) {
+				p.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z);
+				const u = p.dot(x);
+				const v = p.dot(y);
+				const w = p.dot(dir);
+				if (u < lo.x) lo.x = u;
+				if (u > hi.x) hi.x = u;
+				if (v < lo.y) lo.y = v;
+				if (v > hi.y) hi.y = v;
+				if (w < lo.z) lo.z = w;
+				if (w > hi.z) hi.z = w;
+			}
+		});
+		if (lo.x > hi.x) return;
+		// No wider than the view: a sphere round the camera's target through the frame's corners.
+		const tan = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+		const view = this.camera.position.distanceTo(this.target) * tan * Math.hypot(1, this.camera.aspect);
+		const tu = this.target.dot(x);
+		const tv = this.target.dot(y);
+		lo.x = Math.max(lo.x, tu - view);
+		hi.x = Math.min(hi.x, tu + view);
+		lo.y = Math.max(lo.y, tv - view);
+		hi.y = Math.min(hi.y, tv + view);
+		if (lo.x > hi.x || lo.y > hi.y) return;
+		// Square (the map is), in steps: up at once, to keep all of it in,
+		// but down only by two, so the slow turn doesn't flick it between two
+		// sizes and the shadows' softness with it. The middle on whole texels.
+		const step = (n: number) => Math.pow(1.05, Math.ceil(Math.log(n) / Math.log(1.05)));
+		const need = step(Math.max(hi.x - lo.x, hi.y - lo.y) / 2 + this.fitRadius * 0.02);
+		const half = (this.shadowHalf = need > this.shadowHalf || need < this.shadowHalf / 1.1 ? need : this.shadowHalf);
+		const texel = (2 * half) / key.shadow.mapSize.x;
+		const cu = Math.round((lo.x + hi.x) / 2 / texel) * texel;
+		const cv = Math.round((lo.y + hi.y) / 2 / texel) * texel;
+		// Aimed at the box's middle, the light back past its nearest corner.
+		const cw = (lo.z + hi.z) / 2;
+		const depth = (hi.z - lo.z) / 2 + this.fitRadius * 0.05;
+		key.target.position.set(0, 0, 0).addScaledVector(x, cu).addScaledVector(y, cv).addScaledVector(dir, cw);
+		key.target.updateMatrixWorld();
+		key.position.copy(key.target.position).addScaledVector(dir, depth * 2);
+		const sc = key.shadow.camera;
+		const near = depth;
+		const far = depth * 3;
+		if (sc.right !== half || sc.near !== near || sc.far !== far) {
+			sc.left = sc.bottom = -half;
+			sc.right = sc.top = half;
+			sc.near = near;
+			sc.far = far;
+			sc.updateProjectionMatrix();
+		}
+	}
+	private shadowAxes = { x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3() };
+	private shadowHalf = 0;
+	private shadowLo = new THREE.Vector3();
+	private shadowHi = new THREE.Vector3();
+	private shadowBox = new THREE.Box3();
+	private shadowCentre = new THREE.Vector3();
+
 	private aimKey() {
 		const { key } = this.lights;
 		const dist = this.keyHome.length();
@@ -2162,7 +2264,7 @@ export class ModelViewer {
 				for (const [k, v] of Object.entries(this.studioSaved)) this.setParam(k as keyof RenderParams, v);
 				this.studioSaved = null;
 			}
-			this.lights.key.position.copy(this.keyHome);
+			this.homeKey();
 		}
 		for (const fn of this.studioHandlers) fn(on);
 	}
@@ -2480,6 +2582,7 @@ export class ModelViewer {
 			this.glowFrame.value.copy(this.root.matrixWorld).invert().premultiply(this.toAuthored.makeTranslation(-this.offset.x, -this.offset.y, -this.offset.z));
 		}
 		if (this.studioOn && this.studioKeyFollow) this.aimKey();
+		this.fitShadow();
 		// Focus rides the camera target, so whatever the scroll shot frames is sharp.
 		if (this.bokeh) this.bokehUniforms.focus.value = this.camera.position.distanceTo(this.target);
 		this.renderer.info.reset();

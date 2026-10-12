@@ -169,13 +169,16 @@ export class SweepPass extends ShaderPass {
 					// crawl. With a speed it re-rolls that many times a second; the
 					// seed wraps so the hash input stays bounded (fed an ever-growing
 					// time it ran out of fractional precision and collapsed into stripes).
-					vec2 cell = floor( gl_FragCoord.xy / max( uGrainSize, 1.0 ) );
-					float seed = uGrainSpeed > 0.0 ? mod( floor( uTime * uGrainSpeed ), 97.0 ) : 0.0;
-					float n = hash( cell + seed * vec2( 37.0, 91.0 ) ) - 0.5;
-					float l = dot( clamp( rgb, 0.0, 1.0 ), LUMA );
-					// Lift out of true black, then taper off through the highlights.
-					float w = smoothstep( 0.0, 0.12, l ) * ( 1.0 - 0.8 * smoothstep( 0.5, 1.0, l ) );
-					rgb += n * uGrain * w;
+					// None at all at 0, not a pattern worked out and scaled to nothing.
+					if ( uGrain > 0.0 ) {
+						vec2 cell = floor( gl_FragCoord.xy / max( uGrainSize, 1.0 ) );
+						float seed = uGrainSpeed > 0.0 ? mod( floor( uTime * uGrainSpeed ), 97.0 ) : 0.0;
+						float n = hash( cell + seed * vec2( 37.0, 91.0 ) ) - 0.5;
+						float l = dot( clamp( rgb, 0.0, 1.0 ), LUMA );
+						// Lift out of true black, then taper off through the highlights.
+						float w = smoothstep( 0.0, 0.12, l ) * ( 1.0 - 0.8 * smoothstep( 0.5, 1.0, l ) );
+						rgb += n * uGrain * w;
+					}
 
 					gl_FragColor = vec4( rgb, 1.0 );
 				}`

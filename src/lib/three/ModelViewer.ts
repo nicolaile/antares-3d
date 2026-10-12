@@ -741,11 +741,28 @@ export class ModelViewer {
 			const buckets = await trianglesBy(geometry, part, ways.length, (p) => pieceOfPart[p]);
 			// Directions in the mesh's parent's frame, which carries the file's Z-up turn.
 			const toLocal = new THREE.Matrix3().setFromMatrix4(mesh.parent!.matrixWorld).invert();
+			// Each piece's own bounds, its parts' put together (in world space,
+			// then back into the mesh's own): culled on its own, a close shot
+			// skips the pieces out of frame, where the whole group's bounds kept
+			// every one of them in.
+			const toMesh = mesh.matrixWorld.clone().invert();
+			const boxes = ways.map(() => new THREE.Box3());
+			const corner = new THREE.Vector3();
+			for (let p = 0; p < n; p++) {
+				const at = p * 3;
+				// A part index with no vertices in this mesh.
+				if (!(lo[at] <= hi[at])) continue;
+				boxes[pieceOfPart[p]].expandByPoint(corner.set(lo[at], lo[at + 1], lo[at + 2])).expandByPoint(corner.set(hi[at], hi[at + 1], hi[at + 2]));
+			}
 			buckets.forEach((tris, k) => {
 				const g = new THREE.BufferGeometry();
 				for (const [key, attribute] of Object.entries(geometry.attributes)) g.setAttribute(key, attribute);
 				g.setIndex(new THREE.BufferAttribute(tris, 1));
-				shareBounds(geometry, g);
+				if (boxes[k].isEmpty()) shareBounds(geometry, g);
+				else {
+					g.boundingBox = boxes[k].applyMatrix4(toMesh);
+					g.boundingSphere = g.boundingBox.getBoundingSphere(new THREE.Sphere());
+				}
 				const m = new THREE.Mesh(g, mesh.material);
 				m.position.copy(mesh.position);
 				m.quaternion.copy(mesh.quaternion);
@@ -939,12 +956,12 @@ export class ModelViewer {
 	private pmrem: THREE.PMREMGenerator;
 	private envRT: THREE.WebGLRenderTarget | null = null;
 	private composer: EffectComposer;
-	private renderPass: Pass;
+	private renderPass: BeautyPass;
 	/** The scene's own multisampled target, colour and depth (BeautyPass). */
 	private beauty: THREE.WebGLRenderTarget;
 	private outputPass: OutputPass;
 	private bloom: UnrealBloomPass | null = null;
-	private gtao: GTAOPass | null = null;
+	private gtao: SceneGTAOPass | null = null;
 	private contact: ContactShadow | null = null;
 	private ground: THREE.Mesh | null = null;
 	private grain: ReturnType<typeof createGrainPass> | null = null;
@@ -996,7 +1013,13 @@ export class ModelViewer {
 	 * page; on faster displays the moves still draw every refresh.
 	 */
 	private dirty = true;
-	private lastView: number[] = [];
+	/** Everything a frame depends on apart from the slow turn, this tick's and the last drawn frame's (`shouldDraw`). */
+	private view = new Float64Array(14);
+	private lastView = new Float64Array(14).fill(NaN);
+	/** The last frame drawn was for the slow turn alone, nothing else having moved. */
+	private spinOnly = false;
+	/** Whether the slow turn's last frame drew the shadow map (`render`). */
+	private spinShadow = false;
 	private lastSpin = NaN;
 	private lastDrawn = -Infinity;
 	/** Frames actually drawn — for measuring. */
@@ -1222,6 +1245,7 @@ export class ModelViewer {
 		this.aoScale = ao;
 		this.outputPass = new OutputPass();
 		this.composer.addPass(this.outputPass);
+		this.syncPasses();
 		if (opts.grain !== false) {
 			this.grain = createGrainPass(opts.grain ?? 0.03);
 			this.composer.addPass(this.grain);
@@ -1317,6 +1341,7 @@ export class ModelViewer {
 			this.ssr.opacity = opts.ssr?.opacity ?? 0.35;
 			this.composer.removePass(this.renderPass);
 			this.composer.insertPass(this.ssr, 0);
+			this.syncPasses();
 		}
 		if (opts.dof !== false) {
 			const { BokehPass } = await import('three/examples/jsm/postprocessing/BokehPass.js');
@@ -1758,14 +1783,19 @@ export class ModelViewer {
 			case 'materialEnv':
 				m.envMapIntensity = n;
 				break;
+			// A light at nothing is taken out, not left in every pixel's light
+			// loop adding zero (the look has the rim and the ambient at 0).
 			case 'key':
 				this.lights.key.intensity = n;
+				this.lights.key.visible = n > 0;
 				break;
 			case 'rim':
 				this.lights.rim.intensity = n;
+				this.lights.rim.visible = n > 0;
 				break;
 			case 'ambient':
 				this.lights.hemi.intensity = n;
+				this.lights.hemi.visible = n > 0;
 				break;
 			case 'environment':
 				this.scene.environmentIntensity = n;
@@ -2231,8 +2261,12 @@ export class ModelViewer {
 			return;
 		}
 		this.contact?.update(this.scene);
-		// One shadow pass per frame, consumed by the scene render.
-		this.renderer.shadowMap.needsUpdate = true;
+		// One shadow pass per frame, consumed by the scene render; for the slow
+		// turn alone, every other frame. It moves the model about a
+		// thousandth of a radian a frame, so a shadow a frame behind is out by
+		// a fraction of a pixel, and the shadow is the whole model drawn again.
+		this.spinShadow = this.spinOnly ? !this.spinShadow : true;
+		this.renderer.shadowMap.needsUpdate = this.spinShadow;
 		const submit = performance.now();
 		this.composer.render();
 		this.lastFrame.cpu = performance.now() - submit;
@@ -2349,6 +2383,23 @@ export class ModelViewer {
 		plane.dispose();
 	}
 
+	/**
+	 * With occlusion on, its composite reads the scene straight from the
+	 * beauty target and tone maps as it shades: the copy into the composer's
+	 * buffer and the output pass were each one more full-screen pass at the
+	 * frame's size (and the copy one more write of it). With occlusion off
+	 * (adaptive quality's last step), or SSR drawing the scene, both are back.
+	 */
+	private syncPasses() {
+		const merged = !!this.gtao?.enabled && !this.ssr;
+		this.renderPass.resolve = !merged;
+		if (this.gtao) {
+			this.gtao.source = merged ? this.beauty.texture : null;
+			this.gtao.finish = merged;
+		}
+		this.outputPass.enabled = !merged;
+	}
+
 	/** Moves to step `i` of the ladder. */
 	private setStep(i: number) {
 		this.pace.step = i;
@@ -2357,6 +2408,7 @@ export class ModelViewer {
 		this.renderer.setPixelRatio(ratio);
 		this.composer.setPixelRatio(ratio);
 		if (this.gtao) this.gtao.enabled = ao > 0;
+		this.syncPasses();
 		this.resize();
 	}
 
@@ -2384,11 +2436,21 @@ export class ModelViewer {
 		const t = this.target;
 		const r = this.root;
 		// Everything a frame depends on apart from the auto-rotation.
-		const view = [
-			c.x, c.y, c.z, t.x, t.y, t.z, this.camera.fov, this.camera.aspect,
-			r.rotation.x, this.scrollRotation.y + this.userRotation.y, r.rotation.z, r.scale.x, r.position.y,
-			this.gradient?.offset ?? 0
-		];
+		const view = this.view;
+		view[0] = c.x;
+		view[1] = c.y;
+		view[2] = c.z;
+		view[3] = t.x;
+		view[4] = t.y;
+		view[5] = t.z;
+		view[6] = this.camera.fov;
+		view[7] = this.camera.aspect;
+		view[8] = r.rotation.x;
+		view[9] = this.scrollRotation.y + this.userRotation.y;
+		view[10] = r.rotation.z;
+		view[11] = r.scale.x;
+		view[12] = r.position.y;
+		view[13] = this.gradient?.offset ?? 0;
 		// Effects that change with time alone have to draw every frame.
 		const timed =
 			this.opts.breathe !== false ||
@@ -2399,7 +2461,8 @@ export class ModelViewer {
 		const spun = this.autoRotation !== this.lastSpin;
 		if (!moved && !(spun && now - this.lastDrawn >= 1 / SPIN_FPS - 0.004)) return false;
 		this.dirty = false;
-		this.lastView = view;
+		this.spinOnly = !moved;
+		this.lastView.set(view);
 		this.lastSpin = this.autoRotation;
 		this.lastDrawn = now;
 		return true;
@@ -2596,7 +2659,8 @@ class SceneGTAOPass extends GTAOPass {
 			tDepth: { value: null },
 			uIntensity: { value: 1 },
 			cameraNear: { value: 0.1 },
-			cameraFar: { value: 100 }
+			cameraFar: { value: 100 },
+			toneMappingExposure: { value: 1 }
 		},
 		vertexShader: /* glsl */ `
 			varying vec2 vUv;
@@ -2606,6 +2670,7 @@ class SceneGTAOPass extends GTAOPass {
 			}`,
 		fragmentShader: /* glsl */ `
 			#include <packing>
+			#include <tonemapping_pars_fragment>
 			uniform sampler2D tDiffuse;
 			uniform sampler2D tAO;
 			uniform sampler2D tDepth;
@@ -2618,15 +2683,10 @@ class SceneGTAOPass extends GTAOPass {
 				return perspectiveDepthToViewZ( texture2D( tDepth, uv ).x, cameraNear, cameraFar );
 			}
 
-			void main() {
-				vec4 scene = texture2D( tDiffuse, vUv );
+			vec3 occlusion() {
 				vec2 size = vec2( textureSize( tAO, 0 ) );
 				// At the frame's own resolution: nothing to upsample.
-				if ( size == vec2( textureSize( tDepth, 0 ) ) ) {
-					vec3 ao = texelFetch( tAO, ivec2( vUv * size ), 0 ).rgb;
-					gl_FragColor = vec4( scene.rgb * mix( vec3( 1.0 ), ao, uIntensity ), scene.a );
-					return;
-				}
+				if ( size == vec2( textureSize( tDepth, 0 ) ) ) return texelFetch( tAO, ivec2( vUv * size ), 0 ).rgb;
 				vec2 p = vUv * size - 0.5;
 				vec2 base = floor( p );
 				vec2 f = p - base;
@@ -2660,12 +2720,31 @@ class SceneGTAOPass extends GTAOPass {
 						nearest = ao;
 					}
 				}
-				vec3 ao = total > 1e-6 ? sum / total : nearest;
-				gl_FragColor = vec4( scene.rgb * mix( vec3( 1.0 ), ao, uIntensity ), scene.a );
+				return total > 1e-6 ? sum / total : nearest;
+			}
+
+			void main() {
+				vec4 scene = texture2D( tDiffuse, vUv );
+				gl_FragColor = vec4( scene.rgb * mix( vec3( 1.0 ), occlusion(), uIntensity ), scene.a );
+				// OutputPass's work, when this pass does it too (finish).
+				#if defined( ACES_FILMIC_TONE_MAPPING )
+					gl_FragColor.rgb = ACESFilmicToneMapping( gl_FragColor.rgb );
+				#elif defined( NEUTRAL_TONE_MAPPING )
+					gl_FragColor.rgb = NeutralToneMapping( gl_FragColor.rgb );
+				#elif defined( AGX_TONE_MAPPING )
+					gl_FragColor.rgb = AgXToneMapping( gl_FragColor.rgb );
+				#elif defined( LINEAR_TONE_MAPPING )
+					gl_FragColor.rgb = LinearToneMapping( gl_FragColor.rgb );
+				#endif
+				#ifdef SRGB_TRANSFER
+					gl_FragColor = sRGBTransferOETF( gl_FragColor );
+				#endif
 			}`,
 		depthTest: false,
 		depthWrite: false,
-		blending: THREE.NoBlending
+		blending: THREE.NoBlending,
+		// Tone mapped here by hand, when at all (`finish`): three adds none.
+		toneMapped: false
 	});
 
 	render(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget, delta: number, maskActive: boolean) {
@@ -2684,7 +2763,9 @@ class SceneGTAOPass extends GTAOPass {
 		this.output = output;
 		// …and this draws the frame with it.
 		const u = this.composite.uniforms;
-		u.tDiffuse.value = readBuffer.texture;
+		u.tDiffuse.value = this.source ?? readBuffer.texture;
+		this.finishLike(this.finish ? renderer : null);
+		u.toneMappingExposure.value = renderer.toneMappingExposure;
 		u.tAO.value = this.pdRenderTarget.texture;
 		u.tDepth.value = this.depthTexture;
 		u.uIntensity.value = this.blendIntensity;
@@ -2694,6 +2775,33 @@ class SceneGTAOPass extends GTAOPass {
 		this.quad.render(renderer);
 	}
 	private quad = new FullScreenQuad(this.composite);
+
+	/** The scene to shade, when not the composer's read buffer: the beauty target's own, saving the copy into it. */
+	source: THREE.Texture | null = null;
+	/** Tone maps and encodes as it shades, as OutputPass would next: one full-screen pass, not two. */
+	finish = false;
+	private finishedAs = '';
+	/** The composite's defines for the renderer's tone mapping and output colour space, as OutputPass sets its own; none for `null`. */
+	private finishLike(renderer: THREE.WebGLRenderer | null) {
+		const key = renderer ? `${renderer.toneMapping}|${renderer.outputColorSpace}` : '';
+		if (key === this.finishedAs) return;
+		this.finishedAs = key;
+		const defines: Record<string, string> = {};
+		if (renderer) {
+			if (THREE.ColorManagement.getTransfer(renderer.outputColorSpace) === THREE.SRGBTransfer) defines.SRGB_TRANSFER = '';
+			const tone = (
+				{
+					[THREE.ACESFilmicToneMapping]: 'ACES_FILMIC_TONE_MAPPING',
+					[THREE.NeutralToneMapping]: 'NEUTRAL_TONE_MAPPING',
+					[THREE.AgXToneMapping]: 'AGX_TONE_MAPPING',
+					[THREE.LinearToneMapping]: 'LINEAR_TONE_MAPPING'
+				} as Record<number, string>
+			)[renderer.toneMapping];
+			if (tone) defines[tone] = '';
+		}
+		this.composite.defines = defines;
+		this.composite.needsUpdate = true;
+	}
 
 	dispose() {
 		super.dispose();
@@ -2732,6 +2840,9 @@ class BeautyPass extends Pass {
 		this.needsSwap = false;
 	}
 
+	/** Copies the scene into the composer's read buffer; off while the next pass reads `target` itself. */
+	resolve = true;
+
 	setSize(width: number, height: number) {
 		this.target.setSize(width, height);
 	}
@@ -2742,9 +2853,11 @@ class BeautyPass extends Pass {
 		renderer.setRenderTarget(this.target);
 		renderer.clear();
 		renderer.render(this.scene, this.camera);
-		this.copy.uniforms.tDiffuse.value = this.target.texture;
-		renderer.setRenderTarget(this.renderToScreen ? null : read);
-		this.quad.render(renderer);
+		if (this.resolve) {
+			this.copy.uniforms.tDiffuse.value = this.target.texture;
+			renderer.setRenderTarget(this.renderToScreen ? null : read);
+			this.quad.render(renderer);
+		}
 		renderer.autoClear = autoClear;
 	}
 

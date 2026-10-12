@@ -148,10 +148,14 @@ export function applyStudioShade(
 					// Grazing-angle pickup of the backdrop in the direction the
 					// surface faces. 0.3 of the screen is far enough that a top
 					// edge reaches the light plateau and an underside the dark.
-					vec2 screenUv = gl_FragCoord.xy / uResolution;
-					vec3 bounceColor = sweepLinear( screenUv + normal.xy * 0.3 );
-					float fresnel = pow( 1.0 - saturate( dot( normal, geometryViewDir ) ), 3.0 );
-					vec3 bounce = bounceColor * fresnel * uBounce;
+					// Skipped at 0 (the look's), every pixel the same way.
+					vec3 bounce = vec3( 0.0 );
+					if ( uBounce > 0.0 ) {
+						vec2 screenUv = gl_FragCoord.xy / uResolution;
+						vec3 bounceColor = sweepLinear( screenUv + normal.xy * 0.3 );
+						float fresnel = pow( 1.0 - saturate( dot( normal, geometryViewDir ) ), 3.0 );
+						bounce = bounceColor * fresnel * uBounce;
+					}
 
 					outgoingLight = mix( outgoingLight, outgoingLight * shade + bounce, uShadeOn );
 				}

@@ -39,6 +39,7 @@
 		later = false,
 		poster: posterOn = true,
 		hold = false,
+		asleep = false,
 		onready = undefined
 	}: {
 		/** The model: one .glb, or several that make it up between them (ModelViewer's `url`). */
@@ -67,6 +68,12 @@
 		 * until it turns false. For a model the visitor may never reach.
 		 */
 		hold?: boolean;
+		/**
+		 * Off stage: once it's had time to fade out, the viewer gives back its
+		 * frame's GPU memory and stops drawing (ModelViewer's `sleep`); back
+		 * at once when it turns false.
+		 */
+		asleep?: boolean;
 		/** Fires once the model is in the scene, for the render controls. */
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
@@ -105,6 +112,16 @@
 		if (!viewer) return;
 		viewer.spinning = !paused;
 		viewer.invalidate();
+	});
+
+	/** How long off stage before sleeping, seconds: the explorer's fade out (0.4 s) and some. */
+	const SLEEP_AFTER = 1;
+	$effect(() => {
+		if (!viewer) return;
+		const v = viewer;
+		if (!asleep) return v.wake();
+		const call = gsap.delayedCall(SLEEP_AFTER, () => v.sleep());
+		return () => call.kill();
 	});
 
 	/** Puts the camera on a shot, gliding there unless `instant`. */

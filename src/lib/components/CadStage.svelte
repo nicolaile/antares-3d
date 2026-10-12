@@ -492,6 +492,7 @@
 		shot={framed}
 		paused={paused || hidden}
 		later={hidden}
+		asleep={hidden}
 		poster={false}
 		{hold}
 		onready={(v) => {

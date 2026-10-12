@@ -1107,7 +1107,10 @@ export class ModelViewer {
 		// fullscreen quad from the composer, whose own 8× MSAA target does
 		// the antialiasing; multisampling the canvas as well only bought a
 		// second set of sample buffers and a resolve per frame.
-		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+		// No depth buffer either: only full-screen quads reach the canvas, the
+		// scene's own depth is the beauty target's (a 2× screen's worth of
+		// memory saved: 16 MB at 2770×1478).
+		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, depth: false, powerPreference: 'high-performance' });
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2));
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1382,6 +1385,16 @@ export class ModelViewer {
 		if (this.opts.groups?.length) await this.splitGroups(model);
 		else if (this.opts.mergeMeshes !== false) mergeStaticMeshes(model, this.material);
 		if (this.disposed) return model;
+		// The part index (carving and splitting, done now) and the CAD's
+		// colours ride along in the files but no shader reads them, and three
+		// uploads every attribute a geometry has: a quarter of the model's
+		// GPU memory for nothing.
+		model.traverse((o) => {
+			const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+			if (!(o as THREE.Mesh).isMesh || !g) return;
+			g.deleteAttribute('_part');
+			g.deleteAttribute('color');
+		});
 
 		// Recentre on the origin so rotations spin about the vessel's own axis
 		// rather than the exporter's origin. Bounds read from the typed arrays
@@ -1944,6 +1957,37 @@ export class ModelViewer {
 		return new Promise<Blob | null>((resolve) => this.renderer.domElement.toBlob(resolve, 'image/png'));
 	}
 
+	/** Off stage: nothing drawn, and the frame's buffers given back (`sleep`). */
+	private asleep = false;
+
+	/**
+	 * For a viewer out of sight a while (the explorer's other model, once
+	 * faded out): the frame's buffers go, the canvas, the scene's
+	 * multisampled target, the passes' and the shadow maps, a few hundred
+	 * megabytes of GPU memory at a pixel ratio of 2; and nothing is drawn.
+	 * The model, materials and compiled programs all stay, so `wake` is
+	 * quick: the buffers come back for the next frame drawn.
+	 */
+	sleep() {
+		if (this.asleep || this.disposed) return;
+		this.asleep = true;
+		this.resize();
+		for (const light of [this.lights.key, this.lights.rim]) {
+			// three makes a shadow map again the next time one's needed.
+			light.shadow.map?.dispose();
+			light.shadow.map = null;
+			light.shadow.mapPass?.dispose();
+			light.shadow.mapPass = null;
+		}
+	}
+
+	/** Back from `sleep`: full size again, a fresh frame on the next tick. */
+	wake() {
+		if (!this.asleep || this.disposed) return;
+		this.asleep = false;
+		this.resize();
+	}
+
 	/** Set while `profile` runs: the ticker's frames stay out of its timing. */
 	private profiling = false;
 
@@ -2095,6 +2139,11 @@ export class ModelViewer {
 	}
 
 	resize() {
+		if (this.asleep) {
+			this.renderer.setSize(1, 1, false);
+			this.composer.setSize(1, 1);
+			return;
+		}
 		const { clientWidth: w, clientHeight: h } = this.container;
 		if (!w || !h) return;
 		this.camera.aspect = w / h;
@@ -2118,7 +2167,7 @@ export class ModelViewer {
 	}
 
 	render() {
-		if (this.disposed || this.contextLost || this.profiling) return;
+		if (this.disposed || this.contextLost || this.profiling || this.asleep) return;
 		if (this.opts.breathe !== false) {
 			// ~1% of the model's height over a 7s period. The contact shadow
 			// lightens as it rises, which is what sells the motion.
@@ -2372,6 +2421,8 @@ export class ModelViewer {
 		this.scene.traverse((o) => {
 			const m = o as THREE.Mesh;
 			if (m.isMesh) m.geometry?.dispose();
+			// The groups' depth-only see-through firsts (one material a group).
+			if (m.userData.depthFirst) (m.material as THREE.Material).dispose();
 		});
 		this.material?.dispose();
 		if (this.ground) {
@@ -2385,10 +2436,15 @@ export class ModelViewer {
 		this.ssr?.dispose();
 		this.renderPass.dispose();
 		this.bokeh?.dispose();
+		this.outputPass.dispose();
+		for (const pass of this.overlayPasses) this.composer.removePass(pass);
 		this.composer.dispose();
 		this.envRT?.dispose();
 		this.pmrem.dispose();
 		this.renderer.dispose();
+		// The context goes now, not whenever the canvas is collected: a page
+		// gets only so many, and a rebuild after a loss makes another.
+		if (!this.contextLost) this.renderer.forceContextLoss();
 		this.renderer.domElement.remove();
 	}
 }
@@ -2524,6 +2580,13 @@ class SceneGTAOPass extends GTAOPass {
 		this.pdNoiseTexture.dispose();
 		this.pdNoiseTexture = seededNoise();
 		this.pdMaterial.uniforms.tNoise.value = this.pdNoiseTexture;
+		// Occlusion is a factor from 0 to 1: eight bits hold it, at half the
+		// memory and bandwidth of the stock pass's half floats.
+		this.gtaoRenderTarget.dispose();
+		this.pdRenderTarget.dispose();
+		this.gtaoRenderTarget = new THREE.WebGLRenderTarget(this.width, this.height, { depthBuffer: false });
+		this.pdRenderTarget = this.gtaoRenderTarget.clone();
+		this.pdMaterial.uniforms.tDiffuse.value = this.gtaoRenderTarget.texture;
 	}
 
 	private composite = new THREE.ShaderMaterial({

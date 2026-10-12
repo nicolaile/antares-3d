@@ -9,7 +9,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { ModelViewer, ViewProfile } from '$lib/three/ModelViewer';
-	import { run, type PerfTarget } from '$lib/three/perf';
+	import { run, visibility, type PerfTarget } from '$lib/three/perf';
 
 	let {
 		viewers,
@@ -55,7 +55,10 @@
 				];
 			});
 		}, 1000);
-		(window as unknown as Record<string, unknown>).__perf = { run: (l: string, o?: Parameters<typeof run>[2]) => run(target, l, o) };
+		(window as unknown as Record<string, unknown>).__perf = {
+			run: (l: string, o?: Parameters<typeof run>[2]) => run(target, l, o),
+			visibility: (o?: Parameters<typeof visibility>[1]) => visibility(target, o)
+		};
 		return () => {
 			clearInterval(id);
 			delete (window as unknown as Record<string, unknown>).__perf;

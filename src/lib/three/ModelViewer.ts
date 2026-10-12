@@ -52,6 +52,8 @@ const OPEN_AT = 0.08;
 /** The tone curves the look can take (`tone`). */
 const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMapping, agx: THREE.AgXToneMapping } as const;
 export type Tone = keyof typeof TONES;
+/** How many pixels a level of detail's error may come to on screen (`chooseLod`). */
+const LOD_PIXELS = 1;
 /** Roughness detail over the finishes (scripts/surface-detail.mjs). */
 const DETAIL_URL = '/textures/surface-detail.webp';
 
@@ -233,6 +235,8 @@ export type ViewProfile = {
 };
 
 export interface ModelViewerOptions {
+	/** Keeps each vertex's part index on the GPU, for the visibility sampler (`visibleParts`, dev). */
+	keepParts?: boolean;
 	/**
 	 * Path to the optimised .glb (meshopt-compressed, GPU-instanced), or
 	 * several that make one model between them (the CAD's groups), loaded
@@ -669,6 +673,8 @@ export class ModelViewer {
 		const box = new THREE.Box3(new THREE.Vector3(...spec.min), new THREE.Vector3(...spec.max));
 		const holder = new THREE.Group();
 		holder.name = THREE.PropertyBinding.sanitizeNodeName(name);
+		// The file its parts are numbered in, for the visibility sampler.
+		holder.userData.file = node.userData.file ?? spec.from;
 		model.add(holder);
 		const meshes: THREE.Mesh[] = [];
 		node.traverse((o) => {
@@ -686,15 +692,17 @@ export class ModelViewer {
 			}
 			const [keep, take] = await trianglesBy(geometry, part, 2, (p) => inside[p]);
 			if (!take.length) continue;
-			const shared = (tris: Uint32Array | Uint16Array) => {
+			const lods = await lodsBy(geometry, part, 2, (p) => inside[p]);
+			const shared = (tris: Uint32Array | Uint16Array, k: number) => {
 				const g = new THREE.BufferGeometry();
 				for (const [key, attribute] of Object.entries(geometry.attributes)) g.setAttribute(key, attribute);
 				g.setIndex(new THREE.BufferAttribute(tris, 1));
+				if (lods[k].length) g.userData.lods = lods[k];
 				shareBounds(geometry, g);
 				return g;
 			};
-			mesh.geometry = shared(keep);
-			const carved = new THREE.Mesh(shared(take), mesh.material);
+			mesh.geometry = shared(keep, 0);
+			const carved = new THREE.Mesh(shared(take, 1), mesh.material);
 			// The model's frame is the world's here (it isn't placed yet).
 			mesh.matrixWorld.decompose(carved.position, carved.quaternion, carved.scale);
 			holder.add(carved);
@@ -878,6 +886,10 @@ export class ModelViewer {
 				let sin = 0;
 				let cos = 0;
 				for (let p = 0; p < n; p++) {
+					// A part index with no vertices (left out of the landing's
+					// files, never seen) has no middle: one NaN here and every
+					// part went to the first piece.
+					if (!(lo[p * 3] <= hi[p * 3])) continue;
 					const x = mid(p, 0) - ax;
 					const z = mid(p, 2) - az;
 					if (Math.hypot(x, z) <= 0.15) continue;
@@ -900,6 +912,7 @@ export class ModelViewer {
 
 			// Triangles by piece.
 			const buckets = await trianglesBy(geometry, part, ways.length, (p) => pieceOfPart[p]);
+			const lods = await lodsBy(geometry, part, ways.length, (p) => pieceOfPart[p]);
 			// Directions in the mesh's parent's frame, which carries the file's Z-up turn.
 			const toLocal = new THREE.Matrix3().setFromMatrix4(mesh.parent!.matrixWorld).invert();
 			// Each piece's own bounds, its parts' put together (in world space,
@@ -919,6 +932,7 @@ export class ModelViewer {
 				const g = new THREE.BufferGeometry();
 				for (const [key, attribute] of Object.entries(geometry.attributes)) g.setAttribute(key, attribute);
 				g.setIndex(new THREE.BufferAttribute(tris, 1));
+				if (lods[k].length) g.userData.lods = lods[k];
 				if (boxes[k].isEmpty()) shareBounds(geometry, g);
 				else {
 					g.boundingBox = boxes[k].applyMatrix4(toMesh);
@@ -1537,6 +1551,7 @@ export class ModelViewer {
 	async load(): Promise<THREE.Group> {
 		const [model] = await Promise.all([this.loadModel(), this.loadEnvironment(), this.addOptionalPasses(), this.loadDetail()]);
 		if (this.disposed) return model;
+		this.lodErrors = foldLods(model);
 
 		// One shared material for every part: one shader program, and one
 		// object to tune. The glTF's own material is dropped.
@@ -1577,7 +1592,7 @@ export class ModelViewer {
 		model.traverse((o) => {
 			const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
 			if (!(o as THREE.Mesh).isMesh || !g) return;
-			g.deleteAttribute('_part');
+			if (!this.opts.keepParts) g.deleteAttribute('_part');
 			g.deleteAttribute('color');
 		});
 
@@ -2349,6 +2364,124 @@ export class ModelViewer {
 		tDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) as THREE.Texture }
 	};
 
+	/**
+	 * Dev tooling (perf.ts `visibility`): which CAD parts can be seen in the
+	 * view as it stands, the model turned right round in `turns` steps at
+	 * each of `tilts` (the drag's range), as the frame would draw it: groups
+	 * put away left out, cuts open, pieces where they are. Each part drawn in
+	 * its own colour, with its group's clipping, and every colour that
+	 * shows counts; see-through groups each on their own (they hide nothing
+	 * behind them). Wider than the frame by `widen`, so a part only a taller
+	 * phone frame would take in still counts. Needs `keepParts`. Returns
+	 * part indices by the file they're numbered in.
+	 */
+	async visibleParts({ turns = 24, tilts = [-0.6, -0.3, 0, 0.3, 0.6], scale = 1.25, widen = 1.5 } = {}) {
+		const seen = new Map<string, Set<number>>();
+		const groups = [...this.groups.entries()].filter(([, g]) => g.node.visible);
+		const r = this.renderer;
+		const buffer = r.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(scale).round();
+		const target = new THREE.WebGLRenderTarget(buffer.x, buffer.y);
+		const pixels = new Uint8Array(buffer.x * buffer.y * 4);
+		const ids = groups.map(([name, g], i) => {
+			const material = new THREE.ShaderMaterial({
+				uniforms: { uGroup: { value: i + 1 } },
+				vertexShader: /* glsl */ `
+					#include <common>
+					#include <clipping_planes_pars_vertex>
+					attribute float _part;
+					flat varying float vPart;
+					void main() {
+						vPart = _part;
+						#include <begin_vertex>
+						#include <project_vertex>
+						#include <clipping_planes_vertex>
+					}`,
+				fragmentShader: /* glsl */ `
+					#include <clipping_planes_pars_fragment>
+					uniform float uGroup;
+					flat varying float vPart;
+					void main() {
+						#include <clipping_planes_fragment>
+						float p = vPart;
+						gl_FragColor = vec4( mod( p, 256.0 ), floor( p / 256.0 ), uGroup, 255.0 ) / 255.0;
+					}`,
+				clipping: true,
+				clippingPlanes: g.material.clippingPlanes,
+				clipIntersection: g.material.clipIntersection,
+				side: g.material.side
+			});
+			const meshes: THREE.Mesh[] = [];
+			g.node.traverse((o) => {
+				if ((o as THREE.Mesh).isMesh && !o.userData.depthFirst && (o as THREE.Mesh).geometry.getAttribute('_part')) meshes.push(o as THREE.Mesh);
+			});
+			return { name, file: (g.node.userData.file as string | undefined) ?? name, g, material, meshes, see: g.level < 0.999 };
+		});
+		const saved = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+		for (const id of ids) for (const m of id.meshes) saved.set(m, m.material);
+		const depthFirst: THREE.Object3D[] = [];
+		this.root.traverse((o) => o.userData.depthFirst && o.visible && depthFirst.push(o));
+		const pose = { turn: this.autoRotation, tilt: this.userRotation.x, fov: this.camera.fov, shadow: r.shadowMap.enabled };
+		const read = () => {
+			r.setRenderTarget(target);
+			r.setClearColor(0x000000, 0);
+			r.clear();
+			r.render(this.scene, this.camera);
+			r.readRenderTargetPixels(target, 0, 0, buffer.x, buffer.y, pixels);
+			for (let i = 0; i < pixels.length; i += 4) {
+				const group = pixels[i + 2];
+				if (!group) continue;
+				const id = ids[group - 1];
+				let set = seen.get(id.file);
+				if (!set) seen.set(id.file, (set = new Set()));
+				set.add(pixels[i] + pixels[i + 1] * 256);
+			}
+		};
+		this.profiling = true;
+		this.lodHold = 0;
+		try {
+			r.shadowMap.enabled = false;
+			for (const o of depthFirst) o.visible = false;
+			for (const id of ids) for (const m of id.meshes) m.material = id.material;
+			for (let k = 0; k < turns; k++) {
+				for (const tilt of tilts) {
+					this.autoRotation = pose.turn + (k / turns) * Math.PI * 2;
+					this.userRotation.x = tilt;
+					this.pose();
+					this.camera.fov = Math.min(150, pose.fov * widen);
+					this.camera.updateProjectionMatrix();
+					// The solid groups together, hiding each other…
+					for (const id of ids) id.g.node.visible = !id.see;
+					read();
+					// …and each see-through one on its own.
+					for (const see of ids.filter((id) => id.see)) {
+						for (const id of ids) id.g.node.visible = id === see;
+						read();
+					}
+					for (const id of ids) id.g.node.visible = true;
+					this.camera.fov = pose.fov;
+					this.camera.updateProjectionMatrix();
+				}
+				await yieldToMain();
+			}
+		} finally {
+			for (const [m, material] of saved) m.material = material;
+			for (const o of depthFirst) o.visible = true;
+			for (const id of ids) id.material.dispose();
+			target.dispose();
+			r.setRenderTarget(null);
+			r.shadowMap.enabled = pose.shadow;
+			this.autoRotation = pose.turn;
+			this.userRotation.x = pose.tilt;
+			this.camera.fov = pose.fov;
+			this.camera.updateProjectionMatrix();
+			this.lodHold = null;
+			this.pose();
+			this.profiling = false;
+			this.invalidate();
+		}
+		return Object.fromEntries([...seen].map(([file, set]) => [file, [...set].sort((a, b) => a - b)]));
+	}
+
 	/** Set while `profile` runs: the ticker's frames stay out of its timing. */
 	private profiling = false;
 
@@ -2527,6 +2660,71 @@ export class ModelViewer {
 		}
 	}
 
+	/** The coarser levels of detail the model has, metres (`foldLods`); none for most files. */
+	private lodErrors: number[] = [];
+	/** The level drawn: 0 the full one, then the coarser (`chooseLod`). */
+	private lod = 0;
+	/** A level held whatever the view (the visibility sampler holds the full one). */
+	private lodHold: number | null = null;
+
+	/**
+	 * The coarsest level of detail whose error comes to under LOD_PIXELS on
+	 * screen, measured where the model is nearest the camera: a wide shot,
+	 * a small or low-resolution screen (adaptive quality's steps among them)
+	 * draws fewer triangles, a close shot all of them. The shadow map draws
+	 * the same geometry. Only when the level changes are the triangles
+	 * swapped (each piece's index; the vertices never change).
+	 */
+	private chooseLod() {
+		if (!this.lodErrors.length || this.asleep) return;
+		const nearest = Math.max(this.fitRadius * 0.05, this.camera.position.distanceTo(this.root.position) - this.fitRadius);
+		const pixel = (2 * nearest * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / this.renderer.domElement.height;
+		let level = 0;
+		this.lodErrors.forEach((error, i) => {
+			if (error <= pixel * LOD_PIXELS) level = i + 1;
+		});
+		if (this.lodHold !== null) level = this.lodHold;
+		if (level === this.lod) return;
+		this.lod = level;
+		this.root.traverse((o) => {
+			const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+			const lods = g?.userData.lods as Lod[] | undefined;
+			if (!g || !lods || o.userData.depthFirst) return;
+			g.userData.full ??= g.index;
+			g.setIndex(level ? (lods[level - 1]?.index ?? g.userData.full) : g.userData.full);
+		});
+		this.invalidate();
+	}
+
+	/** Puts the model, camera, cuts and key where this frame has them (`render`, and the visibility sampler). */
+	private pose() {
+		this.chooseLod();
+		this.root.rotation.set(
+			this.scrollRotation.x + this.userRotation.x,
+			this.scrollRotation.y + this.userRotation.y + this.autoRotation,
+			this.scrollRotation.z,
+			'ZXY'
+		);
+		this.camera.lookAt(this.target);
+		// The far plane follows the camera, so a shot from further out than
+		// the opening one (or a model taken apart) never runs past it; the
+		// near plane stays put, where the depth precision is.
+		if (this.fitRadius > 0) {
+			const far = this.camera.position.length() + this.fitRadius * 4;
+			if (Math.abs(far - this.camera.far) > this.fitRadius * 0.01) {
+				this.camera.far = far;
+				this.camera.updateProjectionMatrix();
+			}
+		}
+		if (this.groups.size) {
+			this.root.updateMatrixWorld();
+			this.aimCuts();
+			this.glowFrame.value.copy(this.root.matrixWorld).invert().premultiply(this.toAuthored.makeTranslation(-this.offset.x, -this.offset.y, -this.offset.z));
+		}
+		if (this.studioOn && this.studioKeyFollow) this.aimKey();
+		this.fitShadow();
+	}
+
 	render() {
 		if (this.disposed || this.contextLost || this.profiling || this.asleep) return;
 		if (this.opts.breathe !== false) {
@@ -2559,30 +2757,7 @@ export class ModelViewer {
 			this.gradient.offset = this.gradientUserOffset + (this.gradientFollow ? this.pointerOffset : 0);
 		}
 
-		this.root.rotation.set(
-			this.scrollRotation.x + this.userRotation.x,
-			this.scrollRotation.y + this.userRotation.y + this.autoRotation,
-			this.scrollRotation.z,
-			'ZXY'
-		);
-		this.camera.lookAt(this.target);
-		// The far plane follows the camera, so a shot from further out than
-		// the opening one (or a model taken apart) never runs past it; the
-		// near plane stays put, where the depth precision is.
-		if (this.fitRadius > 0) {
-			const far = this.camera.position.length() + this.fitRadius * 4;
-			if (Math.abs(far - this.camera.far) > this.fitRadius * 0.01) {
-				this.camera.far = far;
-				this.camera.updateProjectionMatrix();
-			}
-		}
-		if (this.groups.size) {
-			this.root.updateMatrixWorld();
-			this.aimCuts();
-			this.glowFrame.value.copy(this.root.matrixWorld).invert().premultiply(this.toAuthored.makeTranslation(-this.offset.x, -this.offset.y, -this.offset.z));
-		}
-		if (this.studioOn && this.studioKeyFollow) this.aimKey();
-		this.fitShadow();
+		this.pose();
 		// Focus rides the camera target, so whatever the scroll shot frames is sharp.
 		if (this.bokeh) this.bokehUniforms.focus.value = this.camera.position.distanceTo(this.target);
 		this.renderer.info.reset();
@@ -3364,9 +3539,14 @@ async function partBounds(mesh: THREE.Mesh): Promise<PartBounds> {
  * first vertex (`bucketOf` a part), each as an index array of the smallest
  * type that holds the vertex count.
  */
-async function trianglesBy(geometry: THREE.BufferGeometry, part: Uint32Array, count: number, bucketOf: (part: number) => number) {
+async function trianglesBy(
+	geometry: THREE.BufferGeometry,
+	part: Uint32Array,
+	count: number,
+	bucketOf: (part: number) => number,
+	index: THREE.TypedArray | undefined = geometry.index?.array
+) {
 	const slice = slicer();
-	const index = geometry.index?.array;
 	const vertices = geometry.getAttribute('position').count;
 	const triangles = index ? index.length / 3 : vertices / 3;
 	const bucket = new Uint32Array(triangles);
@@ -3419,6 +3599,45 @@ function shareBounds(source: THREE.BufferGeometry, g: THREE.BufferGeometry) {
 	if (!source.boundingSphere) source.boundingSphere = source.boundingBox.getBoundingSphere(new THREE.Sphere());
 	g.boundingBox = source.boundingBox;
 	g.boundingSphere = source.boundingSphere;
+}
+
+/** A coarser level of detail: its error, metres, and its triangles over the full level's vertices. */
+type Lod = { error: number; index: THREE.BufferAttribute };
+
+/**
+ * Levels of detail (the landing's files, scripts/bake-surface.mjs): the
+ * coarser primitives load as meshes beside the full one, over the same
+ * vertex data. Each one's triangles go onto the full mesh's geometry
+ * (`userData.lods`, finest first) and the mesh goes. Returns the errors.
+ */
+function foldLods(model: THREE.Object3D) {
+	const levels: THREE.Mesh[] = [];
+	model.traverse((o) => {
+		if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.userData.lod) levels.push(o as THREE.Mesh);
+	});
+	const errors = new Set<number>();
+	for (const level of levels) {
+		const position = level.geometry.getAttribute('position');
+		const full = level.parent?.children.find(
+			(c) => (c as THREE.Mesh).isMesh && !(c as THREE.Mesh).geometry.userData.lod && (c as THREE.Mesh).geometry.getAttribute('position') === position
+		) as THREE.Mesh | undefined;
+		if (full && level.geometry.index) {
+			const lods = ((full.geometry.userData.lods as Lod[] | undefined) ??= []);
+			lods.push({ error: level.geometry.userData.lod, index: level.geometry.index });
+			lods.sort((a, b) => a.error - b.error);
+			errors.add(level.geometry.userData.lod);
+		}
+		level.removeFromParent();
+	}
+	return [...errors].sort((a, b) => a - b);
+}
+
+/** `trianglesBy` for a geometry's levels of detail: each bucket's triangles at each level. */
+async function lodsBy(geometry: THREE.BufferGeometry, part: Uint32Array, count: number, bucketOf: (part: number) => number) {
+	const lods = (geometry.userData.lods ?? []) as Lod[];
+	const split: (Uint32Array | Uint16Array)[][] = [];
+	for (const lod of lods) split.push(await trianglesBy(geometry, part, count, bucketOf, lod.index.array));
+	return Array.from({ length: count }, (_, k) => lods.map((lod, i): Lod => ({ error: lod.error, index: new THREE.BufferAttribute(split[i][k], 1) })));
 }
 
 /**

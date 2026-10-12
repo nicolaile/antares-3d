@@ -187,6 +187,8 @@
 					hdr: '/hdr/studio_small_09_512.hdr',
 					// Phones: GPUs pay per pixel, so fewer of them, and occlusion at half size.
 					maxPixelRatio: light ? 1.5 : 2,
+					// Dev, ?visibility: the part indices kept for the visibility sampler (perf.ts).
+					keepParts: import.meta.env.DEV && new URLSearchParams(location.search).has('visibility'),
 					aoScale: light ? 0.5 : 1,
 					// Off. The CAD model has coincident surfaces (parts that touch exactly);
 					// they resolve deterministically while nothing moves, but the idle

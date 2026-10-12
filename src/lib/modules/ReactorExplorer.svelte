@@ -515,6 +515,7 @@
 			const m = features[i]?.model;
 			return m ? viewers[m] : undefined;
 		},
+		modelFor: (i) => features[i]?.model,
 		viewers: () => Object.values(viewers).filter((v): v is ModelViewer => !!v),
 		setPaused: (on) => (paused = on)
 	};

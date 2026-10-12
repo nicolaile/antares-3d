@@ -34,8 +34,21 @@
 // final value is the occlusion averaged over the triangles round it
 // (weighted towards it, as the GPU interpolates), not taken at the point.
 //
+// Two more things go into the landing's copies. CAD parts never seen in
+// any of the explorer's views, turned and tilted every way the visitor can
+// (scripts/visibility/<model>.json, from perf.ts's `visibility`), are left
+// out: internals no cut or explode ever opens. (They still shade what's in
+// front of them: the rays see the whole model.) And each file carries
+// coarser levels of detail (LOD_ERRORS), as further primitives over the
+// same vertices: the viewer draws the coarsest whose error is under a
+// pixel, so a wide shot or a small screen draws a fraction of the
+// triangles, and a close shot all of them.
+//
 //   node scripts/bake-surface.mjs [model ...] [--samples 96] [--radius 0.3]
-//     [--smooth 2] [--bits 5] [--edge 0.2] [--only group]
+//     [--smooth 2] [--bits 5] [--edge 0.2] [--only group] [--all-parts]
+//
+// After the models or the explorer's features change, bake with
+// --all-parts, sample visibility again (perf.ts), then bake as usual.
 //
 // Models default to all under static/models/cad/web/; output goes to
 // static/models/landing/<model>/<group>.glb. Deterministic: the same input
@@ -73,6 +86,13 @@ const OVERRIDES = { 'mark-0': { f3_core: { mat_0: 'graphite' } } };
 /** The classic look's albedo range, before a finish's scale; the brightest shade it can give, for 0–1. */
 const ALBEDO = [0.02, 0.09];
 const BRIGHTEST = ALBEDO[1] * 3;
+/**
+ * The coarser levels of detail, by how far (metres) a surface may stray;
+ * the viewer reads them from each primitive's extras. One: a phone's wide
+ * shot comes to 5–7 mm a pixel, which 4 mm suits (−30% triangles there),
+ * and a 12 mm level was never drawn on any screen tried, for its bytes.
+ */
+const LOD_ERRORS = [0.004];
 /** Subdividing: rays a vertex for deciding where, passes of halving at most, and what counts as a change. */
 const PROBE_SAMPLES = 32;
 const PASSES = 4;
@@ -112,6 +132,9 @@ async function main() {
 	// along them (`subdivide`); 0 leaves the mesh be.
 	const edge = flag('edge', 0.2);
 	const only = flagged('only');
+	// Every part kept: for sampling visibility afresh (perf.ts), which can't
+	// see parts an earlier list already left out.
+	const allParts = args.includes('--all-parts') && !!args.splice(args.indexOf('--all-parts'), 1);
 	const models = args.length ? args : (await readdir(SRC, { withFileTypes: true })).filter((d) => d.isDirectory()).map((d) => d.name);
 
 	const { NodeIO } = await import('@gltf-transform/core');
@@ -124,29 +147,49 @@ async function main() {
 		.registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
 
 	const names = await renderNames();
+	const { readFile } = await import('node:fs/promises');
+	const { MeshoptSimplifier } = await import('meshoptimizer');
+	await MeshoptSimplifier.ready;
 	for (const model of models) {
+		const visible = allParts
+			? null
+			: await readFile(`${ROOT}scripts/visibility/${model}.json`, 'utf8')
+			.then((json) => JSON.parse(json))
+			.catch(() => null);
+		if (!visible && !allParts) console.warn(`${model}: no scripts/visibility/${model}.json, every part kept`);
 		const files = (await readdir(`${SRC}${model}`)).filter((f) => f.endsWith('.glb') && (!only || f === `${only}.glb`));
 		await mkdir(`${OUT}${model}`, { recursive: true });
 		for (const file of files) {
 			const t = performance.now();
 			const doc = await io.read(`${SRC}${model}/${file}`);
-			let from = 0;
-			let to = 0;
+			const group = file.replace('.glb', '');
+			// A file the visibility list doesn't name had nothing seen: keep it all rather than guess.
+			const seen = visible?.[group] ? new Set(visible[group]) : null;
+			const stats = { from: 0, to: 0, tris: 0, kept: 0, lods: [] };
+			const prims = [];
 			for (const node of doc.getRoot().listNodes()) {
 				const mesh = node.getMesh();
 				if (!mesh) continue;
 				const world = node.getWorldMatrix();
 				for (const prim of mesh.listPrimitives()) {
-					from += prim.getAttribute('POSITION').getCount();
-					const overrides = OVERRIDES[model]?.[file.replace('.glb', '')];
-					await bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names: names[model], overrides });
-					to += prim.getAttribute('POSITION').getCount();
+					stats.from += prim.getAttribute('POSITION').getCount();
+					stats.tris += prim.getIndices().getCount() / 3;
+					const overrides = OVERRIDES[model]?.[group];
+					await bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names: names[model], overrides, seen });
+					stats.to += prim.getAttribute('POSITION').getCount();
+					stats.kept += prim.getIndices().getCount() / 3;
+					prims.push({ mesh, prim, world });
 				}
 			}
-			// Back into the GPU's preferred order, the new vertices among the rest.
+			// Back into the GPU's preferred order, the new vertices among the rest…
 			await doc.transform(reorder({ encoder: MeshoptEncoder, target: 'size' }));
+			// …then the coarser levels, over the vertices as they now lie.
+			for (const { mesh, prim, world } of prims) stats.lods.push(...addLods(doc, mesh, prim, world, MeshoptSimplifier));
 			await io.write(`${OUT}${model}/${file}`, doc);
-			console.log(`${model}/${file}: ${from} → ${to} vertices, ${((performance.now() - t) / 1000).toFixed(1)} s`);
+			const pct = (n) => `${Math.round((n / stats.tris) * 100)}%`;
+			console.log(
+				`${model}/${file}: ${stats.from} → ${stats.to} vertices; ${stats.tris} → ${stats.kept} triangles (${pct(stats.kept)}), LODs ${stats.lods.map(pct).join(', ')}; ${((performance.now() - t) / 1000).toFixed(1)} s`
+			);
 		}
 	}
 }
@@ -328,16 +371,22 @@ async function pool(P, index, part, radius) {
 }
 
 /** Reads a primitive, subdivides it where it needs, bakes it, and writes `_SURF` in place of COLOR_0. */
-async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names, overrides }) {
+async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, edge, names, overrides, seen }) {
 	const mesh = readMesh(prim, world);
 	const original = mesh.world();
+	// The rays see the whole model, parts left out or not: those still shade what's in front of them.
 	const workers = await pool(original.P, mesh.index, original.part, radius);
 	try {
+		if (seen) {
+			keepParts(mesh, seen);
+			mesh.commit();
+		}
+		const { P: P0, N: N0, part: part0 } = mesh.world();
 		// Where to split: an edge longer than `edge` whose ends' occlusion
 		// differs by more than STEP, the biggest differences over the longest
 		// edges first, within BUDGET; then the new points baked, and again.
 		if (edge > 0) {
-			let { P, N, part } = original;
+			let [P, N, part] = [P0, N0, part0];
 			let ao = groupOf(await workers.bake({ mode: 'point', P: share(P), N: share(N), part: share(part), samples: PROBE_SAMPLES }, 0, mesh.count));
 			const length = (a, b) => Math.hypot(P[a * 3] - P[b * 3], P[a * 3 + 1] - P[b * 3 + 1], P[a * 3 + 2] - P[b * 3 + 2]);
 			let budget = Math.round(mesh.count * BUDGET);
@@ -448,6 +497,55 @@ async function bakePrimitive(doc, prim, world, { samples, radius, smooth, bits, 
 	} finally {
 		await workers.close();
 	}
+}
+
+/** Leaves out the triangles of parts not in `seen`, and the vertices only they used. */
+function keepParts(mesh, seen) {
+	const part = mesh.get('_PART').array;
+	const index = mesh.index;
+	const kept = [];
+	for (let t = 0; t < index.length; t += 3) if (seen.has(part[index[t]])) kept.push(index[t], index[t + 1], index[t + 2]);
+	const remap = new Int32Array(mesh.count).fill(-1);
+	let n = 0;
+	for (const v of kept) if (remap[v] < 0) remap[v] = n++;
+	for (const d of mesh.data) {
+		const next = new d.array.constructor(n * d.size);
+		for (let v = 0; v < mesh.count; v++) if (remap[v] >= 0) for (let c = 0; c < d.size; c++) next[remap[v] * d.size + c] = d.array[v * d.size + c];
+		d.array = next;
+	}
+	mesh.index = Uint32Array.from(kept, (v) => remap[v]);
+	mesh.count = n;
+}
+
+/**
+ * The coarser levels of detail (LOD_ERRORS): each a primitive of its own on
+ * the same mesh, sharing the full level's vertex data (so its finish and
+ * occlusion), with only its triangles: meshoptimizer's simplifier, its
+ * error in metres, allowed across hard edges where the normals and the
+ * occlusion barely change (`Permissive`), parts smaller than the error
+ * dropped (`Prune`). Its extras say `{ lod: error }`. Returns each level's
+ * triangle count.
+ */
+function addLods(doc, mesh, prim, world, simplifier) {
+	const { P, N } = readMesh(prim, world).world();
+	const n = P.length / 3;
+	const surf = prim.getAttribute('_SURF').getArray();
+	const attributes = new Float32Array(n * 4);
+	for (let i = 0; i < n; i++) {
+		attributes.set(N.subarray(i * 3, i * 3 + 3), i * 4);
+		attributes[i * 4 + 3] = surf[i * 4 + 1] / 255;
+	}
+	const index = Uint32Array.from(prim.getIndices().getArray());
+	const counts = [];
+	for (const error of LOD_ERRORS) {
+		const [lod] = simplifier.simplifyWithAttributes(index, P, 3, attributes, 4, [0.5, 0.5, 0.5, 0.5], null, 0, error, ['ErrorAbsolute', 'Prune', 'Permissive']);
+		const level = doc.createPrimitive().setMode(prim.getMode()).setMaterial(prim.getMaterial()).setExtras({ lod: error });
+		for (const semantic of prim.listSemantics()) level.setAttribute(semantic, prim.getAttribute(semantic));
+		level.setIndices(doc.createAccessor().setType('SCALAR').setArray(lod).setBuffer(prim.getIndices().getBuffer()));
+		mesh.addPrimitive(level);
+		counts.push(lod.length / 3);
+	}
+	return counts;
 }
 
 /** The group occlusion out of a bake's pairs. */

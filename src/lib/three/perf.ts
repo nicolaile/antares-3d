@@ -24,6 +24,8 @@ export type PerfTarget = {
 	select(i: number): void;
 	/** The viewer feature `i` is shown on, once it has loaded. */
 	viewerFor(i: number): ModelViewer | undefined;
+	/** The model feature `i` is shown on. */
+	modelFor(i: number): string | undefined;
 	/** Every viewer loaded so far. */
 	viewers(): ModelViewer[];
 	/** Holds or lets go of the slow turn, as the pause button. */
@@ -154,4 +156,50 @@ export async function run(
 	await save(label, 'report.json', JSON.stringify(report, null, '\t') + '\n');
 	log(`[perf] ${label}: saved to captures/perf/${label}/`);
 	return report;
+}
+
+/**
+ * Which CAD parts can ever be seen, for scripts/bake-surface.mjs to leave
+ * the rest out of the landing's models: every feature, settled, sampled all
+ * the way round and through the drag's tilt (`ModelViewer.visibleParts`),
+ * and the moves between them, as they play, once every SAMPLE_MS. Saved as
+ * captures/perf/visibility/<model>.json: part indices by file. From a fresh
+ * load with ?perf&visibility:
+ *
+ *   await __perf.visibility()
+ */
+export async function visibility(target: PerfTarget, { log = console.info } = {}) {
+	const SAMPLE_MS = 300;
+	const seen = new Map<string, Map<string, Set<number>>>();
+	const add = (model: string, parts: Record<string, number[]>) => {
+		let files = seen.get(model);
+		if (!files) seen.set(model, (files = new Map()));
+		for (const [file, list] of Object.entries(parts)) {
+			let set = files.get(file);
+			if (!set) files.set(file, (set = new Set()));
+			for (const p of list) set.add(p);
+		}
+	};
+	target.setPaused(true);
+	const order = [target.count - 1, ...Array.from({ length: target.count }, (_, i) => i)];
+	for (const i of order) {
+		target.select(i);
+		const v = await viewerOf(target, i);
+		const model = target.modelFor(i);
+		if (!v || !model) continue;
+		// The move there, as it plays: one look each time, at the turn it's at.
+		const start = performance.now();
+		while (performance.now() - start < 6000) {
+			add(model, await v.visibleParts({ turns: 1, tilts: [0] }));
+			await wait(SAMPLE_MS);
+		}
+		await settle(v, { min: 500 });
+		add(model, await v.visibleParts());
+		log(`[visibility] ${i + 1}: ${[...seen.get(model)!.values()].reduce((n, s) => n + s.size, 0)} parts seen on ${model} so far`);
+	}
+	for (const [model, files] of seen) {
+		const json = Object.fromEntries([...files].map(([file, set]) => [file, [...set].sort((a, b) => a - b)]));
+		await save('visibility', `${model}.json`, JSON.stringify(json) + '\n');
+	}
+	log('[visibility] saved to captures/perf/visibility/');
 }

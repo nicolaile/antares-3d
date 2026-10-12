@@ -1991,13 +1991,17 @@ export class ModelViewer {
 				calls,
 				triangles,
 				...this.quality,
-				targets: this.targetBytes(),
-				geometry: this.geometryBytes()
+				...this.memory()
 			};
 		} finally {
 			this.profiling = false;
 			this.invalidate();
 		}
+	}
+
+	/** What the viewer holds in GPU memory, roughly, bytes: its render targets and its geometry (`profile`). */
+	memory() {
+		return { targets: this.targetBytes(), geometry: this.geometryBytes() };
 	}
 
 	/** Every render target the frame uses (shadow maps too), and roughly what each holds in GPU memory, bytes. */
@@ -2022,7 +2026,10 @@ export class ModelViewer {
 				add(shadow.mapPass, `${o.name || o.type} shadow blur`);
 			}
 		});
-		return [...found].map(([rt, name]) => {
+		// Only those the GPU has storage for: a target three has never drawn
+		// into (GTAOPass's own normals, with ours in their place) holds none.
+		const allocated = (rt: THREE.WebGLRenderTarget) => (this.renderer.properties.get(rt) as { __webglFramebuffer?: unknown }).__webglFramebuffer !== undefined;
+		return [...found].filter(([rt]) => allocated(rt)).map(([rt, name]) => {
 			const tex = rt.texture;
 			const texel = (tex.type === THREE.FloatType ? 4 : tex.type === THREE.HalfFloatType ? 2 : 1) * (tex.format === THREE.RedFormat ? 1 : tex.format === THREE.RGFormat ? 2 : 4);
 			const samples = rt.samples;

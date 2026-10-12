@@ -10,7 +10,9 @@
 // bar for a change meant to leave the image as it was. Two runs of the same
 // code: 01 matches, the others are off on 0.02% of pixels at most (a few
 // coincident CAD faces), 05 on ~0.25% (its energy trails move with time).
-// Times: ±10% a feature from run to run; the total is steadier.
+// Times: ±10% a feature from run to run; the total is steadier. "page MB"
+// is every viewer's render targets and geometry together (runs from before
+// it was recorded show –).
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -70,14 +72,14 @@ for (const sb of rb.shots) {
 	const fb = file(name, b);
 	const d = existsSync(fa) && existsSync(fb) ? await diff(fa, fb, file(`diff-${a}-${name}`, b)) : null;
 	rows.push(
-		`| ${sb.feature} | ${ms(pa?.full)} → ${ms(pb?.full)} ${delta(pa?.full, pb?.full)} | ${ms(pa?.shadow)} → ${ms(pb?.shadow)} | ${ms(pa?.scene)} → ${ms(pb?.scene)} | ${ms(pa?.post)} → ${ms(pb?.post)} | ${pa?.calls ?? '–'} → ${pb?.calls ?? '–'} | ${pa ? mb(sum(pa.targets.map((t) => t.bytes))) : '–'} → ${pb ? mb(sum(pb.targets.map((t) => t.bytes))) : '–'} | ${
+		`| ${sb.feature} | ${ms(pa?.full)} → ${ms(pb?.full)} ${delta(pa?.full, pb?.full)} | ${ms(pa?.shadow)} → ${ms(pb?.shadow)} | ${ms(pa?.scene)} → ${ms(pb?.scene)} | ${ms(pa?.post)} → ${ms(pb?.post)} | ${pa?.calls ?? '–'} → ${pb?.calls ?? '–'} | ${pa ? mb(sum(pa.targets.map((t) => t.bytes))) : '–'} → ${pb ? mb(sum(pb.targets.map((t) => t.bytes))) : '–'} | ${sa?.memory ? mb(sa.memory) : '–'} → ${sb.memory ? mb(sb.memory) : '–'} | ${
 			d ? `${d.off === 0 && d.max <= 2 ? 'match' : `${(d.off * 100).toFixed(2)}% px, max ${d.max}`}` : '–'
 		} |`
 	);
 }
 console.log(`${a} → ${b}  (${rb.gpu}, ${rb.viewport.join('×')}@${rb.dpr})\n`);
-console.log('| # | GPU ms | shadow | scene | post | calls | targets MB | pixels |');
-console.log('|---|---|---|---|---|---|---|---|');
+console.log('| # | GPU ms | shadow | scene | post | calls | targets MB | page MB | pixels |');
+console.log('|---|---|---|---|---|---|---|---|---|');
 const total = (r) => sum(r.shots.map((s) => s.profile?.full ?? 0));
 console.log(rows.join('\n'));
-console.log(`| all | ${ms(total(ra))} → ${ms(total(rb))} ${delta(total(ra), total(rb))} | | | | | | |`);
+console.log(`| all | ${ms(total(ra))} → ${ms(total(rb))} ${delta(total(ra), total(rb))} | | | | | | | |`);

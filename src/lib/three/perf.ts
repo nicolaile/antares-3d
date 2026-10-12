@@ -35,6 +35,8 @@ export type ShotReport = {
 	settled: number;
 	/** Where the camera and model stood: frames that differ with nothing changed differ here first. */
 	pose: number[];
+	/** GPU memory held by every viewer on the page at the time, bytes (render targets and geometry). */
+	memory: number;
 };
 export type PerfReport = {
 	label: string;
@@ -127,7 +129,11 @@ export async function run(target: PerfTarget, label: string, { capture = true, l
 		report.gpu ||= gpuName(v);
 		v.root.updateMatrixWorld();
 		const pose = [...v.camera.position.toArray(), ...v.target.toArray(), v.camera.fov, ...v.root.matrixWorld.elements];
-		report.shots.push({ feature: i + 1, profile, settled: Math.round(settled), pose });
+		const memory = target
+			.viewers()
+			.map((each) => each.memory())
+			.reduce((sum, m) => sum + m.targets.reduce((a, t) => a + t.bytes, 0) + Object.values(m.geometry).reduce((a, b) => a + b, 0), 0);
+		report.shots.push({ feature: i + 1, profile, settled: Math.round(settled), pose, memory });
 		if (capture) {
 			const png = await v.snapshot();
 			if (png) await save(label, `${String(i + 1).padStart(2, '0')}.png`, png);

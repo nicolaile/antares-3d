@@ -4,7 +4,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import CtaButton from '$lib/components/CtaButton.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
-	import IconButton from '$lib/components/IconButton.svelte';
+	import PauseButton from '$lib/components/PauseButton.svelte';
 	import PlayButton from '$lib/components/PlayButton.svelte';
 	import MenuButton from '$lib/components/MenuButton.svelte';
 	import ToggleRing from '$lib/components/ToggleRing.svelte';
@@ -270,23 +270,18 @@
 				</div>
 			</li>
 			<li class="button-spec">
-				<div class="stage wide">
-					<IconButton label={paused ? 'Resume' : 'Pause'} pressed={paused} onclick={() => (paused = !paused)}>
-						<svg viewBox="0 0 12 12" aria-hidden="true">
-							{#if paused}
-								<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
-							{:else}
-								<rect x="3" y="2" width="2" height="8" fill="currentColor" />
-								<rect x="7" y="2" width="2" height="8" fill="currentColor" />
-							{/if}
-						</svg>
-					</IconButton>
+				<div class="stage">
+					<PauseButton bind:paused label="Pause" />
+				</div>
+				<div class="stage dark">
+					<PauseButton bind:paused label="Pause" tone="dark" />
 				</div>
 				<div class="button-meta">
-					<h3 class="type-body-large">IconButton</h3>
-					<code class="type-body-large class">&lt;IconButton label pressed? onclick&gt;icon&lt;/IconButton&gt;</code>
+					<h3 class="type-body-large">PauseButton</h3>
+					<code class="type-body-large class">&lt;PauseButton bind:paused label tone? /&gt;</code>
 					<p class="type-body-large usage">
-						A square control holding one icon, for toggles on media: pause and resume. The label is read out, not shown.
+						Pause and play for anything that moves on its own: autoplay, loops and videos. The ArrowButton square with a
+						line icon; the label is read out, not shown, and <code>aria-pressed</code> carries the state.
 					</p>
 				</div>
 			</li>

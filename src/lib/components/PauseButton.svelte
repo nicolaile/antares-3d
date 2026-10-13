@@ -1,29 +1,33 @@
 <!--
 	@component
-	Pauses and resumes something that moves on its own. The name stays put
-	and `aria-pressed` carries the state, so a screen reader hears "Pause
-	video, pressed" rather than a name that swaps under it.
+	Pauses and resumes something that moves on its own, in the ArrowButton
+	style (OutlineButton). The name stays put and `aria-pressed` carries the
+	state, so a screen reader hears "Pause video, pressed" rather than a name
+	that swaps under it.
 -->
 <script lang="ts">
-	import IconButton from '$lib/components/IconButton.svelte';
+	import OutlineButton from '$lib/components/OutlineButton.svelte';
 
 	let {
 		paused = $bindable(false),
-		label
+		label,
+		tone = 'light'
 	}: {
 		paused?: boolean;
 		/** What it pauses, as an action: "Pause video". */
 		label: string;
+		/** `dark` for dark stages and imagery. */
+		tone?: 'light' | 'dark';
 	} = $props();
 </script>
 
-<IconButton {label} pressed={paused} onclick={() => (paused = !paused)}>
-	<svg viewBox="0 0 12 12" aria-hidden="true">
+<OutlineButton {label} {tone} pressed={paused} onclick={() => (paused = !paused)}>
+	<!-- Line icons on the arrows' 16px grid: play while paused, pause while playing. -->
+	<svg viewBox="0 0 16 16" fill="none">
 		{#if paused}
-			<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
+			<path d="M5.5 2.75v10.5L13 8z" stroke-linejoin="round" />
 		{:else}
-			<rect x="3" y="2" width="2" height="8" fill="currentColor" />
-			<rect x="7" y="2" width="2" height="8" fill="currentColor" />
+			<path d="M5.75 2.5v11M10.25 2.5v11" />
 		{/if}
 	</svg>
-</IconButton>
+</OutlineButton>

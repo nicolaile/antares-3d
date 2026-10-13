@@ -782,7 +782,7 @@
 		</div>
 
 		<div class="pause">
-			<PauseButton bind:paused label="Pause animation" />
+			<PauseButton bind:paused label="Pause animation" tone="dark" />
 		</div>
 	</div>
 </div>

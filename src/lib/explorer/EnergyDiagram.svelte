@@ -405,7 +405,7 @@
 			</div>
 		{/if}
 		{#if moving}
-			<PauseButton bind:paused label="Pause energy flow" />
+			<PauseButton bind:paused label="Pause energy flow" tone={dark ? 'dark' : 'light'} />
 		{/if}
 	</div>
 </figure>

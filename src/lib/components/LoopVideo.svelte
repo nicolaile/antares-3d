@@ -65,7 +65,7 @@
 ></video>
 {#if button}
 	<div class="pause">
-		<PauseButton bind:paused {label} />
+		<PauseButton bind:paused {label} tone="dark" />
 	</div>
 {/if}
 

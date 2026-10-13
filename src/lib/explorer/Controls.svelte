@@ -181,6 +181,37 @@
 		slots = viewer.colourSlots();
 	}
 
+	/** The values as LOOK entries (look.ts), in the panel's order, studio first: it applies first. */
+	function asLook() {
+		if (!params) return '';
+		const p = params;
+		const value = (v: unknown) => (typeof v === 'number' ? String(+v.toFixed(4)) : `'${v}'`);
+		const line = (k: string) => `\t${k}: ${value(p[k as keyof RenderParams])},`;
+		const shown = new Set<string>(['studio']);
+		const out = ['// Paste into LOOK (src/lib/three/viewer/look.ts).', line('studio')];
+		for (const group of GROUPS) {
+			const keys = group.rows.map((r) => r.key).filter((k) => !shown.has(k) && (available?.has(k) ?? true));
+			if (!keys.length) continue;
+			out.push('', `\t// ${group.title}`, ...keys.map(line));
+			keys.forEach((k) => shown.add(k));
+		}
+		const rest = Object.keys(p).filter((k) => !shown.has(k));
+		if (rest.length) out.push('', '\t// Not in the panel', ...rest.map(line));
+		if (slots.length) {
+			out.push('', '// Colour slots (`colours` in src/lib/content/home.ts):');
+			for (const s of slots) out.push(`// ${s.name}: { colour: '${s.colour}', amount: ${+s.amount.toFixed(2)} }`);
+		}
+		if (stops) out.push('', `// Gradient stops: ${JSON.stringify(stops)}`);
+		return out.join('\n') + '\n';
+	}
+
+	let copied = $state(false);
+	async function copy() {
+		await navigator.clipboard.writeText(asLook());
+		copied = true;
+		setTimeout(() => (copied = false), 1500);
+	}
+
 	function pushStops() {
 		if (!viewer || !stops) return;
 		viewer.setGradientStops(stops.map((s) => ({ ...s })));
@@ -326,7 +357,10 @@
 						</label>
 					{/each}
 				{/each}
-				<button class="reset type-caption" onclick={reset}>Reset</button>
+				<div class="actions">
+					<button class="action type-caption" onclick={copy}>{copied ? 'Copied' : 'Copy values'}</button>
+					<button class="action type-caption" onclick={reset}>Reset</button>
+				</div>
 			</div>
 		{/if}
 
@@ -526,9 +560,13 @@
 		border: 0;
 	}
 
-	.reset {
-		width: 100%;
+	.actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: calc(var(--size-font) * 0.4);
 		margin-top: calc(var(--size-font) * 1.1);
+	}
+	.action {
 		padding: calc(var(--size-font) * 0.45) 0;
 		border: 0;
 		border-radius: 1px;

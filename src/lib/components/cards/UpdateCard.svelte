@@ -1,12 +1,7 @@
 <!--
 	@component
-	One item in the updates grid: the image (456×277 at 1440, a grey box
-	until it has one), then the date and the title under it. The whole card
-	is the link.
-
-	On hover the date brightens and a right arrow slides in beside it.
-	On a dark page (the updates list) by default; `tone="light"` for a
-	light one (an article's recent articles).
+	One item in the updates grid: image (a grey box until it has one), date
+	and title, the whole card a link. On hover an arrow slides in by the date.
 -->
 <script lang="ts">
 	import type { Picture as Source } from 'vite-imagetools';
@@ -24,7 +19,7 @@
 		label: string;
 		href: string;
 		image?: { src: Source; alt: string };
-		/** The page it sits on. */
+		/** The page it sits on: `light` for an article's recent articles. */
 		tone?: 'dark' | 'light';
 	} = $props();
 </script>
@@ -47,7 +42,6 @@
 
 <style>
 	.card {
-		/* Dark page: a dark stand-in box, the date brightening to white. */
 		--card-box: var(--grey-900);
 		--card-date: var(--grey-400);
 		--card-strong: var(--white);
@@ -55,7 +49,6 @@
 		color: inherit;
 		text-decoration: none;
 	}
-	/* Light page: a light grey box, the date darkening to black. */
 	.card.light {
 		--card-box: var(--grey-50);
 		--card-date: var(--grey-700);
@@ -84,7 +77,7 @@
 	}
 	.date {
 		color: var(--card-date);
-		/* Fades with the arrow, on its curve. */
+		/* On the arrow's curve. */
 		transition: color 0.5s cubic-bezier(0.625, 0.05, 0, 1);
 	}
 	.card:hover .date {
@@ -93,12 +86,9 @@
 
 	.title {
 		margin-top: var(--space-24);
-		/* Wraps short of the image's edge, as in the design. */
 		max-width: 75%;
 	}
 
-	/* The arrow: the caption's size, hidden a little to the left until
-	   hover, then sliding in as the date brightens. */
 	.arrow {
 		display: block;
 		width: var(--type-caption-size);

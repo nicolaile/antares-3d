@@ -2,23 +2,20 @@
  * Homepage content. Sections take everything they show as props, so the
  * same sections can be reused on other pages with different content.
  *
- * Images are `?enhanced` imports: each is converted to AVIF/WebP at the
- * widths listed in `w` (never wider than the source) at build time.
+ * Images are `?enhanced` imports, converted to AVIF/WebP at build time at
+ * the widths in `w`: from the display width at 1440 (capability photos
+ * three columns, 338px; Graphite Machining eight, 928px) up to the source's.
  */
 import type { Picture } from 'vite-imagetools';
 import type { FeatureCardsContent } from './company';
-// Capability photos, three columns (338px at 1440): the sources are 2028px wide.
 import specialPurposeReactors from '$lib/assets/images/landing/special-purpose-reactors.jpg?w=2028;1014;676;338&enhanced';
 import heatPipes from '$lib/assets/images/landing/heat-pipes.jpg?w=2028;1014;676;338&enhanced';
 import controlSystems from '$lib/assets/images/landing/control-systems.jpg?w=2028;1014;676;338&enhanced';
-// Graphite Machining's photo card, eight columns (928px at 1440).
 import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1862;928;464&enhanced';
 import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;1800;1200;800&enhanced';
-// A stand-in for the hero's film, for now.
+// TODO(launch): replace the stand-in hero film with the final cut.
 import heroVideo from '$lib/assets/images/landing/hero-placeholder.mp4';
-// The mission video's still, three columns (338px at 1440): the source is 676px wide.
 import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;700&enhanced';
-// import videoStill from '$lib/assets/images/landing/video.jpg?w=676;338&enhanced';
 
 import type { Feature, CadModel, CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
 import type { Shot } from '$lib/three/viewer/shot';
@@ -32,22 +29,14 @@ export const hero = {
 };
 
 export const mission = {
+	// TODO(launch): replace the placeholder mission statement.
 	statement:
 		'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 	milestones: [
 		{ value: '322.000SQ', label: 'Manufacturing Scale' },
 		{ value: '30+', label: 'Experts' },
 		{ value: '$600M+', label: 'Capital Raised' }
-	],
-	// The machinist video, held back for now; put `images` back to show it.
-	// images: {
-	// 	secondary: {
-	// 		src: videoStill,
-	// 		alt: 'A machinist in a hard hat working on a graphite block, seen from above, in black and white',
-	// 		ratio: '676 / 420',
-	// 		duration: '02:23'
-	// 	}
-	// }
+	]
 };
 
 /*
@@ -67,17 +56,17 @@ const system: Shot = { pos: [0, 0.44, 1.23], target: [0, -0.03, 0], spin: 0, tur
 /**
  * The CAD on the stage, one model at a time: Mark-0 for the reactor
  * (01–04), the power conversion system from the exchanger on (05–07).
- * Each as its web groups (scripts/lab/split-web-model.mjs), baked for the
- * landing (scripts/lab/bake-surface.mjs: static/models/landing/).
+ * Each model is a set of baked group files in static/models/landing/,
+ * exported by the local lab pipeline (not in the repo).
  */
 const cad = (model: string, groups: string[]) => groups.map((g) => `/models/landing/${model}/${g}.glb`);
 
 const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': {
 		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
-		// Colour slots, a group each (ModelViewer's `colours`, changed live
-		// with its `setColour` and in the controls panel): off but for a test,
-		// the control drums in the accent (colors.css --orange).
+		// Colour slots, a group each (ModelViewer's `colours`, live via `setColour`
+		// and the controls panel); off unless `amount` is set: only the control
+		// drums show, in #ff751f, a tone of its own rather than colors.css --orange.
 		colours: {
 			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#ff751f' },
 			drives: { group: 'f2_drives', label: 'Drive mechanisms', colour: '#ff751f' },
@@ -90,8 +79,8 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'power-conversion-system': {
 		// `standalone`: the exchanger's stand, which the stacked system leaves out.
 		files: cad('power-conversion-system', ['f4_heatpipes', 'f5_phx', 'standalone', 'f6_brayton', 'context']),
-		// Colour slots, a group each, off (as mark-0's). The skid's carved
-		// turbo-alternator takes the skid's.
+		// Colour slots, a group each, all off. The carved turbo-alternator
+		// takes the skid's (`brayton`).
 		colours: {
 			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#ff751f' },
 			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#ff751f' },
@@ -99,15 +88,11 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
 			context: { group: 'context', label: 'Context', colour: '#ff751f' }
 		},
-		// The horizontal vessel at the back of the skid, carved out of it to
-		// cut open: by what's inside (a shaft on its axis, a stack of ~1 m
-		// discs, two inlets on top) the turbo-alternator's housing, which the
-		// video shows in half-section, rather than the recuperator it was
-		// first taken for. To confirm with Antares. Its axis runs along x at
-		// y 1.09 m, z −4.20 m, from x −0.65 to 1.45 m; Ø1.44 m at its ends.
-		// Then its insides out of that again, to stay whole in the cut, as the
-		// video's rotating parts do: what's centred on the axis and under
-		// the casing's 1.07 m across (the shaft and its rods, the disc stack).
+		// The vessel at the back of the skid, carved out to cut open: a shaft on its
+		// axis (along x at y 1.09 m, z −4.20 m; Ø1.44 m), ~1 m discs, two inlets on
+		// top. `f6_turbo_inner` carves its insides (under the casing's 1.07 m) out
+		// again, so they stay whole in the cut, as in the video's half-section.
+		// TODO(launch): confirm with Antares this vessel is the turbo-alternator, not the recuperator.
 		carve: {
 			f6_turbo: { from: 'f6_brayton', min: [-0.7, 0.55, -4.75], max: [1.5, 1.65, -3.65] },
 			f6_turbo_inner: { from: 'f6_turbo', min: [-0.7, 0.99, -4.3], max: [1.5, 1.19, -4.1], maxSize: 1.05 }
@@ -171,21 +156,14 @@ const features: Feature[] = [
 		model: 'mark-0',
 		// Close, from about 30° above: the nearest drums and their drives
 		// large at the front, the ring curving away round the core; leaning
-		// 15° to the right as it comes apart. Back ~5% from [0, 0.86, 1.48],
-		// along the same line, so the ring sits a touch smaller in the frame.
+		// 15° to the right as it comes apart.
 		shot: { pos: [0, 0.9, 1.55], target: [0, 0.03, 0], spin: 0, fov: 29, lean: (-15 * Math.PI) / 180 },
-		// Taken apart, as the video shows it: the shield opened and faded
-		// away, the drums and the reflector blocks between them out from the
-		// core into one ring, the drives out and up over their drums, the
-		// heat pipes risen out of the core.
+		// Taken apart in order, as the video shows it.
 		look: {
 			explode: {
-				// The shield first, opened like a clamshell at the seam facing
-				// the camera, its two sides sliding apart whole and fading out
-				// as they go. It's built in half-shells, the upper pair split at
-				// 90° to the lower (upper at 0° and 180°, lower at ±90°), so each
-				// side takes an upper half and the lower one beside it: sides
-				// centred on −45° and 135°.
+				// The shield first, opened like a clamshell at the seam facing the
+				// camera, fading. Its upper half-shells split at 0° and 180°, the lower
+				// at ±90°, so each side takes one of each: sides centred on −45° and 135°.
 				f1_cradle: { out: 1.1, sectors: 2, phase: -45, at: 0, fade: true },
 				// Then the drums widen out into a ring, the reflector blocks
 				// after them a little less far, so each drum stands clear.
@@ -221,12 +199,9 @@ const features: Feature[] = [
 		// at about 35°, so the pipes slide down into frame and into the
 		// blocks' holes, the columns running away below.
 		shot: { pos: [0, 0.39, 0.5], target: [0, -0.07, 0], spin: 0, fov: 29, aim: 'point' },
-		// As the video shows it: everything but the core fades away, the
-		// core turns see-through, and the heat pipes appear above it and
-		// slide down into it ring by ring, the middle first and the outer
-		// ring last, each slowing as it seats; once the last is in, the heat
-		// comes on: a glow down the core and its pipes from the deck fittings
-		// (2.85 m) to the bottom (0.4 m), once, settling to a soft glow.
+		// As the video shows it: all but the core fades, the core turns see-through,
+		// the heat pipes slide down into it ring by ring, middle first; once seated, a
+		// glow runs down from the deck fittings (2.85 m) to the bottom (0.4 m) and settles.
 		look: {
 			hide: ['f1_cradle', 'f2_drives', 'f2_reactivity', 'context'],
 			opacity: { f3_core: 0.16 },
@@ -238,20 +213,13 @@ const features: Feature[] = [
 		title: 'Primary Heat Exchanger',
 		text: 'Fin and tube heat exchanger. It carries the heat from the sodium heat pipes into the nitrogen loop that drives the turbine.',
 		model: 'power-conversion-system',
-		// The whole system head-on, from nearly level: turned a quarter so
-		// the skid stands on the left and the exchanger on the right, held
-		// still. Coming from Mark-0 it turns the last 50° into place as it's
-		// revealed, the camera sweeping down from high above to level.
-		// The camera a little left of centre, so the model sits right of the panel's text.
+		// Head-on from nearly level, turned a quarter (skid left, exchanger right), held
+		// still; from Mark-0 it turns the last 50° in as the camera sweeps down to level.
+		// A little left of centre, so the model sits right of the panel's text.
 		shot: { pos: [-0.06, 0.035, 1.1], target: [-0.06, -0.04, 0], spin: 0, turn: Math.PI / 2, swing: (50 * Math.PI) / 180, swingFrom: { pos: [-0.06, 0.68, 1.2] }, fov: 29 },
-		// The exchanger's side picked out, a step at a time: the system
-		// arrives, the Brayton skid on the left fades to a faint ghost, the
-		// exchanger's shell cuts open on the tube bundle facing the camera,
-		// then the heat pipes rise up into it ring by ring, as they went
-		// down into the core in 04. Once they're seated the heat comes up
-		// them, the glow 04 left them with, a little softer, rising from
-		// their feet (1.7 m) to their heads (3.9 m) into the bundle; as it
-		// nears the top, energy runs out along both pipes to the skid.
+		// Step by step: the skid fades to a ghost, the exchanger's shell cuts open on
+		// the bundle, the heat pipes rise into it ring by ring (as into the core in 04),
+		// heat climbs them from 1.7 m to 3.9 m, then energy runs along both pipes to the skid.
 		look: {
 			opacity: { f6_brayton: 0.15, context: 0.15 },
 			cut: ['f5_phx'],
@@ -270,11 +238,9 @@ const features: Feature[] = [
 		// its housing), from about 30° above, back far enough for the skid
 		// round it to read; the skid turned square on, as in 05.
 		shot: { pos: [-0.12, 0.395, 0.74], target: [-0.12, 0.01, 0], spin: 0, turn: Math.PI, fov: 29, aim: 'point' },
-		// As the video shows it: the rest of the skid fades to the faintest
-		// ghost and the exchanger's side away; the turbo-alternator's casing
-		// opens in half-section facing the camera to its axis, and the stack
-		// of discs inside it only so far, its near edges off to look into it,
-		// the shaft on the axis whole.
+		// As the video shows it: the skid fades to the faintest ghost, the exchanger's
+		// side away; the turbo-alternator's casing opens in half-section to its axis,
+		// the disc stack only so far (near edges off to look in), the shaft whole.
 		look: {
 			hide: ['f5_phx', 'f4_heatpipes', 'standalone'],
 			opacity: { f6_brayton: 0.06, context: 0.06 },
@@ -297,6 +263,7 @@ const features: Feature[] = [
 
 export const r1 = {
 	title: 'R1 Microreactor',
+	// TODO(launch): finish the R1 aside (it ends in placeholder text).
 	aside: 'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
 	features,
 	models,
@@ -308,7 +275,7 @@ export const r1 = {
 	},
 };
 
-/** Placeholders, as in the design, until the copy is written. */
+// TODO(launch): write the operating model's three points (title and text are placeholders).
 const operatingPoint = {
 	title: '#Title',
 	text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.'
@@ -319,7 +286,7 @@ export const operating = {
 	points: [operatingPoint, operatingPoint, operatingPoint]
 };
 
-/** The paragraph is a placeholder, as in the design. */
+// TODO(launch): write the Progress card's paragraph (placeholder text).
 export const progress = {
 	title: 'FROM MARK-01',
 	name: 'R1',
@@ -328,6 +295,7 @@ export const progress = {
 		alt: 'The R1 microreactor in exploded view, its modules side by side on a grey studio gradient'
 	},
 	text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
+	// TODO(launch): link to /progress (href is '#').
 	link: { label: 'Progress', href: '#' }
 };
 
@@ -337,7 +305,7 @@ export type Capability = { title: string; text: string; image: { src: Picture; a
 const capabilityPlaceholder =
 	'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.';
 
-/** Only the first row's copy is written; the others carry placeholder text. */
+// TODO(launch): write the intro and the rows' copy (the first ends in placeholder, the rest are placeholder).
 export const capabilities = {
 	label: 'Capabilities',
 	intro: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
@@ -360,7 +328,7 @@ export const capabilities = {
 	] satisfies Capability[]
 };
 
-/** The statement card is Company's, until this section's copy is written. */
+// TODO(launch): write this section's statement card; it reuses Company's, bullet points included.
 export const graphite = {
 	title: 'Graphite Machining',
 	intro:

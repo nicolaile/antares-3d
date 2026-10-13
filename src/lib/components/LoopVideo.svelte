@@ -1,11 +1,8 @@
 <!--
 	@component
-	A muted film on a loop, with a pause button in its bottom-right corner.
-	It plays only while on screen, so it isn't decoding frames nobody sees,
-	and a pause holds until the visitor plays it again. With reduced motion
-	it starts paused, on its first frame. Place it in a positioned box: the
-	button sits in that box's corner. With `button={false}` the caller
-	places its own PauseButton, bound to the same `paused`.
+	A muted looping video with a pause button. Plays only while on screen and
+	starts paused with reduced motion. Place it in a positioned box: the
+	button pins to that box's bottom-right corner.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -22,12 +19,11 @@
 		preload = 'auto'
 	}: {
 		src: string;
-		/** Shown until the film is ready. */
 		poster?: string;
-		/** What the film shows. Without it the film is decorative and hidden from screen readers. */
+		/** Without it the video is decorative and hidden from screen readers. */
 		alt?: string;
 		paused?: boolean;
-		/** Draws the pause button; false when the caller places its own. */
+		/** False when the caller places its own PauseButton, bound to the same `paused`. */
 		button?: boolean;
 		label?: string;
 		preload?: 'none' | 'metadata' | 'auto';
@@ -46,7 +42,7 @@
 	$effect(() => {
 		if (inView && !paused) {
 			video.play().catch((e: DOMException) => {
-				// The browser won't play it (low-power mode, say): show it as paused.
+				// Autoplay refused (low-power mode, say): show it as paused.
 				if (e.name === 'NotAllowedError') paused = true;
 			});
 		} else {

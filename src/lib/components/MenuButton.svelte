@@ -1,8 +1,7 @@
 <!--
 	@component
-	The round menu toggle: four 3px dots in a square that glide to the centre
-	and merge into one when the menu is open. 34px at 1440, scaling with the
-	Osmo system; the dots are vector so they stay crisp at any size.
+	The round menu toggle: four dots in a square that glide to the centre and
+	merge into one when the menu is open.
 -->
 <script lang="ts">
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
@@ -14,9 +13,9 @@
 		onclick
 	}: {
 		open?: boolean;
-		/** `dark` for pages on a dark background: a dark frosted fill, white dots. */
+		/** `dark` over dark backgrounds: a dark frosted fill, white dots. */
 		tone?: 'light' | 'dark';
-		/** id of the panel this button shows and hides. */
+		/** The id of the panel this button shows and hides. */
 		controls: string;
 		onclick: (e: MouseEvent) => void;
 	} = $props();
@@ -25,14 +24,12 @@
 	let face: HTMLSpanElement;
 
 	/**
-	 * Light to dark and back as a crossfade: the dark fill (--dark, 0 to 1)
-	 * over the light one, and the dots between near-black and white. Open,
-	 * the dots stay dark on the white whatever the tone. Colours are read
-	 * from the system's tokens, resolved, so GSAP can blend them.
+	 * Tone changes crossfade the dark fill (--dark, 0 to 1) and the dot colour,
+	 * resolved from tokens so GSAP can blend them. Open, the dots stay dark.
 	 */
 	const FADE = { duration: 0.15, ease: 'power1.out' };
-	/* Opening and closing crossfade on the white fill's own timing, so the
-	   dark one never drops out ahead of it and flashes the translucent grey. */
+	/* Matches the white fill's timing, so the dark one never drops out ahead
+	   of it and flashes the translucent grey. */
 	const TOGGLE = { duration: 0.3, ease: 'menu' };
 	let first = true;
 	let wasOpen = false;
@@ -51,11 +48,9 @@
 	});
 
 	/**
-	 * A tiny bounce on every press: a quick dip to 95%, then a spring back
-	 * with a slight overshoot. GSAP rather than :active, because a quick
-	 * click holds :active for only a few milliseconds. It scales the face, not
-	 * the button: scaling the element that carries the backdrop blur makes
-	 * browsers re-rasterise the blur mid-tween, and the fill flickers.
+	 * A press bounce. GSAP rather than :active, which a quick click holds for
+	 * only a few ms. Scales the face, not the button: scaling the element with
+	 * the backdrop blur re-rasterises the blur mid-tween and the fill flickers.
 	 */
 	function bounce() {
 		if (prefersReducedMotion()) return;
@@ -66,10 +61,7 @@
 			.to(face, { scale: 1, duration: 0.45, ease: 'back.out(3)' });
 	}
 
-	/**
-	 * Each dot's resting place (a square, 5px out on each axis) and its hover
-	 * place: the same square, eased 1px further out from the centre.
-	 */
+	/** Each dot's resting offset and its hover offset (1px further out). */
 	const DOTS = [
 		{ x: -5, y: -5, hx: -6, hy: -6 },
 		{ x: 5, y: -5, hx: 6, hy: -6 },
@@ -92,7 +84,7 @@
 	}}
 >
 	<span class="face" bind:this={face}>
-	<!-- 34-unit box centred on 0,0, so a dot's resting place is its offset. -->
+	<!-- Centred on 0,0, so a dot's resting place is its offset. -->
 	<svg viewBox="-17 -17 34 34" aria-hidden="true">
 		{#each DOTS as dot, i (i)}
 			<rect
@@ -125,24 +117,20 @@
 		background: none;
 		color: var(--black);
 		cursor: pointer;
-		/* Frosted glass behind the translucent fill. Only a 34px circle, so
-		   the blur costs next to nothing. */
+		/* Frosted glass behind the translucent fill; cheap at this size. */
 		-webkit-backdrop-filter: blur(4px);
 		backdrop-filter: blur(4px);
 	}
-	/* Grey 300 at 40%, on its own layer: the colour system allows no
-	   translucent colour values, so opacity does it — and the layer
-	   cross-fades to solid white when open. */
 	/* What bounces on a press: the fills and the dots, inside the blur. */
 	.face {
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		/* Always its own layer. Left to GSAP, it's promoted when the bounce
-		   starts and dropped when it ends, and each switch re-composites the
-		   fills under the blur: a one-frame flash. */
+		/* Always its own layer: GSAP promoting and dropping it around the
+		   bounce re-composites the fills under the blur, a one-frame flash. */
 		will-change: transform;
 	}
+	/* Translucent via opacity, since the colour tokens have no alpha values. */
 	.face::before {
 		content: '';
 		position: absolute;
@@ -154,9 +142,7 @@
 			opacity 300ms var(--ease),
 			background 300ms var(--ease);
 	}
-	/* Dark: Grey 775 under white dots, so it holds its own on a dark page
-	   the way the light one does on white. Faded in over the light fill by
-	   --dark (GSAP, above), which falls to 0 while open, the white showing. */
+	/* The dark fill, faded in by --dark (GSAP, above); 0 while open. */
 	.face::after {
 		content: '';
 		position: absolute;
@@ -165,14 +151,13 @@
 		background: var(--grey-800);
 		opacity: var(--dark, 0);
 	}
-	/* Open: solid white, matching the panel it opened. */
+	/* Matches the panel it opened. */
 	.open .face::before,
 	.open:hover .face::before {
 		background: var(--white);
 		opacity: 1;
 	}
-	/* A larger hit area than the circle (23px at the 992px minimum), at least
-	   24px across; nothing drawn. */
+	/* A hit area of at least 24px at small sizes. */
 	.menu-button::before {
 		content: '';
 		position: absolute;
@@ -191,22 +176,19 @@
 		overflow: visible;
 	}
 
-	/* Rest: a square of dots. Hover: the square spread slightly. Open: all four
-	   pulled to the centre, where they overlap into one. All on the menu
-	   curve. */
 	.dot {
 		fill: currentColor;
 		transform: translate(var(--x), var(--y));
 		transition: transform 300ms var(--ease);
 	}
-	/* Real pointers only: on touch, a tap would leave the diamond stuck. */
+	/* Real pointers only: on touch, a tap would leave the hover stuck. */
 	@media (hover: hover) {
 		.menu-button:not(.open):hover .dot {
 			transform: translate(var(--hx), var(--hy));
 		}
 	}
-	/* Merging into one on open takes a little longer: 400ms. A transition
-	   follows the state it's going to, so hover and closing keep 300ms. */
+	/* Slower to merge; a transition follows its target state, so hover and
+	   closing keep 300ms. */
 	.open .dot {
 		transform: translate(0, 0);
 		transition-duration: 400ms;

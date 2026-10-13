@@ -45,8 +45,8 @@
 
 	/**
 	 * The opening: the title's lines rise from behind their masks
-	 * (`splitReveal`), and the model's name after them, letter by letter. Then, with the scroll, the
-	 * name sinks slower than the page as the hero leaves.
+	 * (`splitReveal`), then the model's name, letter by letter; with the
+	 * scroll, the name sinks slower than the page as the hero leaves.
 	 */
 	onMount(() => {
 		initScroll();

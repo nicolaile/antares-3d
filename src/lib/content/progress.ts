@@ -1,23 +1,22 @@
 /**
  * Content for the Progress page: the roadmap to electricity, year by year,
  * each year with the render, drawing or photos that go with it, then the
- * figures and a word from the founder over the closing photo. The figures'
- * lines and the quote are placeholders until their copy is written.
+ * figures and a word from the founder over the closing photo.
+ *
+ * Image widths (`w`) start from the display width at 1440: the R1 render
+ * three columns (338px, at most 694px), the clusters' photos three to five
+ * columns, the full-bleed band 1440px.
  */
 import type { Picture } from 'vite-imagetools';
-// The exploded R1 render, three columns (338px at 1440): 694px is as wide as it comes.
 import r1 from '$lib/assets/images/progress/r1.png?w=694;347&enhanced';
-// The line drawing, traced from line-diagram.png into strokes
-// (scripts/lab/trace-line-drawing.py), so it can draw itself on.
+// Traced into strokes by the local lab pipeline, so it can draw itself on.
 import diagram from '$lib/assets/images/progress/line-diagram.svg?raw';
-// The clusters' photos, at three, four or five columns.
 import site from '$lib/assets/images/progress/image-cluster-01.jpg?w=1722;1148;574&enhanced';
 import ribbon from '$lib/assets/images/progress/image-cluster-02.jpg?w=1017;678;339&enhanced';
 import aerial from '$lib/assets/images/progress/image-cluster-03.jpg?w=1368;912;456&enhanced';
 import sign from '$lib/assets/images/progress/image-cluster-04.jpg?w=1371;914;457&enhanced';
 import crew from '$lib/assets/images/progress/image-cluster-05.jpg?w=1014;676;338&enhanced';
 import portrait from '$lib/assets/images/progress/image-cluster-06.jpg?w=1014;676;338&enhanced';
-// Full-bleed, 1440px at 1440: sources at twice that, and smaller.
 import orbit from '$lib/assets/images/progress/full-bleed.jpg?w=2880;1440;720&enhanced';
 
 type Image = { src: Picture; alt: string };
@@ -40,6 +39,7 @@ export type ClusterItem = {
 	depth?: number;
 };
 
+// TODO(launch): write the three figures' lines (placeholder text).
 const lorem = 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt';
 
 export const progress = {
@@ -145,6 +145,7 @@ export const progress = {
 			depth: 0.3
 		}
 	] satisfies ClusterItem[],
+	// TODO(launch): write the founder's quote (placeholder text).
 	quote: {
 		text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et',
 		name: 'Jordan Bramble',

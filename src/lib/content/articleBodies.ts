@@ -8,7 +8,7 @@
  * large to keep in the repo.
  */
 import type { Block } from './articles';
-// The figure runs six columns (692px at 1440).
+// Figures run six columns (692px at 1440).
 import f1Trackside from '$lib/assets/images/article/f1-electronics-01.jpg?w=1384;1038;692&enhanced';
 import janusWelding from '$lib/assets/images/article/janus-01.jpg?w=1384;1038;692&enhanced';
 import neutronsPit from '$lib/assets/images/article/neutrons-to-electrons-01.jpg?w=1384;1038;692&enhanced';

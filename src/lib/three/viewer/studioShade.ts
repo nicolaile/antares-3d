@@ -49,27 +49,13 @@ export function shadeDirection(azimuthDeg: number, elevationDeg: number, out = n
 }
 
 /**
- * Stylised product-shot shadow: one big soft source, no fill — plus the
- * backdrop lighting the subject back.
- *
- * Shadow: multiplies the material's final lit colour by a factor that drops
- * towards `1 - depth` where the surface faces away from `uShadeDir`. It is a
- * shaping term, not a light — it darkens reflections and diffuse alike, which
- * is what a matte object under a single softbox with black surround does.
- *
- * Bounce: at grazing angles the surface picks up the backdrop, sampled from
- * the SAME gradient the SweepPass paints (shared uniforms, shared GLSL), at
- * the screen position the normal points towards — so an upward-facing edge
- * catches the light end and an underside catches the dark. That faint rim on
- * the shadow side is what makes the object sit in the light rather than on
- * top of it. Not shadowed by the key: it comes from behind.
- *
- * `normal` here is three's VIEW-space normal, so the direction is expressed
- * relative to the camera for free: the shadow keeps its place on screen as
- * the scroll shots move, but still wraps around the geometry as the model
- * turns. That distinction is what makes it read as a shadow rather than a
- * screen overlay.
- *
+ * Stylised product-shot shading: one big soft source, no fill, plus the
+ * backdrop lighting the subject back. The shadow scales the final lit colour
+ * towards `1 - depth` where the surface faces away from `uShadeDir`, darkening
+ * reflections too, as a softbox with black surround does. The bounce samples
+ * the SweepPass gradient (shared uniforms and GLSL) where the normal points,
+ * so edges catch the light end at grazing angles. The normal is view-space,
+ * so the shadow holds its place on screen yet wraps the model as it turns.
  * Chains any `onBeforeCompile` already on the material (surface variation).
  */
 export function applyStudioShade(

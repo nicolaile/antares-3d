@@ -2,26 +2,18 @@
  * How Mark-0 and the power conversion system join, shared by the systems
  * page (SystemScene) and the CAD test bench's Assembled view (CadViewer).
  *
- * Both CAD files put their vessel on x = z = 0, so the power conversion
- * system stays where it is and its primary heat exchanger rises onto the
- * reactor: its body flange (2.28 m) lands on Mark-0's top deck (2.67 m),
- * and the heat pipes run on from the core up into its tube bundle. The
- * outlet elbow on its dome rises with it, and so do the skid's first two
- * pipe pieces, leaving a 0.39 m gap at the top of the down pipe that
- * FILLER bridges. What the stack makes redundant is left out of it:
- * Mark-0's drive motors (their own group, f2_drives) and the exchanger's
- * own stand (`standalone`, for the landing, where the system stands on its
- * own; scripts/lab/auto-tag-cad.mjs). Inferred from the geometry and the
- * product video; not confirmed by an engineer.
+ * Both files centre their vessel on x = z = 0. The primary heat exchanger
+ * rises PHX_LIFT so its body flange (2.28 m) lands on Mark-0's top deck
+ * (2.67 m) and the heat pipes run on from the core into its tube bundle; its
+ * outlet pipes rise with it and FILLER bridges the gap left in the down pipe.
+ * Mark-0's drive motors (f2_drives) and the exchanger's stand (`standalone`)
+ * are left out.
  *
- * The two files aren't clocked alike: Mark-0 turns 30° about its axis
- * (MARK0_TURN) for its heat pipes to meet the exchanger's, 25 of its 26
- * then within 2 mm. (Its pipe pattern repeats every 60°, so +30° fits as
- * well; nothing in the CAD says which.) They still differ: the exchanger
- * takes 36 pipes and no centre one, so 11 of its pipes have nothing below
- * and Mark-0's centre pipe nothing above; and the exchanger's lower neck
- * reaches 0.33 m below the deck, into the drums' and reflector's tops.
- * Likely two design revisions, for the client to confirm.
+ * Mark-0 turns −30° (MARK0_TURN; +30° fits too, its pipe pattern repeats every
+ * 60°) so 25 of its 26 heat pipes meet the exchanger's within 2 mm. The rest
+ * differ (36 exchanger pipes, no centre one; its lower neck sinks 0.33 m into
+ * the drums), likely two design revisions.
+ * TODO(launch): the stack is inferred from geometry; confirm with Antares.
  */
 
 /** Mark-0's turn about its own (vertical) axis so its heat pipes meet the exchanger's, radians. */

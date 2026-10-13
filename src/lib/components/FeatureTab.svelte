@@ -1,12 +1,9 @@
 <!--
 	@component
-	One tab in the R1 feature strip: a card with a number on a grey badge
-	and the feature's title beside it. Open, the badge and title turn
-	orange, and a lighter fill runs across the card as autoplay counts
-	down to the next (`progress`). The strip decides which tab is open, and
-	the open feature's description reads in the stage below, not here.
-	A tab in the ARIA sense: the strip is the tablist, and the open tab is
-	the one in the page's tab order (roving tabindex).
+	One tab in the R1 feature strip: a numbered badge and the feature's title.
+	While open, a fill runs across it as autoplay counts down (`progress`).
+	An ARIA tab: the strip is the tablist and owns which tab is open; only
+	the open tab is in the tab order (roving tabindex).
 -->
 <script lang="ts">
 	let {
@@ -22,10 +19,10 @@
 		index: number;
 		title: string;
 		open?: boolean;
-		/** 0–1: how far autoplay is towards the next feature, while open. */
+		/** 0–1: autoplay's progress towards the next feature, while open. */
 		progress?: number;
 		id: string;
-		/** The id of the panel the open tab's feature reads in. */
+		/** The id of the panel showing the open feature. */
 		controls: string;
 		onselect: () => void;
 	} = $props();
@@ -56,8 +53,6 @@
 		scroll-snap-align: start;
 	}
 
-	/* 45px tall at 1440 (the font's 15.83px × 2.842): the badge 16px in
-	   from the card's left edge, the title 12px beside it on one line. */
 	.face {
 		position: relative;
 		overflow: hidden;
@@ -85,8 +80,7 @@
 		outline-offset: -1px;
 	}
 
-	/* Grey while closed, the accent once open. Swaps at once: fading the
-	   fill and the number together flickers the number. */
+	/* Swaps without a transition: fading it alongside the fill flickers. */
 	.number {
 		flex: none;
 		display: grid;
@@ -104,8 +98,6 @@
 		background: var(--orange);
 		color: var(--black);
 	}
-	/* Autoplay's progress: a lighter card filling from the left, under
-	   the badge and title. */
 	.fill {
 		position: absolute;
 		inset: 0;

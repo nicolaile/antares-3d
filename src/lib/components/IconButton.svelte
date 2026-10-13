@@ -11,7 +11,7 @@
 		onclick,
 		children
 	}: {
-		/** Accessible name — the button has no visible text. */
+		/** Accessible name; the button has no visible text. */
 		label: string;
 		pressed?: boolean;
 		onclick: () => void;

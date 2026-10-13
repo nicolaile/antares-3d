@@ -6,24 +6,18 @@ gsap.registerPlugin(CustomEase);
 CustomEase.create('move', '0.3, 0.075, 0, 1');
 
 /**
- * Osmo's collage focus card on hover. Point at a card in a collage and it
- * grows a little while the others shrink, step aside to clear it and draw
- * towards the middle, the nearest moving most. Leaving the collage puts
- * them all back. On touch, a tap focuses a card, and a second tap on it, or
- * one anywhere outside, puts them back. With reduced motion it does nothing.
+ * Hovering a card in a collage grows it while the others shrink and step
+ * aside, the nearest moving most. On touch, a tap focuses and a second tap
+ * (or one outside) resets. `{@attach collageFocus()}` on the collage:
  *
- * An attachment on the collage, `{@attach collageFocus()}`, marked up as:
+ *     [data-interactive-collage-list]            the area the cards sit in
+ *       [data-interactive-collage-item]          each card, where it's placed
+ *         [data-interactive-collage-item-inner]  what moves
  *
- *     [data-interactive-collage-list]       the area the cards sit in
- *       [data-interactive-collage-item]     each card, where it's placed
- *         [data-interactive-collage-item-inner]   what moves
- *
- * The focused card gets `[data-interactive-collage-focus]`, to style.
+ * The focused card gets `[data-interactive-collage-focus]`.
  */
 export function collageFocus({
-	/** Scale of the focused card. */
 	activeScale = 1.075,
-	/** Base scale of the others. */
 	inactiveScale = 0.9,
 	/** Gap cleared either side of the focused card, % of the collage's width. */
 	gapPercent = 3,

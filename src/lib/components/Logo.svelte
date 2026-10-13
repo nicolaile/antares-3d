@@ -1,8 +1,6 @@
 <!--
 	@component
-	The Antares mark, as in the wordmark. Takes the text colour, so it's white
-	on dark and black on light without separate files. Size it by width; the
-	height follows.
+	The Antares mark in `currentColor`. Size it by width; the height follows.
 	Source: $lib/assets/images/antares-logo.svg.
 -->
 <script lang="ts">

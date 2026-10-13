@@ -2,28 +2,9 @@ import * as THREE from 'three';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { CAP } from './CadViewer';
 
-/**
- * Turns a rendered scene into a line drawing, like a technical
- * illustration: every visible surface's view-space normal and distance go
- * to a buffer, and a full-screen pass draws ink wherever either breaks —
- * creases (the normal turns), steps and silhouettes (the distance jumps),
- * and the outline against the background — on flat paper. Hidden lines go
- * for free, since only the nearest surface is in the buffer, and it works
- * on any geometry, instanced or cut, without building edge meshes.
- * Through a section cut, the parts' insides are hatched like a section
- * drawing.
- *
- * Antialiased by supersampling: it all runs at twice the canvas's
- * resolution each way, and a last pass smooths the remaining stair-steps
- * (FXAA) and averages each 2×2 down to one pixel. Without it, in a
- * near-flat view, edges a degree or two off vertical step a pixel sideways
- * every few rows and read as zigzags. To keep that affordable the surfaces
- * are packed into half floats (see PACKING), and very large canvases
- * supersample less than 2× (SUPERSAMPLE_BUDGET).
- */
-
-/** Supersampling, each way, and the most pixels it may take (about 4K at 1.5×). */
+/** Supersampling, each way. */
 const SUPERSAMPLE = 2;
+/** The most pixels a supersampled buffer may take (about 4K at 1.5×). */
 const SUPERSAMPLE_BUDGET = 20_000_000;
 
 /**
@@ -86,13 +67,11 @@ void main() {
 }
 
 /**
- * Seals pinholes and slivers, the detail too small to draw. Tessellated CAD
- * leaves hairline cracks along the seams between faces, and sub-millimetre
- * ledges where shell sections meet, seen edge-on as a pixel-wide strip
- * facing another way; shaded they vanish, but here each inks a speck. A
- * pixel or two lying behind or flush with a continuous surface on either
- * side takes that surface instead. Anything standing in front of it — a
- * pipe, a wire — is kept.
+ * Seals pinholes and slivers, the detail too small to draw: tessellated CAD
+ * leaves hairline cracks along face seams and sub-millimetre ledges where
+ * shells meet, invisible shaded but each an ink speck here. A pixel or two
+ * behind or flush with a continuous surface on either side takes that
+ * surface instead; anything in front of it (a pipe, a wire) is kept.
  */
 function patchMaterial(surfaces: THREE.Texture | null = null, earlyOut = false) {
 	return new THREE.ShaderMaterial({
@@ -358,6 +337,15 @@ function tier(): Tier {
  */
 export type Quality = 'draft' | 'final';
 
+/**
+ * Turns a rendered scene into a technical line drawing: each visible
+ * surface's view-space normal and distance go to a buffer, and a full-screen
+ * pass inks wherever either breaks (creases, steps, silhouettes, the outline).
+ * Hidden lines come free, any geometry works, instanced or cut, with no edge
+ * meshes, and section insides are hatched. Supersampled, then FXAA'd and
+ * averaged down, because near-vertical edges otherwise zigzag; half-float
+ * packing (PACKING) and SUPERSAMPLE_BUDGET keep that affordable.
+ */
 export class LineDrawing {
 	/** Supersampling for each quality, each way (the final one also held to SUPERSAMPLE_BUDGET). */
 	readonly supersample: Record<Quality, number> = { draft: SUPERSAMPLE, final: SUPERSAMPLE };

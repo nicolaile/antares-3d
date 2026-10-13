@@ -1,12 +1,8 @@
 <!--
 	@component
-	An image on a fixed aspect ratio, filling whatever grid cell it's in.
-	Sources come from `?enhanced` imports, so every image ships as AVIF/WebP
-	at several widths; `sizes` tells the browser which one to pick.
-
-	Without a `src` it renders the empty surface — a placeholder that already
-	holds the layout.
-
+	An image on a fixed aspect ratio, filling its cell. Sources come from
+	`?enhanced` imports (AVIF/WebP at several widths), so set `sizes`.
+	Without a `src` it renders an empty placeholder that holds the layout.
 	A block-level span, not a div, so it can sit inside a button or link.
 -->
 <script lang="ts">
@@ -32,7 +28,7 @@
 		/** Grey panel behind the image, for cut-outs and placeholders. */
 		surface?: boolean;
 		loading?: 'lazy' | 'eager';
-		/** The first thing on screen (a hero): fetched ahead of the page's other images. */
+		/** Above the fold (a hero): fetched ahead of the page's other images. */
 		priority?: boolean;
 	} = $props();
 </script>

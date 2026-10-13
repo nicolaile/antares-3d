@@ -1,12 +1,10 @@
 <!--
 	@component
-	A marker on a diagram: a small dark square with a plus. On hover or
-	focus it turns orange and a card opens out beside it, top-aligned with
-	it, carrying the part's name and a line on what it does: to the right,
-	or to the left near the diagram's right edge so it never clips. The
-	square keeps one size on screen whatever size the diagram is; its
-	position is a fraction of the diagram so it tracks the drawing exactly.
-	Enter or Space toggles the card too, and Escape shuts it.
+	A marker on a diagram: a small dark square with a plus. On hover or focus
+	it turns orange and a card opens beside it with the part's name and what it
+	does (to the left near the diagram's right edge, so it never clips). Enter
+	or Space toggles the card, Escape shuts it. The square keeps one size on
+	screen; `x` and `y` place it as fractions of the diagram.
 -->
 <script lang="ts">
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
@@ -129,7 +127,7 @@
 
 <style>
 	.marker {
-		/* The square: 22px at 1440, its plus 16px with 3px clear all round. */
+		/* The square: its plus with a little clear space all round. */
 		--plus: calc(var(--size-font) * 1);
 		--box: calc(var(--plus) + var(--size-font) * 0.375);
 		position: absolute;
@@ -197,7 +195,6 @@
 		z-index: 1;
 		display: flex;
 		flex-direction: column;
-		/* 216px at 1440. */
 		width: calc(var(--size-font) * 13.5);
 		box-sizing: border-box;
 		padding: var(--space-16);
@@ -235,10 +232,8 @@
 		text-wrap: balance;
 	}
 
-	/* Open (hover, keyboard focus, or a tap on touch): on top of its
-	   neighbours, and the card takes the pointer too — it's inside the
-	   marker, so moving from the square onto it keeps the marker open. The
-	   motion itself is GSAP, in the script. */
+	/* Open: on top of its neighbours, and the card takes the pointer too —
+	   it's inside the marker, so moving onto it keeps the marker open. */
 	.open {
 		z-index: 3;
 	}

@@ -1,8 +1,7 @@
 <!--
 	@component
-	A legal page (Terms, Privacy): when it was last updated and the title on
-	columns 4–9, with the text below in running paragraphs on the same
-	columns, then the footer. Content comes from `$lib/content/legal`.
+	A legal page (Terms, Privacy), footer included. Content comes from
+	`$lib/content/legal`.
 -->
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';

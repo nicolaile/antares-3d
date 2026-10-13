@@ -1,10 +1,6 @@
 <!--
 	@component
-	A labelled set of points: the label in the first three columns, and up
-	to three points on the same line beside it, three columns each (4–6,
-	7–9, 10–12), their tops level with the label's, each a title over
-	a short paragraph. On tablet the label takes its own line, the points two
-	columns under it; on phones everything stacks.
+	A label beside up to three points, each a title over a short paragraph.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -42,8 +38,7 @@
 	.text {
 		margin: 0;
 	}
-	/* Kept off the next column's edge, so the paragraphs wrap shorter and
-	   read as separate columns rather than one run of text. */
+	/* So adjacent paragraphs read as separate columns, not one run of text. */
 	.point {
 		padding-right: var(--space-40);
 	}

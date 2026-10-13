@@ -1,22 +1,15 @@
 /*
  * Typography system — the only place type is defined.
  *
- * Every font-size, line-height, letter-spacing, font-family, font-weight and
- * text-transform in the project lives in this file. Components pick a style by
- * class (`.type-body-default`, `.type-caption`, …) and never set type properties of
- * their own; `npm run check` fails if they do (scripts/check-system.mjs).
+ * Components pick a style by class (`.type-body-default`, …) and never set
+ * font or text-transform properties of their own; `npm run check` fails if
+ * they do (scripts/check-system.mjs). Sizes are multiples of --size-font, so
+ * they scale with Osmo; px values in comments are at 1440. Display and
+ * Caption are trimmed to cap height and baseline (`text-box`, like Figma's
+ * vertical trim), so spacing around them measures from the letters.
  *
- * Sizes are multiples of --size-font, so they scale with the Osmo system:
- * the px values in comments are at the 1440 desktop design width. The large
- * styles step down at the tablet and mobile breakpoints below.
- *
- * Display and Caption are trimmed to cap height and baseline (`text-box`),
- * like Figma's vertical trim, so spacing around them measures from the
- * letters rather than the line box. Line height still sets the space between
- * their lines.
- *
- * The /design-system page reads this file directly. A style's doc comment
- * becomes its description there, so keep the format:
+ * The /design-system page reads this file. A style's doc comment is its
+ * description there, so keep the format:
  *
  *     /** Name — when to use it. *\/
  *     .type-name { … }

@@ -1,16 +1,12 @@
 <!--
 	@component
-	The site menu: a round toggle fixed top-right, centred in the header band, one page margin in from the right.
-	Opening dims the page and grows a panel out of the button's corner in two
-	steps — across, then down — before the links rise in. Closing plays it
-	back. Escape, the dimmed page and any link close it.
+	The site menu: a round toggle fixed top-right. Opening dims the page and
+	grows a panel out of the button's corner (across, then down) before the
+	links rise in. Escape, the dimmed page and any link close it.
 
-	Structure follows Osmo's two-step scaling navigation: state lives on
-	`data-nav-status`, and `data-nav-toggle` marks what opens and closes it.
-	The panel sits on the page grid, columns 8–12: the main links and the
-	secondary ones pinned top, the latest updates pinned bottom, cycling on
-	their own while the menu is open, turning like a wheel (dashes pick one
-	directly).
+	State lives on `data-nav-status`; `data-nav-toggle` marks what opens and
+	closes it. The panel holds the links on top and the latest updates at the
+	bottom, which auto-cycle while open (the dashes pick one directly).
 -->
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
@@ -32,25 +28,21 @@
 		links: Link[];
 		secondary?: Link[];
 		updates?: Update[];
-		/** Path of the page we're on; its link is marked. */
+		/** The current path; its link is marked. */
 		current?: string;
 	} = $props();
 
 	let open = $state(false);
-	/** Which update shows. The active dash's fill advances it when it ends. */
+	/** The active dash's CSS fill animation advances this when it ends. */
 	let shown = $state(0);
 	const next = () => (shown = (shown + 1) % updates.length);
 	let slides = $state<HTMLElement>();
 	let swap: gsap.core.Timeline | null = null;
 
 	/**
-	 * Switching updates turns them like a wheel. Each update moves as one
-	 * piece, image and text together: the old one leaves through the top,
-	 * tilting back and shrinking a little, while the new one rolls in from
-	 * below, tilted the other way, and settles flat. Forward (the next one,
-	 * or a later dash) turns up; an earlier dash turns the same way mirrored.
-	 * A switch mid-turn finishes the running one first, so nothing is left
-	 * half-turned.
+	 * Turns updates like a wheel: the old one tilts out through the top as the
+	 * new one rolls in from below; an earlier dash mirrors it. A switch mid-turn
+	 * finishes the running one first so nothing is left half-turned.
 	 */
 	function transition(from: number, to: number) {
 		swap?.progress(1).kill();
@@ -60,8 +52,7 @@
 		const inn = slides.children[to] as HTMLElement;
 		const dir = to === (from + 1) % updates.length || to > from ? 1 : -1;
 		const travel = slides.offsetHeight * dir;
-		// The outgoing update stays drawn, at full strength, until it has
-		// turned out of the clipped frame; no fade.
+		// Keep the outgoing update drawn until it has turned out of the clipped frame.
 		gsap.set(out, { visibility: 'inherit' });
 		swap = gsap
 			.timeline({
@@ -89,44 +80,41 @@
 	let toggle: HTMLElement;
 	let tl: gsap.core.Timeline | null = null;
 
-	/** How far the page dims: the darkest grey at 70%. Matches the CSS. */
+	/** Overlay opacity when open. */
 	const DIM = 0.7;
 
 	/**
-	 * The panel's mask, as separate edges rather than one clip-path string:
-	 * insets from the right, bottom and left, and the corner radius, in px.
-	 * Widening (left) and dropping (bottom) are separate properties, so the
-	 * two steps can overlap without one tween taking over the other's edge
-	 * mid-way — which is what made the widening stall and restart.
+	 * The panel's clip-path insets and radius, in px, as separate properties
+	 * so the widening (left) and dropping (bottom) tweens can overlap without
+	 * overwriting each other mid-way.
 	 */
 	const mask = { left: 0, bottom: 0, radius: 0 };
 	const paint = () => {
 		panel.style.clipPath = `inset(0px 0px ${mask.bottom}px ${mask.left}px round ${mask.radius}px)`;
 	};
 
-	/** Panel geometry, measured fresh each time so a resize is picked up. */
+	/** Measured fresh each time so a resize is picked up. */
 	function geometry() {
 		return {
 			w: panel.offsetWidth,
 			h: panel.offsetHeight,
 			b: toggle.offsetWidth,
 			r: parseFloat(getComputedStyle(panel).getPropertyValue('--panel-radius')) || 8,
-			/** Menu links: each slides up out of its own masked line. */
+			/** Each slides up out of its own masked line. */
 			links: panel.querySelectorAll('[data-nav-link]'),
-			/** Everything else (the divider and updates): a soft fade. */
+			/** The divider and updates: a soft fade. */
 			items: panel.querySelectorAll('[data-nav-item]')
 		};
 	}
 
 	/**
-	 * Open, in two steps: a button-sized circle in the panel's top-right
-	 * corner widens into a full-width strip, then drops to full height; the
-	 * links rise in once the panel is mostly there. Tweens run from wherever
-	 * the mask is, so reopening mid-close carries on from there.
+	 * A button-sized circle in the panel's corner widens into a strip, then
+	 * drops to full height. Tweens run from wherever the mask is, so reopening
+	 * mid-close carries on from there.
 	 */
 	function openTimeline() {
 		const g = geometry();
-		// Hidden = fully closed (no close still folding it away).
+		// Hidden means fully closed, not mid-close.
 		const fresh = panel.style.visibility !== 'visible';
 		if (fresh) {
 			Object.assign(mask, { left: g.w - g.b, bottom: g.h - g.b, radius: g.b / 2 });
@@ -141,19 +129,13 @@
 			.to(overlay, { autoAlpha: DIM, duration: 0.4, ease: 'power2.out' }, 0)
 			.to(mask, { left: 0, radius: g.r, duration: 0.38 }, 0)
 			.to(mask, { bottom: 0, duration: 0.45 }, 0.22)
-			// No fade: each link rises into view from behind its line.
 			.to(g.links, { yPercent: 0, duration: 0.55, stagger: 0.04, ease: 'power3.out' }, 0.3)
 			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power3.out' }, 0.45)
 			// Hidden elements can't take focus, so move it in once the links show.
 			.call(focusFirst, undefined, 0.4);
 	}
 
-	/**
-	 * Close, in one move: the mask folds straight into the panel's top-right
-	 * corner, under the button, all the way down to 0px — so by the end
-	 * there's nothing left to hide. No fade on the panel; the links and the
-	 * dimmed page fade with it.
-	 */
+	/** The mask folds straight into the corner under the button, down to 0px. */
 	function closeTimeline() {
 		const g = geometry();
 		return gsap
@@ -168,7 +150,7 @@
 			.to(overlay, { autoAlpha: 0, duration: 0.45, ease: 'power2.inOut' }, 0);
 	}
 
-	/** Set when the menu was opened from the keyboard, so focus shows a ring. */
+	/** Opened from the keyboard: focus shows a ring. */
 	let viaKeyboard = false;
 	const focusFirst = () =>
 		(panel.querySelector('a') as HTMLElement | null)?.focus({
@@ -177,7 +159,7 @@
 			focusVisible: viaKeyboard
 		} as FocusOptions);
 
-	/** Undoes what opening did to the page: its scroll lock and inert. */
+	/** Undoes `holdPage`. */
 	let release: (() => void) | null = null;
 	const releaseAll = () => {
 		release?.();
@@ -190,7 +172,6 @@
 		tl?.kill();
 		tl = null;
 		if (next) {
-			// Only the menu and its toggle stay reachable; the dimmed page holds still.
 			release = holdPage(nav);
 			await tick();
 			if (prefersReducedMotion()) {
@@ -344,7 +325,7 @@
 		pointer-events: none;
 	}
 
-	/* The page, dimmed to DIM (70%) by the script while open. */
+	/* Dimmed to DIM by the script while open. */
 	.overlay {
 		position: absolute;
 		inset: 0;
@@ -354,8 +335,7 @@
 		pointer-events: auto;
 	}
 
-	/* A full-width fixed strip carrying the page margin, so the panel lands
-	   on the same columns as the page. It starts under the button. */
+	/* Carries the page margin so the panel lands on the page's columns. */
 	.bar {
 		position: absolute;
 		top: calc(var(--header-top) + var(--header-button) + var(--space-16));
@@ -364,8 +344,7 @@
 		padding-inline: var(--grid-margin);
 	}
 
-	/* 572px tall at 1440 (never taller than the screen leaves room for):
-	   links pinned top, the latest updates pinned bottom. */
+	/* Never taller than the screen leaves room for. */
 	.panel {
 		--panel-radius: 8px;
 		display: flex;
@@ -392,10 +371,9 @@
 	.secondary {
 		margin-top: var(--space-32);
 	}
-	/* Each link's mask. The bottom is padded out and pulled back so the clip
-	   clears the descenders (the y in Company, the g in Progress). The main
-	   links pull back a little further (--tighten), setting them solid
-	   rather than on H2's looser line height. */
+	/* Each link's mask, padded out and pulled back so the clip clears
+	   descenders. --tighten sets the main links solid rather than on the
+	   heading's looser line height. */
 	.line {
 		--line-size: var(--type-h3-size);
 		--tighten: 0.15;
@@ -422,14 +400,11 @@
 		outline-offset: 2px;
 	}
 
-	/* The update: thumbnail left, date and title beside it, the dashes in
-	   the bottom-right corner. */
 	.updates {
 		position: relative;
 		padding-top: var(--space-32);
 	}
-	/* A hairline over the updates, across the panel's full width, edge to
-	   edge through its padding. Fades in with them. */
+	/* Hairline across the panel's full width, through its padding. */
 	.updates::before {
 		content: '';
 		position: absolute;
@@ -439,8 +414,8 @@
 		height: 1px;
 		background: var(--grey-200);
 	}
-	/* One vanishing point for the whole stack, so the updates turn on a
-	   shared wheel; clipped, so a turn never passes over the links above. */
+	/* One vanishing point so the updates turn on a shared wheel; clipped so
+	   a turn never passes over the links above. */
 	.slides {
 		display: grid;
 		perspective: 600px;
@@ -454,8 +429,8 @@
 		text-decoration: none;
 		visibility: hidden;
 	}
-	/* inherit, not visible: a child set visible would show through the
-	   panel's own visibility: hidden once the menu closes. */
+	/* inherit, not visible: a visible child would show through the closed
+	   panel's visibility: hidden. */
 	.update.shown {
 		z-index: 1;
 		visibility: inherit;
@@ -471,7 +446,7 @@
 		display: grid;
 		align-content: start;
 		gap: var(--space-8);
-		/* Clear of the dashes, and wrapping the title onto two lines. */
+		/* Clears the dashes and wraps the title onto two lines. */
 		max-width: calc(var(--size-font) * 17);
 		padding-top: var(--space-8);
 	}
@@ -487,7 +462,6 @@
 		display: flex;
 		gap: var(--space-4);
 	}
-	/* The hit area is taller than the 1.5px line it draws. */
 	.dash {
 		position: relative;
 		width: calc(var(--size-font) * 1.25);
@@ -498,9 +472,8 @@
 		background: none;
 		cursor: pointer;
 	}
-	/* Bigger again, undrawn: at least 24px tall, and across half the gap
-	   each side, so neighbours meet without overlapping. The button keeps
-	   its size, so the focus ring does too. */
+	/* At least 24px tall and across half the gap each side, so neighbours
+	   meet without overlapping; the button (and its focus ring) keeps its size. */
 	.hit {
 		position: absolute;
 		inset: min(0px, (var(--size-font) * 1.25 - 24px) / 2) calc(var(--space-4) / -2);
@@ -518,13 +491,11 @@
 		height: 1.5px;
 		background: var(--button);
 	}
-	/* The track: Grey 200, solid, a shade darker than the button's 40% fill. */
 	.dash::before {
 		background: var(--grey-200);
 	}
-	/* The active dash fills over the time an update stays up, then hands on
-	   to the next. It holds while the menu is closed or the pointer is over
-	   the updates. */
+	/* Fills over an update's dwell time, then `animationend` advances it.
+	   Paused while the menu is closed or the updates are hovered. */
 	.dash::after {
 		background: var(--black);
 		transform: scaleX(0);
@@ -551,7 +522,6 @@
 		}
 	}
 
-	/* Centred in the header band, one page margin from the right edge. */
 	.toggle {
 		position: absolute;
 		top: var(--header-top);

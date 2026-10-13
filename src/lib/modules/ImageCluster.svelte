@@ -1,16 +1,9 @@
 <!--
 	@component
-	A loose cluster of photos, overlapping on the 12-column grid: each placed
-	by column, dropped down and nudged across as a share of its own width,
-	so the composition holds at every size. On phones the cluster keeps only
-	the columns it uses and spreads them across the full width, so the
-	photos aren't left small.
-
-	The photos come in on the scroll (`parallax`): each rises into its
-	place at its own `depth`, landing in the composition as it reaches
-	the middle of the screen. The photo itself sits still in its frame.
-	The scroll travel is off on phones; with reduced motion it's the still
-	composition.
+	A loose cluster of overlapping photos on the grid, each offset as a share
+	of its own width so the composition holds at every size. Each rises into
+	place on the scroll at its own `depth`, landing as it reaches mid-screen.
+	On phones the cluster spreads the columns it uses across the full width.
 -->
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
@@ -19,18 +12,12 @@
 
 	let { items }: { items: ClusterItem[] } = $props();
 
-	/**
-	 * How far below its place a photo of depth 1 starts, in % of its own
-	 * height. Every photo rises into place as it comes up the screen and
-	 * lands exactly in the composition as its middle reaches the screen's,
-	 * then holds; deeper ones start lower, so they arrive at their
-	 * own pace. A negative depth travels as far as a positive one.
-	 */
+	/** How far below its place a depth-1 photo starts, in % of its height. Sign of depth is ignored. */
 	const TRAVEL = 25;
-	/** Seconds the rise takes to catch up with the scroll: a little give, so it glides. */
+	/** Seconds to catch up with the scroll, so it glides. */
 	const CATCH_UP = 0.8;
 
-	/** The first column any photo uses, and how many columns they cover between them. */
+	// The columns the photos span between them, for the phone layout.
 	const first = $derived(Math.min(...items.map((item) => item.start)));
 	const columns = $derived(Math.max(...items.map((item) => item.start + item.span)) - first);
 </script>
@@ -67,15 +54,15 @@
 </div>
 
 <style>
-	/* The page's own columns; every photo in the one row, so they overlap. */
+	/* Every photo in the one row, so they overlap. */
 	.cluster {
 		position: relative;
 		display: grid;
 		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
 		column-gap: var(--grid-gutter);
 	}
-	/* A grid item's percentage margins measure its own area's width: the drop
-	   is a share of the photo's width, whatever the screen. */
+	/* A grid item's % margins resolve against its own area's width, so the
+	   drop is a share of the photo's width. */
 	.item {
 		grid-row: 1;
 		grid-column: var(--start) / span var(--span);

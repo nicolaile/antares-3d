@@ -7,12 +7,6 @@ import { ASSEMBLY, FILLER, PHX_LIFT, liftOf, turnOf } from './assembly';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { LineDrawing } from './LineDrawing';
 
-/**
- * Plain inspection viewer for models converted from STEP
- * (scripts/step-to-glb.mjs). Unlike ModelViewer it keeps the CAD colours,
- * orbits freely and adds a section cut, so a conversion can be judged as-is
- * before any look is applied to it.
- */
 export interface CadStats {
 	/** Drawn meshes, counting each GPU instance. */
 	parts: number;
@@ -86,6 +80,12 @@ void main() {
 	});
 }
 
+/**
+ * Plain inspection viewer for models converted from STEP by the private
+ * model pipeline (scripts/lab/step-to-glb.sh). Unlike ModelViewer it keeps
+ * the CAD colours, orbits freely and adds a section cut, so a conversion can
+ * be judged as-is before any look is applied to it.
+ */
 export class CadViewer {
 	readonly renderer: THREE.WebGLRenderer;
 	readonly scene = new THREE.Scene();
@@ -126,13 +126,11 @@ export class CadViewer {
 	private lines = { mix: 0, on: false, drawing: null as LineDrawing | null, ink: '#111111', paper: '#ffffff', opacity: 1, weight: 0.5 };
 
 	/**
-	 * `web` is the site's web-optimized mode (IsoDrawing, on the landing).
-	 * The CAD test bench (/cad) leaves it off: it's the source of truth for
-	 * detail and look, drawn at full quality every frame. In web mode the
-	 * viewer only ever shows the line drawing, so it skips the shaded
-	 * model's lighting and the canvas's multisampling; draws a draft while
-	 * anything moves, crossfading to the full-quality frame once still (see
-	 * `frame`); and reads the labels' visibility back without stalling.
+	 * `web` is the landing's web-optimized mode (IsoDrawing); /cad leaves it
+	 * off and draws full quality every frame. Web mode only ever shows the
+	 * line drawing, so it skips the shaded model's lighting and multisampling,
+	 * draws drafts while anything moves and crossfades to the final frame once
+	 * still (`settle`), and reads label visibility back without stalling.
 	 */
 	constructor(
 		protected host: HTMLElement,
@@ -476,15 +474,12 @@ export class CadViewer {
 	}
 	private isActive = true;
 	/**
-	 * In web mode, the line drawing's quality. Frames in motion are drafts,
-	 * at full quality for as long as the device keeps up: while things move,
-	 * a running average of the frame interval is kept, and if it slips past
-	 * SLOW_FRAME_MS the draft's supersampling steps down (2 → 1.5 → 1), for
-	 * good. Once a lowered draft has been still for SETTLE_MS, the final
-	 * frame is crossfaded in over it (CROSSFADE_MS), so the sharpening reads
-	 * as the drawing settling rather than a pop; each crossfade frame only
-	 * blends the two drawings already made. At full quality there's nothing
-	 * to settle.
+	 * Web mode's line-drawing quality. Frames in motion are drafts, at full
+	 * quality while the device keeps up; if their running average interval
+	 * passes SLOW_FRAME_MS, the draft's supersampling steps down for good
+	 * (2 → 1.5 → 1). Once a lowered draft has been still for SETTLE_MS, the
+	 * final frame crossfades in over CROSSFADE_MS, so the sharpening reads as
+	 * settling rather than a pop; each crossfade frame only blends the two.
 	 */
 	private settle = { pending: false, at: 0 };
 	private pace = { last: 0, average: 0, frames: 0 };
@@ -601,17 +596,12 @@ export class CadViewer {
 	}
 
 	/**
-	 * Renders every surface's distance from the camera at a quarter of the
-	 * canvas's size and reads back a 5×5 patch round each anchor: a sample
-	 * with a surface in front of the anchor by more than the slack (3 cm for
-	 * the simplified surfaces, plus a sample's width at that distance for
-	 * the quarter-size grid) is covered, and the section cut removing the
-	 * anchor's side covers all of them. Anchors sit just proud of their
-	 * part's surface (cadLabels.ts).
-	 *
-	 * A label hides once most of its patch is covered and shows again only
-	 * once most is clear, so one near the edge of whatever's in front of it
-	 * holds steady instead of blinking as samples cross the edge.
+	 * Renders every surface's distance at a quarter of the canvas's size and
+	 * reads back a 5×5 patch round each anchor. A sample with a surface in
+	 * front of the anchor by more than the slack (3 cm, plus a sample's width
+	 * at that distance) is covered; a section cut removing the anchor's side
+	 * covers all of them. Separate hide and show thresholds
+	 * (`anchorThresholds`) keep a label at an edge from blinking.
 	 */
 	private async testAnchors() {
 		if (!this.anchors.length || !this.model || this.anchorReading) return;

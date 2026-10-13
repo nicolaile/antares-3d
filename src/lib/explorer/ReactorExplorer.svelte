@@ -1,15 +1,14 @@
 <!--
 	@component
-	The features as a strip of numbered card tabs across the top, scrolling
-	sideways when they overflow, and under it a panel with the open
-	feature's title and description in its corner, a scale rule beside the
-	model, and arrows to step through the features. The CAD fills the panel: each feature names the model it's shown on
-	(Mark-0 for the reactor, the power conversion system after), and the
-	stage cuts between them, one model at a time. Each feature has its
-	point on its model (cadPoints.ts, unmarked), and the model turns to
-	show the open one. Selecting a feature moves the camera
-	to its shot. Autoplay steps on to the next feature every 15s; the pause
-	button, always shown, holds it and the model's slow turn. Place in a full-width `subgrid` cell.
+	The features as a strip of numbered card tabs, scrolling sideways when
+	they overflow, over a panel with the open feature's title and description,
+	a scale rule beside the model, step arrows and a pause button.
+
+	The CAD fills the panel: each feature names the model it's shown on, and
+	the stage cuts between models one at a time. Opening a feature turns its
+	model to the feature's point (cadPoints.ts, unmarked) and moves the camera
+	to its shot. Autoplay moves on every 15 s; pause holds it and the slow turn.
+	Place in a full-width `subgrid` cell.
 -->
 <script lang="ts" module>
 	import type { Picture as PictureSource } from 'vite-imagetools';
@@ -35,10 +34,7 @@
 	export type Feature = {
 		title: string;
 		text: string;
-		/**
-		 * Where the camera goes while this feature is open. Without one it
-		 * stays on the last shot.
-		 */
+		/** Where the camera goes while this feature is open; without one it stays on the last shot. */
 		shot?: Shot;
 		/** The feature's own stage, in place of the model. */
 		panel?: Panel;
@@ -53,16 +49,15 @@
 	/** The CAD models, by the names their points use (cadPoints.ts). */
 	export type CadModel = CadLabel['model'];
 
-	/**
-	 * A model on the stage: its files (its groups under
-	 * static/models/cad/web/), any parts carved into groups of their own and
-	 * cut in half-section (ModelViewer's `carve` and `sections`), and any
-	 * given a colour of their own (its `colours`).
-	 */
+	/** A model on the stage and its setup, passed on to ModelViewer. */
 	export type CadModelSetup = {
+		/** Its groups' files, under static/models/cad/web/. */
 		files: string[];
+		/** Parts carved into groups of their own (ModelViewer's `carve`). */
 		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** Groups cut in half-section (ModelViewer's `sections`). */
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Pipes energy can run along, where a feature's look turns it on (CadStage's `trails`). */
 		trails?: TrailSet;
@@ -101,7 +96,6 @@
 		wip?: boolean;
 		/** The scale rule's label beside the model, e.g. its height. */
 		scale?: string;
-		/** Each model's files and setup. */
 		models: Partial<Record<CadModel, CadModelSetup>>;
 	} = $props();
 
@@ -116,10 +110,6 @@
 			at: p.at
 		}));
 
-	/**
-	 * Each model's camera: the shot of the last feature on it that had one,
-	 * so it holds still while another model is up and is framed on return.
-	 */
 	/** A plain three-quarter view, for a model none of whose features has a shot. */
 	const FALLBACK: Shot = { pos: [0, 0.7, 1.4], target: [0, 0, 0], spin: 0 };
 	const firstShot = (m: CadModel) => features.find((f) => f.model === m && f.shot)?.shot ?? FALLBACK;
@@ -146,14 +136,14 @@
 				)
 		) as Record<string, { fold?: number; phase?: number; layers?: boolean; columns?: boolean }>;
 
-	/** Each model's look, likewise: the last feature on it sets it. */
+	/** Each model's look: the last feature on it sets it. */
 	const looks = $state(untrack(() => Object.fromEntries(names.map((m) => [m, {}]))) as Record<CadModel, Look>);
 	/**
-	 * What each model's stage frames (CadStage's `aim`): its camera, the shot
-	 * of the last feature on it that had one, so it holds still while another
-	 * model is up and is framed on return; the open point; and how long the
-	 * stage waits to be seen, the hand-off (HANDOFF) when it's coming in from
-	 * another model, else 0. Set as one, so they always change together.
+	 * What each model's stage frames (CadStage's `aim`): the shot of the last
+	 * feature on it that had one, so it holds still while another model is up
+	 * and is framed on return; the open point; and the wait before it's seen
+	 * (HANDOFF when coming in from another model, else 0). Set as one object
+	 * so they always change together.
 	 */
 	const aims = $state(
 		untrack(() =>
@@ -180,19 +170,13 @@
 	});
 
 	/**
-	 * What each feature puts on the stage: its own panel, or its model. A
-	 * switch fades the outgoing view out, then after a beat the incoming one
-	 * in (HANDOFF) — never both at once. Models fade by opacity alone, never
-	 * visibility: a hidden WebGL canvas can lose its last frame and flash
-	 * empty on the way back.
-	 */
-	/**
 	 * The hand-off between views, seconds: the outgoing one fades out over
 	 * `out`, then after a beat the incoming one fades in from `in`, so the
 	 * two never show at once.
 	 */
 	const HANDOFF = { out: 0.4, in: 0.55 };
 
+	/** What a feature puts on the stage: its own panel (by feature index), or its model. */
 	type View = CadModel | number | null;
 	const viewOf = (i: number): View => (features[i].panel ? i : (features[i].model ?? null));
 	const stageEls: Partial<Record<CadModel, HTMLElement>> = $state({});
@@ -205,6 +189,8 @@
 
 	const layerOf = (v: View) => (v === null ? undefined : typeof v === 'number' ? panelEls[v] : stageEls[v]);
 	const isStage = (el: HTMLElement) => Object.values(stageEls).includes(el);
+	// Models fade by opacity alone, never visibility: a hidden WebGL canvas can
+	// lose its last frame and flash empty on the way back.
 	const hideVars = (el: HTMLElement) => (isStage(el) ? { opacity: 0, pointerEvents: 'none' } : { autoAlpha: 0 });
 	const showVars = (el: HTMLElement) => (isStage(el) ? { opacity: 1, pointerEvents: 'auto' } : { autoAlpha: 1 });
 
@@ -237,7 +223,7 @@
 		if (left === more.left && right === more.right) return;
 		more.left = left;
 		more.right = right;
-		// 48px at 1440, eased in or out as tabs go out of view or come back.
+		// Eased in or out as tabs go out of view or come back.
 		const fade = parseFloat(getComputedStyle(document.body).fontSize) * 3;
 		gsap.to(tabsEl, {
 			'--fade-left': `${left ? fade : 0}px`,
@@ -277,12 +263,10 @@
 	const step = (d: number) => select((active + d + features.length) % features.length);
 
 	/**
-	 * Autoplay: each feature open for AUTOPLAY seconds, its tab filling as
-	 * the time runs (FeatureTab's `progress`), then on to the next, round
-	 * from the last to the first. A pick starts the count again from the
-	 * picked one. It runs only while the explorer is in view, holds while
-	 * the model is being dragged or the pause button is down (and so for
-	 * the perf runs, which pause), and is off for reduced motion.
+	 * Autoplay: each feature open for AUTOPLAY seconds, its tab filling as the
+	 * time runs (FeatureTab's `progress`), then on to the next, wrapping round.
+	 * A pick restarts the count. Runs only while the explorer is in view, holds
+	 * while the model is dragged or paused, and is off for reduced motion.
 	 */
 	const AUTOPLAY = 15;
 	let progress = $state(0);
@@ -317,12 +301,9 @@
 	});
 
 	/**
-	 * The open feature's title and description, in the panel's corner. A
-	 * pick fades the old words away quickly, then the new ones come in line
-	 * by line: each rises a little as it fades up, the title first, the
-	 * description's lines just after, so the text settles rather than
-	 * appears. Picked again mid-change, the change
-	 * under way gives way to the new one.
+	 * The open feature's title and description. A pick fades the old words out
+	 * quickly, then the new ones rise in line by line, title first. A pick
+	 * mid-change takes over from the one under way.
 	 */
 	let detailEl: HTMLDivElement;
 	/**
@@ -401,10 +382,9 @@
 
 	/**
 	 * With a mouse, the strip drags: flung, it glides on (InertiaPlugin) and
-	 * settles with a tab's edge on the grid line. A drag never picks the tab
-	 * it ends on. Touch keeps the browser's own swipe, which already feels
-	 * right there. (Draggable's scroll mode wraps the tabs in a div of its
-	 * own, which the strip's layout and Svelte both need not to happen.)
+	 * settles with a tab's edge on the grid line. A drag never picks the tab it
+	 * ends on. Touch keeps the browser's own swipe. Not Draggable: its scroll
+	 * mode wraps the tabs in a div, which the layout and Svelte can't have.
 	 * Returns the cleanup.
 	 */
 	function dragStrip() {
@@ -416,12 +396,9 @@
 			return stops.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
 		};
 		/**
-		 * The drag works on a position of its own, `at`, which may run past
-		 * the strip's ends: within them it's the scroll; past them the tabs
-		 * stretch on with growing resistance (`pull`) and spring back on
-		 * release. While dragging it eases toward the pointer on GSAP's
-		 * ticker, frame by frame and trailing it by a hair, so it glides
-		 * rather than stepping with every mouse event.
+		 * The drag's own position, which may run past the strip's ends: there the
+		 * tabs stretch with growing resistance (`pull`) and spring back on release.
+		 * It eases toward the pointer on GSAP's ticker, so it glides between mouse events.
 		 */
 		const at = { x: 0 };
 		/** How far the tabs stretch for `over` px dragged past an end: never more than STRETCH. */
@@ -542,13 +519,13 @@
 	$effect(() => {
 		for (const i of [active - 1, active, active + 1]) want(i);
 	});
-	/** The tab under the pointer or focus, by its place in the strip. */
+	/** Wants the model of the tab under the pointer or focus. */
 	function onTabIntent(e: Event) {
 		const tab = (e.target as Element).closest('li');
 		if (tab) want([...(e.currentTarget as Element).children].indexOf(tab));
 	}
-	/** The viewer on stage, for the render controls. */
 	const viewers: Partial<Record<CadModel, ModelViewer>> = $state({});
+	/** The viewer on stage, for the render controls. */
 	const viewer = $derived(typeof onStage === 'string' ? (viewers[onStage] ?? null) : null);
 	// Dev only: the render tuning panel always, the energy tuning panel with
 	// ?controls, the 3D's live readout and measuring runs (PerfHud) with ?perf.
@@ -825,18 +802,17 @@
 		grid-column: 1 / -1;
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr);
-		/* 6px at 1440, between the tabs and down to the panel alike. */
+		/* Between the tabs, and down to the panel alike. */
 		--gap: calc(var(--size-font) * 0.375);
 		row-gap: var(--gap);
 		/* The strip and panel together, a touch under a screen. */
 		height: 88svh;
 	}
 
-	/* The strip: card tabs a little over a fifth of the row wide (335px at
-	   1440), so the last ones run off the edge and the strip scrolls. It
-	   runs out to both edges of the screen, padded back in so the first tab
-	   starts on the grid line: scrolled, the tabs slide off the screen's
-	   edge rather than being cut at the column's. */
+	/* The strip: card tabs a little over a fifth of the row wide, so the last
+	   ones run off the edge and the strip scrolls. It runs out to both screen
+	   edges, padded back in so the first tab starts on the grid line: scrolled,
+	   tabs slide off the screen's edge rather than being cut at the column's. */
 	.tabs {
 		--tab-width: calc(var(--size-font) * 21);
 		position: relative;
@@ -871,11 +847,10 @@
 			scroll-snap-type: x proximity;
 		}
 	}
-	/* Wider than the content column (1920, --content-max), the screen's
-	   edges no longer line up with anything: the strip stops where the
-	   panel does, and fades out over 48px (at 1440) on any side where tabs
-	   run on out of view, so it reads as scrolling on rather than cut. The
-	   script eases the fades (--fade-left, --fade-right) in and out. */
+	/* Wider than the content column (--content-max), the screen's edges line
+	   up with nothing: the strip stops where the panel does and fades out on
+	   any side where tabs run on out of view, so it reads as scrolling rather
+	   than cut. The script eases --fade-left and --fade-right. */
 	@media screen and (min-width: 1921px) {
 		.tabs {
 			margin-inline: 0;

@@ -5,14 +5,10 @@ import { CustomEase } from 'gsap/CustomEase';
 
 gsap.registerPlugin(ScrollTrigger, CustomEase);
 
-/**
- * The menu's curve: a slow start, a long confident middle, a soft landing.
- * Also written as `cubic-bezier(0.48, 0.02, 0.03, 0.98)` wherever CSS
- * transitions use it (MenuButton). Keep the two in step.
- */
+/** Keep in step with the `cubic-bezier(0.48, 0.02, 0.03, 0.98)` in MenuButton's CSS. */
 CustomEase.create('menu', '0.48, 0.02, 0.03, 0.98');
 
-/** The person panel's slide: `cubic-bezier(0.32, 0, 0, 0.97)`, an easy start and a long, soft landing. */
+/** The person panel's slide. */
 CustomEase.create('panel', '0.32, 0, 0, 0.97');
 
 let lenis: Lenis | null = null;
@@ -22,13 +18,10 @@ let resized: ResizeObserver | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
- * One clock for everything.
- *
- * Lenis, ScrollTrigger and the WebGL renderer each want their own rAF loop.
- * Running three loops means Lenis can update scroll *after* ScrollTrigger has
- * read it, which shows up as a one-frame lag between the copy and the 3D —
- * the classic "the model trails the text" bug. So: GSAP's ticker is the only
- * rAF in the app, it drives Lenis, and Lenis pushes ScrollTrigger.
+ * One clock for everything: GSAP's ticker is the only rAF in the app; it
+ * drives Lenis, and Lenis pushes ScrollTrigger. Separate loops let Lenis
+ * update scroll after ScrollTrigger has read it, so the 3D trails the copy
+ * by a frame. Ref-counted with `destroyScroll`.
  */
 export function initScroll() {
 	refs++;
@@ -36,8 +29,7 @@ export function initScroll() {
 
 	// Smoothing is the vestibular trigger; with reduced motion the wheel maps 1:1.
 	const reduce = prefersReducedMotion();
-	// 0.14: catches up a little faster than Lenis's 0.1 default, so the page
-	// still glides but no longer trails the wheel.
+	// A little faster than Lenis's 0.1 default, so the page glides without trailing the wheel.
 	lenis = new Lenis({ lerp: reduce ? 1 : 0.14, smoothWheel: !reduce });
 	lenis.on('scroll', ScrollTrigger.update);
 	if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__lenis = lenis;
@@ -46,12 +38,9 @@ export function initScroll() {
 	// GSAP's lag smoothing skips frames after a stall, which makes scrub jump.
 	gsap.ticker.lagSmoothing(0);
 
-	// ScrollTrigger measures where its triggers start and end once, and again
-	// only on a window resize. Content that changes height afterwards (images
-	// arriving, a section opening, an edit reloading in development) moves
-	// everything below it, and a pin measured before that holds the page in
-	// the wrong place. So it re-measures whenever the page's height changes,
-	// once the change has settled.
+	// ScrollTrigger only re-measures on window resize, so content changing
+	// height later (images arriving, a section opening) would leave pins in
+	// the wrong place. Re-measure whenever the page's height settles.
 	resized = new ResizeObserver(() => {
 		clearTimeout(refreshTimer);
 		refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
@@ -62,11 +51,10 @@ export function initScroll() {
 }
 
 function tickLenis(time: number) {
-	// GSAP reports seconds, Lenis expects milliseconds.
 	lenis?.raf(time * 1000);
 }
 
-/** The shared Lenis instance, once `initScroll` has run. */
+/** Null until `initScroll` has run. */
 export function getLenis() {
 	return lenis;
 }

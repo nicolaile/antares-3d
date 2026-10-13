@@ -1,9 +1,8 @@
 <script lang="ts" module>
 	/**
-	 * The stages on a page put their models together one at a time, in the
-	 * order they start (those that start out of sight, `later`, after the
-	 * rest): each is seconds of downloading and a long run of work on the
-	 * main thread, and two at once only made both late and the page stutter.
+	 * Stages build their models one at a time, in start order (`later` ones
+	 * last): each is seconds of downloading and a long main-thread task, and
+	 * two at once make both late and the page stutter.
 	 */
 	let queue: Promise<unknown> = Promise.resolve();
 	function inTurn(later: boolean): Promise<() => void> {
@@ -22,7 +21,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/motion/scroll';
-	// Types only: three.js itself loads on demand, as its own chunk (see start()).
+	// Types only: three.js loads on demand as its own chunk (see start()).
 	import type { ColourSlots, ModelViewer, RenderParams } from '$lib/three/viewer/ModelViewer';
 	import poster from '$lib/assets/images/model-poster.webp?w=2560;1600;900&enhanced';
 	import type { Shot } from '$lib/three/viewer/shot';
@@ -61,20 +60,13 @@
 		paused?: boolean;
 		/** Out of sight to begin with: its model loads after those in view (read once, at the start). */
 		later?: boolean;
-		/**
-		 * The render shown until the canvas fades in. Off for a model it
-		 * doesn't show: then it isn't fetched at all.
-		 */
+		/** The render shown until the canvas fades in. Off for a model it doesn't show, so it isn't fetched. */
 		poster?: boolean;
-		/**
-		 * Not wanted yet: nothing is fetched, even within a screen of view,
-		 * until it turns false. For a model the visitor may never reach.
-		 */
+		/** Nothing is fetched, even within a screen of view, until this turns false: for a model the visitor may never reach. */
 		hold?: boolean;
 		/**
-		 * Off stage: once it's had time to fade out, the viewer gives back its
-		 * frame's GPU memory and stops drawing (ModelViewer's `sleep`); back
-		 * at once when it turns false.
+		 * Off stage: once faded out, the viewer frees its frame's GPU memory and
+		 * stops drawing (ModelViewer's `sleep`); it wakes at once when this turns false.
 		 */
 		asleep?: boolean;
 		/** Fires once the model is in the scene, for the render controls. */
@@ -83,13 +75,12 @@
 
 
 	/*
-	 * The poster is a render of the opening shot, shown until the live model
-	 * is ready, and again if WebGL fails or the context is lost. It scales the
-	 * way the camera does: the model fills a fixed share of the frame height,
-	 * until the frame is too narrow and the lens widens to fit the width.
-	 * POSTER_FIT is that share — the bounding sphere's height over the frame
-	 * height, measured from the viewer when the poster was captured. Recapture
-	 * both together if the opening shot, lens or look change.
+	 * The poster renders the opening shot, shown until the live model is ready
+	 * and again if WebGL fails or the context is lost. It scales as the camera
+	 * does: the model fills a fixed share of the frame height until the frame is
+	 * too narrow and the lens fits the width. POSTER_FIT is that share (bounding
+	 * sphere height over frame height, measured from the viewer). Recapture both
+	 * together if the opening shot, lens or look change.
 	 */
 	const POSTER_FIT = 0.9357;
 
@@ -108,9 +99,8 @@
 		if (!hold) begin?.();
 	});
 
-	// Pausing and resuming both force a fresh frame: the viewer draws on
-	// demand, so without one a model coming back into view could show a
-	// stale or empty canvas until the next change.
+	// Pausing and resuming both force a fresh frame: the viewer draws on demand,
+	// so a model coming back into view could otherwise show a stale canvas.
 	$effect(() => {
 		if (!viewer) return;
 		viewer.spinning = !paused;
@@ -141,8 +131,7 @@
 		gsap.to(v, { fov: next.fov ?? 38, duration, delay, ease, overwrite: true });
 	}
 
-	// Re-frame whenever the shot changes after load. The first framing is
-	// instant, in the load handler below.
+	// The first framing is instant, in the load handler below.
 	$effect(() => {
 		const next = shot;
 		if (viewer && loaded) frame(viewer, next);
@@ -154,11 +143,8 @@
 		const light = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
 		initScroll();
 
-		// Off-screen, the page is still scrolling on the same ticker; skip the
-		// frame entirely rather than rendering a canvas nobody can see. A
-		// sliver at the screen's edge counts as off: under a fifth of the
-		// stage in view, it holds its last frame, and turns on from there
-		// when it's back.
+		// The ticker keeps running off-screen; skip frames nobody can see. Under a
+		// fifth of the stage in view counts as off: it holds its last frame.
 		const IN_VIEW = 0.2;
 		let visible = true;
 		const io = new IntersectionObserver(([entry]) => (visible = entry.intersectionRatio >= IN_VIEW), {
@@ -189,34 +175,25 @@
 					sections,
 					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
 					hdr: '/hdr/studio_small_09_512.hdr',
-					// 1.5 at most, a retina screen's 2 included: the frame is bound by its
-					// pixels, and 1.5 draws 44% fewer (measured: 3.6 → 2.2 ms on an M4
-					// Max), the same image a touch softer once the browser scales it up
-					// (2.8/255 apart on average, nothing moved); 4× multisampling keeps
-					// the edges. Phones also take occlusion at half size.
+					// Capped below retina 2×: the frame is pixel-bound, and 1.5 draws 44% fewer
+					// (3.6 → 2.2 ms on an M4 Max) for a barely softer image; 4× multisampling
+					// keeps the edges. Phones also take occlusion at half size.
 					maxPixelRatio: 1.5,
 					// Dev, ?visibility: the part indices kept for the visibility sampler (perf.ts).
 					keepParts: import.meta.env.DEV && new URLSearchParams(location.search).has('visibility'),
 					aoScale: light ? 0.5 : 1,
-					// Off. The CAD model has coincident surfaces (parts that touch exactly);
-					// they resolve deterministically while nothing moves, but the idle
-					// drift re-rolled the depth test every frame and made those seams
-					// flicker continuously. Measured: frozen = 0 differing pixels,
-					// breathing = ~25k.
+					// Off: the CAD has coincident surfaces, stable while still, but the idle
+					// drift re-rolls the depth test every frame and makes those seams flicker.
 					breathe: false,
-					// ~80s per revolution. Slow enough to read as presentation rather
-					// than animation; raise for a faster turn.
+					// ~80 s per revolution: slow enough to read as presentation, not animation.
 					autoRotate: 0.08,
 					onProgress: (f) => (progress = f),
 					material: 'satin',
 					color: 0x949494,
-					// Both were sitting at zero and contributing nothing: bloom changed 0
-					// of 19.5M framebuffer bytes, grain only the last bit (max channel
-					// difference 1). Omitting the passes entirely rather than running
-					// them at zero. Their sliders hide themselves via availableParams().
+					// Both add nothing visible at this look, so their passes are skipped
+					// entirely; their sliders hide via availableParams().
 					bloom: false,
 					grain: false,
-					// The look, as dialled in through the controls panel.
 					params: {
 						roughness: 0.43,
 						metalness: 0.96,
@@ -233,30 +210,23 @@
 						// flat silhouette rather than a shaded gradient.
 						gradientOffset: 1
 					},
-					// SSR is built and wired but off: measured ~20 fps for no visible gain
-					// on this matte coating — the environment map already carries its
-					// reflections. Flip to `{ opacity: 0.35 }` to try it on a glossier preset.
+					// SSR off: it costs ~20 fps for no visible gain on this matte coating, where
+					// the environment map carries the reflections. `{ opacity: 0.35 }` turns it on.
 					ssr: false,
-					// Both ground shadows off. The contact shadow sat at opacity 0 —
-					// contributing zero pixels (verified by framebuffer diff) while still
-					// rendering all 153 meshes to a depth target plus four blur passes
-					// every frame: 63 draw calls and 160k triangles for nothing.
+					// Ground shadows off: the contact shadow is invisible at this look yet
+					// costs a depth pass of every mesh plus four blurs each frame.
 					groundShadow: false,
 					contactShadow: false,
-					// Off: even fine world-space noise reads as mottling on a shell this
-					// large and smooth. Raise above 0 only for close-up hero shots.
+					// Off: even fine world-space noise reads as mottling on a shell this large and smooth.
 					surfaceVariation: 0,
-					// Built but off — toggled from the controls panel.
-					// Pointer tracking off: the ramp is parked at a fixed offset (below),
-					// and letting the cursor sweep it would undo that on first move.
+					// Toggled from the controls panel. No pointer tracking: the ramp is parked
+					// at a fixed offset (gradientOffset) that the cursor would undo.
 					gradientMap: { on: false, space: 'oklab', repeat: 'none', followPointer: false },
-					// Studio look (backdrop sweep + softbox shadow), separate from the
-					// gradient map. Also built but off; the toggle applies its own
-					// lighting preset over the values above and undoes it on the way out.
+					// Studio look (backdrop sweep + softbox shadow), toggled from the controls
+					// panel: it applies its own lighting preset and undoes it when turned off.
 					studio: { on: false },
-					// DoF off: stock BokehPass has no in-focus range, so the whole model
-					// goes soft, and its blurred alpha fringes the silhouette against a
-					// light stage. Kept wired for a darker backdrop or a hero still.
+					// DoF off: stock BokehPass has no in-focus range, so the whole model goes
+					// soft and its blurred alpha fringes the silhouette on a light stage.
 					dof: false
 				});
 			} catch {
@@ -267,15 +237,9 @@
 			let resetTween: gsap.core.Tween | null = null;
 			let reveal: gsap.core.Timeline | null = null;
 
-			// Letting go hands the model back to the timeline: ease the drag offset
-			// out to zero.
-			//
-			// Do NOT gate this on `resetTween.isActive()`. GSAP's `isActive()` tests
-			// whether "now" falls inside the tween's time window, not whether it is
-			// still alive — a killed tween keeps reporting true until its original
-			// duration elapses. Gating on it silently swallowed the reset whenever
-			// the model was re-grabbed within 1.6s of a release. Killing any
-			// in-flight tween outright is both simpler and correct.
+			// Letting go eases the drag offset back to zero. Don't gate this on
+			// `resetTween.isActive()`: a killed tween reports active until its duration
+			// elapses, which would swallow the reset after a quick re-grab.
 			const releaseDrag = () => {
 				if (v.isDragging || v.userRotationSettled) return;
 				resetTween?.kill();
@@ -291,8 +255,7 @@
 			// The reveal is only a crossfade, so it can finish under the drag.
 			const cancelReset = () => resetTween?.kill();
 
-			// Dev-only handle for tuning feel from the console, e.g.
-			// __viewer.userRotation.x = 0.5 to watch the reset run.
+			// Dev-only console handle, e.g. `__viewer.userRotation.x = 0.5` to watch the reset.
 			if (import.meta.env.DEV) {
 				(window as unknown as Record<string, unknown>).__viewer = v;
 				// Every viewer on the page, when there's more than one (the CAD stages).
@@ -323,15 +286,13 @@
 					onready?.(v);
 					offTick = onTick(() => {
 						if (!visible) return;
-						// On stage, awake, whatever order the hand-off's calls came in
-						// (a run once caught a viewer still asleep there): a no-op when it is.
+						// Awake on stage whatever order the hand-off's calls arrive in; a no-op when it is.
 						if (!asleep) v.wake();
 						v.render();
 					});
 
-					// Reveal: the poster already shows this exact frame, so the live
-					// canvas simply crossfades in over it — any motion here would
-					// double the image. The poster drops once the canvas is opaque.
+					// The poster shows this exact frame, so the canvas only crossfades in:
+					// any motion would double the image.
 					reveal = gsap.timeline({ onComplete: () => (posterShown = false) });
 					reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.3 : 0.6, ease: 'power1.out' }, 0);
 				})
@@ -367,9 +328,8 @@
 			};
 		}
 
-		// Fetch three.js, the model and the lighting only as the stage comes
-		// within a screen of view, so they never hold up the rest of the page;
-		// and, while held, not until it's let go as well.
+		// three.js, the model and the lighting load only once the stage is within a
+		// screen of view (and not held), so they never hold up the rest of the page.
 		let isNear = false;
 		let begun = false;
 		begin = () => {

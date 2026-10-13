@@ -1,12 +1,8 @@
 <!--
 	@component
-	A product on a dark card the full width of the grid: its name and a
-	line about it centred at the top, a video of it in the middle, sitting on the card's foot, and a
-	short line with a call to action in the bottom-left corner. The video
-	plays once, when you first scroll down to the card, and holds on its
-	last frame. It loads only as the card nears, not with the page. A
-	cut-out image can stand in for the video, centred in the space under the
-	title. On phones the copy follows the video or image.
+	A product on a full-width dark card: name, a video (or cut-out image) and
+	a call to action. The video loads as the card nears, plays once when the
+	card is reached and holds on its last frame.
 -->
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
@@ -25,25 +21,23 @@
 		link
 	}: {
 		title: string;
-		/** Under the name, in grey. */
 		subtitle?: string;
-		/** A muted clip of the product, played once; `start` (seconds) skips a dark lead-in. */
+		/** `start` (seconds) skips a dark lead-in. */
 		video?: { src: string; label: string; start?: number };
-		/** A cut-out of the product (transparent PNG), in the video's place; `wip` tags it as a stand-in. */
+		/** A transparent cut-out in the video's place; `wip` tags it as a stand-in. */
 		image?: { src: PictureSource; alt: string; wip?: boolean };
 		text: string;
 		link: Link;
 	} = $props();
 
 	let player = $state<HTMLVideoElement>();
-	/** The card is near: the clip gets its source, and starts loading. */
+	/** Set as the card nears; gives the video its source. */
 	let near = $state(false);
 
 	onMount(() => {
 		if (!player) return;
 		const card = player.closest('section')!;
-		// Loads the clip a screen and a half before the card, so it's ready
-		// by the time it's reached, without weighing on the page's own load.
+		// A screen and a half early, so it's ready without weighing on page load.
 		const coming = new IntersectionObserver(
 			([entry]) => {
 				if (!entry.isIntersecting) return;
@@ -52,7 +46,6 @@
 			},
 			{ rootMargin: '150% 0px' }
 		);
-		// Plays it once, as soon as a little of the card (15%) is on screen.
 		// Reached in a jump, the source is set first, then it plays.
 		const seen = new IntersectionObserver(
 			async ([entry]) => {
@@ -101,7 +94,6 @@
 </section>
 
 <style>
-	/* 1400 × 800 at 1440. */
 	.card {
 		position: relative;
 		display: grid;
@@ -113,7 +105,7 @@
 		background: var(--grey-950);
 		color: var(--white);
 	}
-	/* 15em wraps the line under it in two, as in the design. */
+	/* Wraps the subtitle onto two lines. */
 	.title {
 		max-width: 15em;
 		margin: 0;
@@ -124,11 +116,9 @@
 		display: block;
 		color: var(--grey-400);
 	}
-	/* Centred, its foot on the card's: the clip's frame cuts the vessel off
-	   at the bottom, and the card's edge hides that cut. 112% of the space
-	   under the title, so the reactor rises into the clip's dark headroom
-	   behind it. Shot on black:
-	   lighten lets the card's grey through it, so it shows no box. */
+	/* Foot on the card's edge, which hides where the frame cuts the vessel
+	   off; 112% so it rises into the clip's dark headroom. Shot on black, so
+	   lighten lets the card's grey through with no visible box. */
 	.video {
 		mix-blend-mode: lighten;
 		align-self: end;
@@ -139,8 +129,6 @@
 		object-fit: contain;
 	}
 
-	/* The cut-out, centred in the space under the title, with room around
-	   it: 80% of that height. */
 	.still {
 		position: relative;
 		align-self: center;

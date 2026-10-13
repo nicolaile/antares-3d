@@ -1,13 +1,7 @@
 <!--
 	@component
-	A labelled accordion in a hairline box: one row per item, its number in
-	the first column, its title in H2 from the second, and a round + button
-	at the far right. One row is open at a time (the first, to start), or
-	any number with `closeSiblings` off: the +'s upright turns flat into a −,
-	and under the title its paragraph sits on columns
-	2–5, level with the foot of its photo on 10–12. Rows open and close by
-	height, with GSAP. On phones the photo comes first, the paragraph
-	under it.
+	A labelled accordion in a hairline box: each row a numbered title that
+	opens to a paragraph and photo. The first row starts open.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -24,25 +18,22 @@
 		items,
 		closeSiblings = true
 	}: {
-		/** Optional: without one (and no intro), the list stands on its own. */
 		label?: string;
-		/** With an intro, the label becomes a heading over a short paragraph. */
+		/** Turns the label into a heading over this paragraph. */
 		intro?: string;
 		items: Capability[];
-		/** Opening a row closes the one open; off, rows open and close on their own. */
+		/** Opening a row closes the open one; off, rows toggle independently. */
 		closeSiblings?: boolean;
 	} = $props();
 
-	/** Which rows are open: the first, to start. */
 	let open = $state(untrack(() => items.map((_, i) => i === 0)));
 	const id = $props.id();
 	let panels: HTMLElement[] = $state([]);
-	/** Which row the pointer is over: its ring darkens (ToggleRing). */
+	/** The hovered row's ring darkens. */
 	let hovered = $state(-1);
 
 	const MOTION = { duration: 0.6, ease: 'power3.inOut' };
 
-	/** Opens or closes row `i`'s panel by height; its ring turns + to − with it. */
 	function set(i: number, on: boolean) {
 		if (open[i] === on) return;
 		open[i] = on;
@@ -91,8 +82,7 @@
 						<span class="toggle"><ToggleRing open={open[i]} active={hovered === i} /></span>
 					</button>
 				</h3>
-				<!-- Inert while closed, so a collapsed row is neither read nor tabbed into. -->
-				<div
+							<div
 					class="panel"
 					id="{id}-{i}"
 					bind:this={panels[i]}
@@ -112,8 +102,7 @@
 </section>
 
 <style>
-	/* A little more room above than the page's gap between sections (40px
-	   at 1440), so the heading starts its own part of the page. */
+	/* Extra room above, so the heading starts its own part of the page. */
 	.capabilities {
 		padding-top: var(--space-40);
 	}
@@ -132,7 +121,6 @@
 		color: var(--grey-700);
 	}
 
-	/* A hairline box, the rows divided by hairlines. */
 	.list {
 		margin: var(--space-40) 0 0;
 		padding: 0;
@@ -147,10 +135,8 @@
 		border-top: 1px solid var(--grey-200);
 	}
 
-	/* The row's head and body both on the page's twelve columns, edge to
-	   edge in the box (which spans the grid), so the title and paragraph
-	   start on the page's second column; the number, ring and photo keep
-	   16px in from the box's sides. */
+	/* Head and body on the page's columns (the box spans the grid), so the
+	   title and paragraph line up with the page's second column. */
 	.head,
 	.body {
 		display: grid;
@@ -182,7 +168,6 @@
 		grid-column: 2 / span 9;
 	}
 
-	/* The ring's place in the row; the ring itself is ToggleRing. */
 	.toggle {
 		grid-column: 12;
 		justify-self: end;
@@ -193,8 +178,6 @@
 	.panel {
 		overflow: hidden;
 	}
-	/* 32px under the photo; the paragraph sits 32px higher again, 64px
-	   off the next row's rule. */
 	.body {
 		align-items: end;
 		padding: 0 0 var(--space-32);
@@ -220,9 +203,8 @@
 		}
 	}
 
-	/* The number above the title; the photo, then the paragraph. */
+	/* Phones: the number above the title; the photo, then the paragraph. */
 	@media screen and (max-width: 767px) {
-		/* One column of text: back to 16px in on both sides. */
 		.head {
 			padding: var(--space-16);
 		}

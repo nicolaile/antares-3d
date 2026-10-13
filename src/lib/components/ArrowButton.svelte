@@ -1,14 +1,8 @@
 <!--
 	@component
-	A square, outlined arrow button (4px corners) for stepping through a carousel: the
-	ring of Capabilities' toggle (36px at 1440) around a 16px arrow. The
-	ring darkens on hover; at the end of the run it's disabled and fades.
-	Disabled stays focusable (`aria-disabled`, clicks ignored), so focus
-	isn't dropped when the arrow it's on reaches the end.
-
-	`tone="dark"`, for controls over a dark stage (the reactor explorer's
-	feature steppers): the same outlined square in Grey 750 with a white
-	chevron, the outline turning white on hover.
+	An outlined square arrow button for stepping through a carousel, the same
+	ring as ToggleRing. Disabled stays focusable (`aria-disabled`, clicks
+	ignored), so focus isn't dropped when the arrow reaches the end.
 -->
 <script lang="ts">
 	import left from '$lib/assets/icons/left-arrow.svg?raw';
@@ -24,7 +18,7 @@
 		onclick
 	}: {
 		direction: 'previous' | 'next';
-		/** `dark`: the small filled square with a chevron, for dark stages. */
+		/** `dark`: a chevron in a dark outline, for dark stages (the reactor explorer). */
 		tone?: 'light' | 'dark';
 		/** Accessible name, e.g. "Previous openings". */
 		label: string;
@@ -76,8 +70,6 @@
 		outline-offset: 2px;
 	}
 
-	/* Dark: the same square outlined in Grey 750 on a dark stage, the
-	   chevron white; the outline turns white on hover. */
 	.dark {
 		border-color: var(--grey-750);
 		color: var(--white);

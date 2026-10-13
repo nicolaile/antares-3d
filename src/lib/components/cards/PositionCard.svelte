@@ -1,8 +1,7 @@
 <!--
 	@component
-	One open position: a grey card (338×211 at 1440) with the title and its
-	department at the top and the location at its foot. The whole card is
-	the link. It never shrinks below that shape, but grows if the copy needs it.
+	One open position, the whole card a link. Holds its aspect ratio as a
+	minimum but grows if the copy needs it.
 -->
 <script lang="ts">
 	let {

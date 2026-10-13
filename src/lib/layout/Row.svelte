@@ -1,10 +1,8 @@
 <!--
 	@component
 	The 12-column grid. Everything on a page sits in a Row, and everything in
-	a Row sits in a Cell, so all horizontal placement is in whole columns.
-
-	A Row nested in a Cell with `subgrid` keeps the page's own column lines,
-	so nested content still lands exactly on the grid.
+	a Row in a Cell, so all horizontal placement is in whole columns. Nest
+	inside a `subgrid` Cell to keep the page's column lines.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';

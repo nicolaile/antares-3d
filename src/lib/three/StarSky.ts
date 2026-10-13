@@ -1,33 +1,17 @@
 /**
- * The 404's sky, as a camera sees it, on one WebGL2 canvas over the field.
+ * The 404's sky, as a camera sees it, on one opaque-black WebGL2 canvas over
+ * the field; put it on the page with `mix-blend-mode: screen` so only the
+ * light shows. All light adds up linearly in a float buffer, then is
+ * tone-mapped once (saturating to white like film), grained and dithered.
  *
- * All light is added up, in linear space, in a float buffer, then
- * tone-mapped once (so it saturates to white the way film does, however
- * many sources overlap), grained and dithered on the way to the screen.
- * The canvas is opaque black: put it on the page with
- * `mix-blend-mode: screen` and only the light shows.
+ * Stars are small point-spread functions, some twinkling; the brightest get
+ * hairline spikes, colour scintillation and sub-pixel wander. Trails fade
+ * near the copy (`setAvoid`). Every hairline is averaged over its pixel so it
+ * holds steady on 1× screens.
  *
- * Stars are small point-spread functions: a bright Gaussian core and a
- * faint skirt, each with a slight colour temperature, a twinkle on some
- * and hairline spikes on the brightest. The brightest also scintillate in
- * colour, flickering faintly red and blue, and wander by a fraction of a
- * pixel, as stars do through air.
- *
- * Every hairline (spikes, trails, small cores) is averaged over the pixel
- * it lands on, so it holds steady on 1× screens instead of shimmering as
- * it moves.
- *
- * Their trails are strips along their orbits, drawn with the star's own
- * width, brightness and colour, brightest at the star and fading out
- * behind it. They fade away near the copy and the label (`setAvoid`).
- *
- * Antares is built the way bloom forms in a lens: a blown-out core, faint
- * Airy rings round it, then Gaussians each wider, fainter and warmer than
- * the last. Its diffraction spikes are split by wavelength: red reaches
- * further and spaces its bands wider than blue, so the tips fan into a
- * faint spectrum. Brightness, not size, is what changes: more exposure
- * and more of the falloff clears the threshold, so the star grows the way
- * a real one does.
+ * Antares is built like lens bloom: a blown-out core, faint Airy rings, then
+ * ever wider, fainter, warmer Gaussians, with spikes split by wavelength so
+ * the tips fan into a faint spectrum. Exposure, not size, makes it grow.
  */
 
 const COMMON = /* glsl */ `
@@ -351,8 +335,9 @@ export type SkyGlow = {
 /**
  * One frame. `stars` holds four floats per star, in setStars order: x and y
  * (CSS px), alpha, and nearness to the pointer (0–1). `trails` holds eight
- * per trail, round `center`: orbit radius, start angle, head angle, span; then the star's radius, brightness,
- * temperature and the trail's alpha. `trailCount` of them are drawn.
+ * per trail, round `center`: orbit radius, start angle, head angle, span,
+ * then the star's radius, brightness, temperature and the trail's alpha.
+ * `trailCount` of them are drawn.
  */
 export type SkyFrame = {
 	time: number;

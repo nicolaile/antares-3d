@@ -1,9 +1,8 @@
 <!--
 	@component
-	Pauses and resumes something that moves on its own: a loop, an
-	animation. The name stays put and `aria-pressed` carries the state, so a
-	screen reader hears "Pause video, pressed" rather than a name that
-	swaps under it. Shows a play icon while paused.
+	Pauses and resumes something that moves on its own. The name stays put
+	and `aria-pressed` carries the state, so a screen reader hears "Pause
+	video, pressed" rather than a name that swaps under it.
 -->
 <script lang="ts">
 	import IconButton from '$lib/components/IconButton.svelte';

@@ -1,8 +1,7 @@
 <!--
 	@component
-	The Antares wordmark: the mark and ANTARES set beside it. Takes the text
-	colour, like Logo. The viewBox is cropped to the ink, so the height you
-	give it is the height of the mark. Size it by height; the width follows.
+	The mark and ANTARES in `currentColor`. Size it by height; the viewBox is
+	cropped to the ink, so that is the mark's height. The width follows.
 	Source: $lib/assets/images/antares-wordmark.svg.
 -->
 <script lang="ts">

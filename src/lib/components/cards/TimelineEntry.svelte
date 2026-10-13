@@ -1,8 +1,7 @@
 <!--
 	@component
-	One year on a roadmap: the year in the first column, then a title and a
-	paragraph on the next four. Place in a `subgrid` cell; it uses that
-	cell's columns.
+	One year on a roadmap: the year, then a title and paragraph. Place it in
+	a `subgrid` cell; it lays out on that cell's columns.
 -->
 <script lang="ts">
 	let { year, title, text }: { year: string; title: string; text: string } = $props();

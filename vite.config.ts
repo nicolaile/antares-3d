@@ -6,8 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { defineConfig, type PluginOption } from 'vite';
 import { perfCaptures } from './scripts/vite-perf.js';
 
-// The local-only lab (/cad, /systems, the model pipeline) is gitignored, so
-// its dev plugin loads only where it exists.
+// The lab (/cad, /systems, the model pipeline) is local-only and gitignored,
+// so its dev plugin loads only where it exists.
 const LAB_PLUGIN = 'scripts/lab/vite-cad-tags.js';
 const lab: PluginOption[] = existsSync(LAB_PLUGIN)
 	? [(await import(/* @vite-ignore */ pathToFileURL(LAB_PLUGIN).href)).cadTags()]
@@ -20,12 +20,9 @@ export default defineConfig({
 		port: Number(process.env.PORT) || 5173
 	},
 	ssr: {
-		// gsap's plugin entrypoints resolve to CommonJS under Node's ESM loader,
-		// so `import { ScrollTrigger } from 'gsap/ScrollTrigger'` throws
-		// "Named export not found" at runtime on the server. Vite's dev SSR
-		// papers over it with interop; a real Node server does not. Bundling
-		// gsap into the server output instead of leaving it external applies
-		// that same interop to the production build.
+		// gsap's plugin entrypoints resolve to CommonJS under Node's ESM loader, so
+		// `import { ScrollTrigger } from 'gsap/ScrollTrigger'` throws on a real Node
+		// server; bundling gsap applies Vite's dev-SSR interop to the production build.
 		noExternal: ['gsap']
 	},
 	plugins: [
@@ -38,14 +35,12 @@ export default defineConfig({
 		enhancedImages(),
 		sveltekit({
 			compilerOptions: {
-				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+				// Runes mode for the project, not its libraries; redundant from Svelte 6.
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
-			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
+			// Picks the host's adapter at build time; https://svelte.dev/docs/kit/adapters to pin one.
 			adapter: adapter()
 		})
 	]

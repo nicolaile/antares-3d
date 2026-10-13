@@ -1,8 +1,6 @@
 /**
- * The colour system, read straight out of its stylesheet.
- *
- * colors.css is the source of truth; this parses it at build time so the
- * design system page can never drift from what the site actually renders.
+ * The colour system, parsed from colors.css (the source of truth) at build
+ * time so the design system page can't drift from what the site renders.
  */
 import source from '$lib/styles/colors.css?raw';
 

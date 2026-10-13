@@ -54,15 +54,11 @@ void main() {
 	gl_Position = vec4(((aPos - uOrigin) / uView * 2.0 - 1.0) * vec2(1.0, -1.0), 0.0, 1.0);
 }`;
 
-// Each segment is a capsule-shaped quad. A pixel in reach records how far
-// along the loop it is, its signed distance from the centreline (the side
-// matters: sparks sit off-centre), and whether that stretch runs inside a
-// drawn pipe; the depth test keeps the nearest.
-//
-// Baked twice. The second pass skips whatever the first pass found at that
-// pixel — the same stretch of pipe — so it records the next-nearest pipe.
-// Shading both lets two pipes' glows overlap instead of meeting at a hard
-// edge halfway between them.
+// Each segment is a capsule-shaped quad. A pixel in reach records its arc
+// along the loop, signed distance from the centreline (sparks sit off-centre)
+// and whether that stretch is inside a drawn pipe; the depth test keeps the
+// nearest. A second bake skips the first's stretch to record the next-nearest
+// pipe, so two pipes' glows overlap instead of meeting at a hard edge.
 const BAKE_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec2 vPos;

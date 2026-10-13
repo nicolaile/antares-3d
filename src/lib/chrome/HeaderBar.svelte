@@ -1,14 +1,9 @@
 <!--
 	@component
-	The bar behind the header: a plain fill the full width of the screen,
-	68px tall at 1440. It slides
-	down when the visitor scrolls back up partway down a page, and away again
-	when they scroll down or reach the top. White over light sections, dark
-	over dark ones, crossfading as it passes from one to the other. A page
-	on another light colour sets `--header-light` on <html> to it (Progress,
-	on its mid grey). Sits under
-	the wordmark, whose difference blend turns it black on the white and
-	white on the dark, and under the menu button.
+	The full-width bar behind the wordmark and menu button. Slides in when the
+	visitor scrolls back up mid-page, away on scroll down or at the top.
+	White over light sections, dark over dark ones, crossfading between them.
+	A page on another light colour sets `--header-light` on <html> (Progress).
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -27,13 +22,12 @@
 			return;
 		}
 		if (shown) {
-			// In the colour of the page it's over now, which may not be the last one's.
+			// The section under it may have changed while it was away.
 			gsap.set(bar, { backgroundColor: untrack(colour) });
-			// Slides down solid; with reduced motion it fades in where it stands instead.
 			gsap.set(bar, reduce ? { yPercent: 0 } : { autoAlpha: 1 });
 			gsap.to(bar, { yPercent: 0, autoAlpha: 1, ...(reduce ? { duration: 0.2 } : SHOW), overwrite: 'auto' });
 		} else {
-			// Out of view, it's hidden too, so nothing of it lingers at the edge.
+			// Hidden once out of view so no sliver lingers at the edge.
 			gsap.to(bar, {
 				...(reduce ? { autoAlpha: 0, duration: 0.2 } : { yPercent: -100, ...HIDE }),
 				overwrite: 'auto',
@@ -44,11 +38,9 @@
 
 	/** A colour token, resolved, so GSAP can tween between two. */
 	const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-	/** The bar's colour over what's under it now. */
 	const colour = () => (header.barDark ? token('--grey-950') : token('--header-light') || token('--white'));
 
-	// Crossfades while it shows; out of view it just takes the colour it
-	// will come back in with, so it never arrives in the wrong one.
+	// Crossfades while shown; while hidden it just takes the colour it will return in.
 	$effect(() => {
 		const color = colour();
 		if (untrack(() => header.backed)) gsap.to(bar, { backgroundColor: color, duration: 0.3, ease: 'power1.out' });
@@ -66,7 +58,7 @@
 		right: 0;
 		left: 0;
 		z-index: 39;
-		/* 68px at 1440; keep in step with BAR in header.svelte.ts. */
+		/* Keep in step with BAR in header.svelte.ts. */
 		height: var(--header-height);
 		background: var(--white);
 		visibility: hidden;

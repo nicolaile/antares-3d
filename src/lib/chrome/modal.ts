@@ -1,15 +1,13 @@
 /**
  * What an open overlay (the menu, a person's panel) does to the rest of the
- * page: takes it out of the tab order and the accessibility tree, and stops
- * it scrolling. Each returns its own undo, so two overlays can't release
- * what the other still holds.
+ * page. Each helper returns its own undo, so two overlays can't release what
+ * the other still holds.
  */
 import { getLenis } from '$lib/motion/scroll';
 
 /**
- * Makes everything outside `keep` inert: its siblings, and its ancestors'
- * siblings, up to <body>. Anything already inert is left as it is, and
- * stays inert on release.
+ * Makes `keep`'s siblings and its ancestors' siblings (up to <body>) inert.
+ * Anything already inert stays inert on release.
  */
 export function inertOutside(keep: Element): () => void {
 	const set: HTMLElement[] = [];
@@ -48,10 +46,7 @@ export function lockScroll(): () => void {
 	};
 }
 
-/**
- * Both, for an overlay opening over the page: everything outside `keep`
- * inert, and the scroll held. The undo is safe to call more than once.
- */
+/** `inertOutside` plus `lockScroll`. The undo is safe to call more than once. */
 export function holdPage(keep: Element): () => void {
 	const undo = [lockScroll(), inertOutside(keep)];
 	return () => undo.splice(0).forEach((fn) => fn());

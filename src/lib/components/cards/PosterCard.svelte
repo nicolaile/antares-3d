@@ -1,17 +1,9 @@
 <!--
 	@component
-	A full-width image card with type on its corners: a big title in the
-	top-left, a big name in the bottom-right, and a short line with a call
-	to action in the bottom-left. The image's own shape sets the card's.
-
-	The big type is white with `mix-blend-mode: exclusion`, so it inverts
-	whatever is under it: grey on the dark side of a gradient, near black
-	on the light side.
-
-	On phones the card turns portrait, the image cropped to its centre, and
-	the copy follows it.
-
-	The landing's From MARK-01 → R1.
+	A full-width image card with type on its corners: a big title top-left,
+	a big name bottom-right, and a line with a call to action bottom-left.
+	The image's own shape sets the card's; on phones it turns portrait.
+	Home's "From MARK-01 → R1".
 -->
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
@@ -27,7 +19,6 @@
 		link
 	}: {
 		title: string;
-		/** Set as large as the title, in the bottom-right corner. */
 		name: string;
 		image: { src: Source; alt: string };
 		text: string;
@@ -69,8 +60,8 @@
 		background: var(--button);
 	}
 
-	/* White, inverted against the image under it. Trimmed to the caps, so
-	   they sit on the card's padding exactly. */
+	/* Inverts against the image. Trimmed to the caps so they sit on the
+	   card's padding exactly. */
 	.title,
 	.name {
 		position: absolute;
@@ -105,7 +96,6 @@
 		color: var(--grey-700);
 	}
 
-	/* Portrait, the image cropped to its centre; the copy under it. */
 	@media screen and (max-width: 767px) {
 		.card {
 			aspect-ratio: 3 / 4;

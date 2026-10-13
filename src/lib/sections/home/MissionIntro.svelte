@@ -1,12 +1,9 @@
 <!--
 	@component
-	Who we are: a statement across the first seven columns, the figures under it, and
-	images on the right whose bottoms line up — an optional large one on
-	columns 8–10 and a smaller one on 11–12, or on its own a video's still
-	on 10–12, its Play label in the corner (PlayButton).
-
-	An image without a `src` renders as a grey placeholder that already
-	holds the layout.
+	Home's "who we are": a statement, the figures under it, and images on
+	the right with their bottoms aligned: a large one and a smaller one, or
+	a video's still on its own. An image without a `src` renders as a
+	placeholder that holds the layout.
 -->
 <script lang="ts">
 	import type { Picture as PictureSource } from 'vite-imagetools';
@@ -17,7 +14,7 @@
 	import PlayButton from '$lib/components/PlayButton.svelte';
 
 	type Image = { src?: PictureSource; alt: string };
-	/** A video's still: its shape (`ratio`, the still's own) and running time. */
+	/** A video's still, with its own `ratio`. */
 	type Video = Image & { ratio: string; duration: string };
 
 	let {
@@ -37,8 +34,7 @@
 			<p class="statement type-h4">{statement}</p>
 		</Cell>
 
-		<!-- The figures sit at the top of this row, the images at its foot,
-		     starting a little lower. -->
+		<!-- Figures at the top of this row, images at its foot. -->
 		<Cell subgrid>
 			<Cell span={4} tablet={{ span: 6 }} mobile={{ span: 12 }} subgrid self="start">
 				<Milestones items={milestones} quiet />
@@ -72,8 +68,6 @@
 </section>
 
 <style>
-	/* Close under what's above, 32px at 1440, with plenty of room below:
-	   180px. */
 	.mission {
 		padding-top: var(--space-32);
 		padding-bottom: var(--space-120);
@@ -88,8 +82,7 @@
 		border-radius: var(--stage-radius);
 		overflow: hidden;
 	}
-	/* Columns 8–10 and 11–12 of the page. */
-	/* Starts well below the figures, the images sitting low in the row. */
+	/* Starts well below the figures, so the images sit low in the row. */
 	.primary {
 		grid-column: span 3;
 		margin-top: var(--space-120);
@@ -97,12 +90,11 @@
 	.secondary {
 		grid-column: span 2;
 	}
-	/* Without the large one, still on columns 11–12. */
+	/* Without the large one, keeps its column. */
 	.secondary.alone {
 		grid-column: 4 / span 2;
 	}
-	/* A video's still, on its own: wider, on columns 10–12, starting a
-	   little below the figures beside it. */
+	/* A video's still on its own is wider, starting a little below the figures. */
 	.secondary.alone.video {
 		grid-column: 3 / span 3;
 		margin-top: var(--space-32);
@@ -132,7 +124,6 @@
 		}
 	}
 
-	/* Phones: the video the full width, clear of the figures above it. */
 	@media screen and (max-width: 767px) {
 		.secondary.alone.video {
 			grid-column: 1 / -1;

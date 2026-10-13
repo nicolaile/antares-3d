@@ -5,17 +5,14 @@ import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 gsap.registerPlugin(SplitText);
 
 /**
- * Osmo's highlight text on scroll: the text is split into letters, which
- * start faded and light up one after another as it scrolls through,
- * scrubbed to the scroll. Split again whenever it reflows; the animation is
- * rebuilt with it. With reduced motion it's simply lit.
- *
- * An attachment: `<h2 {@attach highlightText()}>`.
+ * Letters start faded and light up one after another, scrubbed to the
+ * scroll. Re-split (and rebuilt) whenever the text reflows.
+ * `<h2 {@attach highlightText()}>`
  */
 export function highlightText({
 	scrollStart = 'top 90%',
 	scrollEnd = 'center 40%',
-	/** The letters' opacity before they're lit. */
+	/** Opacity before a letter is lit. */
 	fade = 0.2,
 	/** Between letters: 1 lights them strictly one by one; lower is smoother. */
 	stagger = 0.1

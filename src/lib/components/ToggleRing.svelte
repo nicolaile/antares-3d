@@ -1,13 +1,11 @@
 <!--
 	@component
-	The plus/minus ring for anything that opens and closes, like an
-	accordion row: 36px square at 1440 with 4px corners, a Grey 200 hairline with a + in it.
-	Open, the + turns to a − (its upright lies flat) and a dark ring fades
-	in over the light one; the dark ring also shows while `active` (the
-	row is hovered). The same ring as ArrowButton's.
+	The plus/minus ring for anything that opens and closes, like an accordion
+	row. Open, the + turns to a − and a dark ring fades in; the dark ring also
+	shows while `active`. The same ring as ArrowButton's.
 
-	A decoration, not a button: it sits inside the control that does the
-	opening, which carries the label and aria-expanded.
+	A decoration, not a button: the control around it carries the label and
+	aria-expanded.
 -->
 <script lang="ts">
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
@@ -17,7 +15,7 @@
 		active = false
 	}: {
 		open?: boolean;
-		/** Show the dark ring without opening: while the row is hovered. */
+		/** Show the dark ring without opening, e.g. while the row is hovered. */
 		active?: boolean;
 	} = $props();
 
@@ -25,7 +23,7 @@
 	let upright: SVGPathElement;
 	const MOTION = { duration: 0.6, ease: 'power3.inOut' };
 
-	// Starts where it is, without animating in.
+	// The first run sets state without animating.
 	let first = true;
 	$effect(() => {
 		const on = open;
@@ -42,7 +40,7 @@
 </script>
 
 <span class="toggle" aria-hidden="true" bind:this={ring}>
-	<!-- add.svg / minus.svg's strokes, drawn here so the upright can turn. -->
+	<!-- add.svg / minus.svg inlined so the upright can turn. -->
 	<svg viewBox="0 0 16 16" fill="none">
 		<path d="M15 8H1" stroke="currentColor" />
 		<path d="M8 15V1" stroke="currentColor" bind:this={upright} />
@@ -50,8 +48,7 @@
 </span>
 
 <style>
-	/* 36px, 4px corners, the hairline closed; the dark one fades in over it on
-	   hover and while open (--ring, 0 to 1, tweened by GSAP). */
+	/* The dark ring fades in via --ring (0 to 1), tweened by GSAP. */
 	.toggle {
 		position: relative;
 		display: grid;

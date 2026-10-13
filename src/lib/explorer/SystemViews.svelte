@@ -1,29 +1,16 @@
 <!--
 	@component
-	R1 two ways, switched at the bottom left: the section (the energy
-	diagram) and an isometric line drawing of the assembled CAD
-	(IsoDrawing). A title over a line sits centred above the drawing,
-	which is centred under it (beside it at the left, over the switch,
-	when the switch is on).
+	R1's section (the energy diagram) under a centred title and line. With
+	SWITCHABLE on, a switch at the bottom left turns it into an isometric line
+	drawing of the assembled CAD (IsoDrawing), and the text moves beside it.
 
-	Switching turns one into the other: the 3D camera swings from the front
-	elevation the section is drawn in round to the isometric while the two
-	drawings crossfade. The diagram's markers fade out and back in on their
-	parts in 3D (IsoDrawing.ANCHORS, some approximate), each as the model's
-	build-up reaches it; one whose part is turned out of sight hides until
-	it's back in view.
-
-	Back to the section, the isometric turns slightly home and fades as
-	the section draws itself on again (EnergyDiagram's reveal), and the
-	markers fade back in on it.
-
-	In the isometric, dragging turns the model (and up and down, tilts it);
-	it eases after the pointer, and starts from the plain isometric on each
-	visit.
-	On touch only sideways drags turn it, so the page still scrolls.
-
-	The CAD loads as the section nears the screen, so the switch is ready
-	when it's reached. With reduced motion the switch is a cut.
+	Switching swings the 3D camera from the section's front elevation round to
+	the isometric while the drawings crossfade; the markers fade out and back
+	in on their parts (IsoDrawing.ANCHORS), hidden while their part is out of
+	sight. Switching back, the section draws itself on again. In the isometric,
+	dragging turns and tilts the model (sideways only on touch, so the page
+	still scrolls). The CAD loads as the section nears the screen. With reduced
+	motion the switch is a cut.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -52,7 +39,7 @@
 		{ id: 'isometric', name: 'Isometric' }
 	];
 	let view: View = $state('section');
-	/** Off for now: the section only, the switch hidden and the CAD not loaded. */
+	/** TODO(post-launch): turning this on shows the section/isometric switch and loads the CAD. */
 	const SWITCHABLE = false;
 
 	let root: HTMLElement;
@@ -68,23 +55,16 @@
 	const REDRAW_AT = 0.35;
 	let redraw: gsap.core.Tween | null = null;
 
-	/**
-	 * Trial: the isometric builds itself up as it arrives, a section cut
-	 * sweeping from nothing (0) to the whole model (1), its cut faces
-	 * hatched as it goes and each label appearing as the cut reaches its
-	 * part. Starts with the camera's swing (SWITCH) and carries on a while
-	 * after it settles.
-	 *
-	 * Across X. At first the camera looks straight down X (the elevation),
-	 * where every slice would show the model's whole outline and it would
-	 * seem to be there from the start; so the sweep waits until the camera
-	 * is a third of the way round (0.4s into its 1.2s swing) and the cut is
-	 * turning oblique.
-	 */
 	/** The switch itself, seconds: the camera's swing and the crossfade. */
 	const SWITCH = 1.2;
 	/** How much of the swing the isometric turns back through as it fades out to the section. */
 	const EXIT_TURN = 0.2;
+	/**
+	 * The isometric builds itself up as it arrives: a section cut sweeps across X
+	 * from nothing (0) to the whole model (1), hatching cut faces and showing each
+	 * label as it reaches its part. It waits a third of the way into the swing:
+	 * looking straight down X, every slice would show the whole outline.
+	 */
 	const SWEEP = {
 		axis: 'x' as const,
 		fromMax: false,
@@ -175,13 +155,12 @@
 		layout.top = isoHost.offsetTop;
 	}
 
-	/**
-	 * The isometric only works while it can be seen: the section on screen,
-	 * and the isometric showing or on its way in or out. Otherwise it does
-	 * nothing at all, not even its frame loop.
-	 */
 	// Assumed until the observer first reports: better a little work than a blank stage.
 	let onScreen = true;
+	/**
+	 * The isometric runs only while the section is on screen and the isometric
+	 * showing or on its way in or out; otherwise not even its frame loop runs.
+	 */
 	function syncActive() {
 		if (iso) iso.active = onScreen && (view === 'isometric' || progress.t > 0);
 	}
@@ -423,7 +402,7 @@
 	.intro {
 		display: grid;
 		gap: var(--space-24);
-		/* 280px at 1440: the paragraph's short measure. */
+		/* The paragraph's short measure. */
 		max-width: calc(var(--size-font) * 17.5);
 	}
 	.intro h3 {
@@ -481,18 +460,11 @@
 	}
 
 	/*
-	 * Desktop: the paragraph under the drawing, at the bottom left. The
-	 * section keeps its own proportions, held to the screen's height on
-	 * wide, short ones.
-	 *
-	 * Section only (the switch off): the panel hugs the drawing. The frame's
-	 * empty margin above and below is trimmed (235 and 234 of its 1284), so
-	 * the drawing's top lines up with the text's, and its right edge
-	 * (199 of 1930 in) sits on the grid's.
-	 *
-	 * With the switch (`full`): one screen tall, the switch at its foot and
-	 * the section centred; the isometric takes the panel's whole height, so
-	 * the model has room as it's turned.
+	 * Desktop: the section keeps its proportions, held to the screen's height
+	 * on wide, short ones. Section only, the panel hugs the drawing: the
+	 * frame's empty margin (235 and 234 of its 1284 high) is trimmed, and its
+	 * right edge (199 of 1930 in) sits on the grid's. With the switch (`full`):
+	 * one screen tall, so the isometric has room as it's turned.
 	 */
 	@media screen and (min-width: 992px) {
 		.views {
@@ -507,8 +479,8 @@
 		   stage colour and focus veils stay inside the band. */
 		.views:not(.full) {
 			overflow: clip;
-			/* Room above the drawing, 80px at 1440, so the section stands
-			   taller than the drawing it hugs; the text below ends it. */
+			/* Room above the drawing, so the section stands taller than the
+			   drawing it hugs; the text below ends it. */
 			padding-top: var(--space-80);
 		}
 		.views.full {
@@ -536,16 +508,15 @@
 			align-items: center;
 			text-align: center;
 		}
-		/* 360px at 1440: the line under the title in two, after "reliability,". */
+		/* Breaks the line under the title in two, after "reliability,". */
 		.views:not(.full) .intro {
 			max-width: calc(var(--size-font) * 22.5);
 		}
 		.views:not(.full) .turn :global(figure.diagram) {
 			/* 2% up on the frame's fit. */
 			--width: calc(min(100%, 92svh * 1930 / 1284) * 1.02);
-			/* Centred (the drawing is centred in its frame: x 251–1783 of
-			   52–1982), then 16px right at 1440: the heavy reactor on the
-			   left makes the true middle read left of centre. */
+			/* Centred, then nudged right: the heavy reactor on the left makes
+			   the true middle read left of centre. */
 			margin-left: calc((100% - var(--width)) / 2 + var(--space-16));
 		}
 		.turn {

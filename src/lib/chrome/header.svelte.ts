@@ -1,59 +1,43 @@
 /**
- * The header's state, shared by everything in it: the wordmark, the bar
- * behind it and the menu button.
- *
- * - `hidden`: the visitor is scrolling down, away from the top. The
- *   wordmark slides out of the way; the menu button stays.
- * - `backed`: the visitor is scrolling back up, still down the page. The
- *   bar slides in behind the wordmark and button.
- * - `barDark`: the colour the bar takes over what's under it: dark over
- *   anything marked `data-tone="dark"`, unless it's also marked
- *   `data-header="light"` (Missions' slideshow), which gets the white bar.
- * - `dark`: the menu button's tone, the same as the bar's: so over a
- *   `data-header="light"` section it stays light, bar or no bar.
- * - `follow`: from the very top of the page, the wordmark isn't fixed yet: it
- *   scrolls up with the page, this many px, until it's out of view. Null
- *   once it has left, or come back on a scroll up.
- *
- * Read from the native scroll (Lenis drives it, so its smoothing is
- * included). A change of direction only counts once it has run a few
- * pixels, so a wobble at the end of a scroll doesn't flicker the header.
+ * Header state shared by the wordmark, the bar and the menu button. A
+ * module-level `$state` singleton: safe because pages are prerendered and
+ * state lives per tab. Driven by the native scroll (which Lenis moves).
  */
 import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
- * How far a change of direction must run before it counts, in px: further
- * going down, so a wobble doesn't hide the wordmark; hardly at all going
- * up, so it answers the moment the visitor turns back.
+ * Px a change of direction must run before it counts: more going down so a
+ * wobble at the end of a scroll doesn't hide the wordmark, little going up.
  */
 const DEAD_ZONE = 8;
 const DEAD_ZONE_UP = 3;
 
-/**
- * The wordmark and the bar move together. Coming in: at full speed from
- * the first frame, then a long glide into place. Going: a quick pull away.
- */
+/** Shared by the wordmark and the bar so they move together. */
 export const SHOW = { duration: 0.6, ease: 'expo.out' };
 export const HIDE = { duration: 0.3, ease: 'power2.in' };
 
 class Header {
+	/** Scrolling down: the wordmark slides away; the menu button stays. */
 	hidden = $state(false);
+	/** Scrolling back up mid-page: the bar slides in behind the wordmark and button. */
 	backed = $state(false);
+	/** The menu button's tone; matches `barDark`. */
 	dark = $state(false);
+	/** Over `data-tone="dark"`, unless also `data-header="light"` (Missions' slideshow). */
 	barDark = $state(false);
+	/** Near the top the wordmark scrolls with the page by this many px; null once it has left. */
 	follow = $state<number | null>(0);
 }
 
 export const header = new Header();
 
-/** The menu button, in units of the root font size: one page margin from the right, 34px across. */
+// Root-font units; keep in step with app.css --header-* (and --page-margin).
 const MARGIN = 1.25;
 const BUTTON = 2.125;
 
-/** The header bar's height, in units: 68px at 1440. Keep in step with HeaderBar's CSS. */
+/** Keep in step with app.css --header-height. */
 const BAR = 4.25;
 
-/** The header bar's height, in px. */
 export function headerHeight() {
 	const unit = parseFloat(getComputedStyle(document.body).fontSize);
 	return unit * BAR;
@@ -63,7 +47,6 @@ export function headerHeight() {
 function under(selector: string) {
 	const unit = parseFloat(getComputedStyle(document.body).fontSize);
 	const x = window.innerWidth - unit * (MARGIN + BUTTON / 2);
-	// Centred in the header band, as the button is.
 	const y = unit * (BAR / 2);
 	return [...document.querySelectorAll(selector)].some((el) => {
 		const r = el.getBoundingClientRect();
@@ -72,7 +55,7 @@ function under(selector: string) {
 }
 
 let lastY = 0;
-/** The page is being moved for the visitor (a slideshow settling): the header holds still. */
+/** The page is scrolling itself (a slideshow settling), so the header holds still. */
 let frozen = false;
 
 /** Holds the header as it is while the page scrolls itself, and lets it go again. */
@@ -81,7 +64,7 @@ export function freezeHeader(on: boolean) {
 	lastY = Math.max(0, window.scrollY);
 	run = 0;
 }
-/** How far the scroll has run in its current direction, signed. */
+/** Signed distance run in the current direction. */
 let run = 0;
 
 /**
@@ -141,7 +124,6 @@ function step(reset: boolean) {
 	}
 }
 
-/** The tone under the header, given whether the bar is showing. */
 function tone() {
 	header.barDark = under('[data-tone="dark"]') && !under('[data-header="light"]');
 	header.dark = header.barDark;
@@ -161,12 +143,10 @@ export function trackHeader() {
 }
 
 /**
- * Slides an element up off the top of the screen while `hide()` is true, and
- * back down when it isn't, without fading (with reduced motion it fades in
- * place instead). With `follow`, while it returns a number the element is
- * moved up that many px instead, keeping pace with the page. The first
- * state is set at once, without animating.
- * Use as an attachment: `{@attach slideWithHeader(() => header.hidden)}`.
+ * Attachment that slides an element off the top while `hide()` is true (fades
+ * with reduced motion). While `follow()` returns a number, the element is
+ * offset by that many px instead. The first state is set without animating.
+ * `{@attach slideWithHeader(() => header.hidden)}`
  */
 export function slideWithHeader(hide: () => boolean, follow?: () => number | null) {
 	let first = true;

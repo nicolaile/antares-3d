@@ -1,13 +1,10 @@
 /**
- * The typography system, read straight out of its stylesheet.
- *
- * typography.css is the source of truth; this parses it at build time so the
- * design system page can never drift from what the site actually renders.
- * Add, rename or resize a style there and the page follows.
+ * The typography system, parsed from typography.css (the source of truth) at
+ * build time so the design system page can't drift from what the site renders.
  */
 import source from '$lib/styles/typography.css?raw';
 
-/** Design widths of the Osmo breakpoints, where 1 unit = 16px. */
+/** Design widths per breakpoint, where 1 unit = 16px. */
 export const BREAKPOINTS = [
 	{ key: 'desktop', label: 'Desktop', width: 1440, query: null },
 	{ key: 'tablet', label: 'Tablet', width: 834, query: '991px' },

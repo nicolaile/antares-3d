@@ -1,12 +1,7 @@
 <!--
 	@component
-	A file to download, as a card the full width of the grid: its image on
-	the first three columns, then its title and size, and a download prompt
-	in the bottom-right corner. The whole card is the link. `tone="dark"`
-	sets it on the raised dark grey with an underlined "Download" (Updates'
-	press kit); light, the default, on the pale grey with a round download
-	icon (Missions' specs). The image runs full width above the copy on
-	phones.
+	A full-width card linking to a file: image, title, size and a download
+	prompt.
 -->
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
@@ -21,10 +16,11 @@
 		tone = 'light'
 	}: {
 		title: string;
-		/** The file's size, as shown: "38 MB". */
+		/** As shown: "38 MB". */
 		size: string;
 		image: { src: Source; alt: string };
 		href: string;
+		/** `dark`: an underlined "Download" (Updates' press kit); `light`: a round icon (Missions' specs). */
 		tone?: 'light' | 'dark';
 	} = $props();
 </script>
@@ -78,7 +74,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		/* 20px on every side: the gutter already sets the copy off the image. */
+		/* The gutter already sets the copy off the image. */
 		padding: var(--space-20) var(--space-20) var(--space-20) calc(var(--space-20) - var(--grid-gutter));
 	}
 	.title,
@@ -90,7 +86,6 @@
 		color: var(--muted);
 	}
 
-	/* Dark: an underlined word, brightening on hover. */
 	.label {
 		align-self: end;
 		color: var(--muted);
@@ -102,7 +97,6 @@
 		color: var(--ink);
 	}
 
-	/* Light: a 36px ring round the download arrow, darkening on hover. */
 	.icon {
 		align-self: end;
 		display: grid;

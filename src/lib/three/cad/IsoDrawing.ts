@@ -7,27 +7,14 @@ import { CadViewer, type SectionAxis } from './CadViewer';
 MeshoptDecoder.useWorkers(2);
 
 /**
- * The landing page's isometric view of R1: Mark-0 and the power conversion
- * system assembled (CadViewer.loadAssembly), drawn as lines on a 4° lens,
- * near enough orthographic to read as a drawing. `pose` sets the camera,
- * from the front elevation the section diagram is drawn in (0) round to
- * the isometric (1), so the switch between the two views can turn one into
- * the other; `rotate` adds the visitor's own turn and tilt on top.
- *
- * Every diagram marker is pinned to the model here (ANCHORS); four of
- * them only approximately, as their parts aren't in the CAD.
- */
-
-/**
  * Where each diagram marker sits on the assembled model, by its label: the
- * assembled frame, Y-up metres, about 1 cm proud of a surface the
- * isometric camera sees (picked by raycasting from the default view).
+ * assembled frame, Y-up metres, about 1 cm proud of a surface the isometric
+ * camera sees from the default view.
  *
- * Only three are real. The CAD's skid holds a single shell-and-tube vessel,
- * its pipework, valves, frame and an end panel; the turbine, compressor
- * and alternator (one shaft unit in the product video) and the waste heat
- * rejection aren't modelled. Those four stand where they plausibly would,
- * following the section's reading order, and need confirming with Antares.
+ * Only three are real: the CAD's skid has no turbine, compressor, alternator
+ * or waste heat rejection, so those four stand where they plausibly would,
+ * in the section's reading order.
+ * TODO(launch): confirm the four approximate anchors with Antares.
  */
 export const ANCHORS: Record<string, [number, number, number]> = {
 	// The exchanger's shell under its dome (cadLabels point 5, lifted onto the reactor).
@@ -46,7 +33,7 @@ export const ANCHORS: Record<string, [number, number, number]> = {
 	'Waste heat rejection': [3.8, 1.499, -3.925]
 };
 
-/** The baked model (scripts/lab/iso-model.mjs). */
+/** Built by the private model pipeline (scripts/lab/iso-model.mjs). */
 const MODEL = '/models/cad/web/iso.glb';
 
 /** The isometric: turned 45° from the elevation, looking down 30°. */
@@ -74,6 +61,13 @@ const FILL = 1.4;
 /** How far left of centre the model sits, as a share of the view's half-width. */
 const SHIFT = 0.06;
 
+/**
+ * The landing page's isometric view of R1: Mark-0 and the power conversion
+ * system assembled, drawn as lines on a 4° lens, near enough orthographic to
+ * read as a drawing. `pose` sets the camera from the front elevation the
+ * section diagram is drawn in (0) round to the isometric (1), so the two
+ * views can turn into each other; `rotate` adds the visitor's turn and tilt.
+ */
 export class IsoDrawing extends CadViewer {
 	private posed = 0;
 	/** The model's own bounding sphere, tight round its vertices (`measure`). */
@@ -96,9 +90,9 @@ export class IsoDrawing extends CadViewer {
 	}
 
 	/**
-	 * Loads the model (baked by scripts/lab/iso-model.mjs: the assembly as one
-	 * mesh, positions and normals only) and shows it as a drawing at the
-	 * current pose, its programs compiled first so the first frame is quick.
+	 * Loads the model (the assembly as one mesh, positions and normals only)
+	 * and shows it as a drawing at the current pose, its programs compiled
+	 * first so the first frame is quick.
 	 */
 	async open(onProgress?: (f: number) => void) {
 		await this.load(MODEL, onProgress);

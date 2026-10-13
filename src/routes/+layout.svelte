@@ -20,10 +20,9 @@
 	/**
 	 * A new page starts at the top before it mounts, not after: SvelteKit
 	 * only resets the scroll once the page is in, and until then the old
-	 * page's position is clamped into the new, still-short one. Missions'
-	 * pinned slideshow took that for a visitor arriving at its pin and held
-	 * the page there. Back and forward, and links to a #section, keep
-	 * SvelteKit's own restore.
+	 * page's position is clamped into the new, still-short one, which a
+	 * pinned section (Missions' slideshow) reads as a visitor arriving at its
+	 * pin. Back and forward, and links to a #section, keep SvelteKit's restore.
 	 */
 	onNavigate(({ type, to }) => {
 		if (type === 'popstate' || to?.url.hash) return;

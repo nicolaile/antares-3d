@@ -2,20 +2,18 @@
 	@component
 	The R1 power-conversion diagram with energy flowing through its pipes.
 
-	Layers, bottom to top: the WebGL flow map (`FlowMapEnergy`) glowing along
-	the pipe centrelines; the line art in three tiers of weight and tone, so
-	the glow sits inside the pipes rather than over them; the labelled
-	markers; the pause button.
+	Layers, bottom to top: the WebGL flow map (`FlowMapEnergy`) along the pipe
+	centrelines; the line art in tiers of weight and tone, so the glow sits
+	inside the pipes; the labelled markers; the pause button.
 
-	The first time it scrolls into view the lines draw themselves on, then
-	the detail, markers and flow follow. Off-screen it stops. With reduced
-	motion it is a still frame; without WebGL it is the drawing and markers.
+	The first time it scrolls into view the lines draw on, then the detail,
+	markers and flow follow. Off-screen it stops. With reduced motion it is a
+	still frame; without WebGL, the drawing and markers.
 
 	Another view can stand in for the drawing (SystemViews): `drawing` fades
-	the line art and the flow, `layer` goes between them and the markers,
-	and `markersEl` hands over the markers to be moved. `conceal` and
-	`reveal` replay the draw-on when the drawing comes back, leaving the
-	markers where they are.
+	the line art and flow, `layer` goes between them and the markers, and
+	`markersEl` hands over the markers. `conceal` and `reveal` replay the
+	draw-on, leaving the markers where they are.
 -->
 <script lang="ts">
 	import { dev } from '$app/environment';
@@ -126,11 +124,7 @@
 	}
 	/** The marker being hovered or focused. */
 	let active = $state<number | null>(null);
-	/**
-	 * Hovering a marker spotlights its part: the rest of the drawing and the
-	 * other markers dim. Off for now — the marker's own label still opens.
-	 * Flip to true to bring the spotlight back.
-	 */
+	/** Turning this on makes hovering a marker spotlight its part, dimming the rest of the drawing and the other markers. */
 	const SPOTLIGHT = false;
 	const spot = $derived(SPOTLIGHT ? active : null);
 	const focusPipes = MARKERS.map((m) => m.focus.pipes.map((k) => centreline(PIPES[k])));
@@ -144,11 +138,9 @@
 	/** Diagram units per CSS pixel, so line weights hold on screen at any size. */
 	let unit = $state(FRAME.width / 800);
 	/**
-	 * Line weights hold in screen pixels, so a small diagram would carry the
-	 * same ink in far less room and read heavy, a huge one faint. This leans
-	 * them gently with the diagram's width — the square root of its size
-	 * against the desktop layout, held to 0.8–1.2 — so the drawing keeps the
-	 * same density everywhere while the lines stay hairlines.
+	 * Line weights hold in screen pixels, so a small diagram would read heavy and
+	 * a huge one faint. This leans them with the square root of the width against
+	 * the desktop layout, held to 0.8–1.2, keeping the density even.
 	 */
 	let fitWeight = $state(1);
 	const DESKTOP_WIDTH = 880;

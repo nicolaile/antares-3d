@@ -6,13 +6,11 @@
 //
 //   node scripts/perf-compare.mjs baseline shadow-throttle
 //
-// A frame "matches" when no channel moved more than 2/255 anywhere: the
-// bar for a change meant to leave the image as it was. Two runs of the same
-// code: 01 matches, the others are off on 0.02% of pixels at most (a few
-// coincident CAD faces), 05 on ~0.25% (its energy trails move with time).
-// Times: ±10% a feature from run to run; the total is steadier. "page MB"
-// is every viewer's render targets and geometry together (runs from before
-// it was recorded show –).
+// A frame "matches" when no channel moved more than 2/255 anywhere: the bar
+// for a change meant to leave the image as it was. Noise between two runs of
+// the same code: up to 0.02% of pixels (coincident CAD faces), ~0.25% on 05
+// (its energy trails move with time), ±10% on a feature's time. "page MB" is
+// every viewer's render targets and geometry together (– where a run lacks it).
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

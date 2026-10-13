@@ -1,7 +1,6 @@
 <!--
 	@component
-	The title block that opens a light page: the page's name in H3, then a
-	line about it in muted grey, on the first four columns (six on tablet).
+	The title block that opens a light page: its name, then a line about it.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';

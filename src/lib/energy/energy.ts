@@ -29,22 +29,14 @@ export interface EnergyParams {
 	sparks: number;
 	/** How far each pipe's temperature cools its colour towards grey, 0..1. */
 	temperature: number;
-	/**
-	 * How far temperature calms the flow as well as cooling its colour, 0..1:
-	 * hot gas keeps its turbulence, sparks and bloom; cooled gas runs as a
-	 * calm, crisp line with a tight halo and no sparks.
-	 */
+	/** How far temperature also calms the flow, 0..1: cooled gas runs crisp, tight-haloed and sparkless. */
 	agitation: number;
 	/**
-	 * How warm the hot side's white-hot head is, 0..1, from cool white to
-	 * HOT_HEAD (dark stage). Cooled gas stays cool white, so white reads as
-	 * cooled, not as the hottest point.
+	 * How warm the hot side's head is on the dark stage, 0..1, from cool white
+	 * to HOT_HEAD, so white reads as cooled gas rather than the hottest point.
 	 */
 	headWarmth: number;
-	/**
-	 * How hard temperatures are pushed to hot or cold, 0..1: at 1, gas reads
-	 * as one or the other, with in-between shades only where it changes.
-	 */
+	/** How hard temperatures are pushed to hot or cold, 0..1; at 1, in-between shades show only where gas changes. */
 	contrast: number;
 	/** Cooled gas's brightness against hot gas's, 0..1. */
 	coolLevel: number;
@@ -70,24 +62,16 @@ export const DEFAULT_PARAMS: EnergyParams = {
 	coolLevel: 0.7
 };
 
-/**
- * What the energy along the CAD's pipes adds to the diagram's look
- * (EnergyTrails): it's drawn in 3D, over the model, with a bloom of its
- * own. Spacing is in the diagram's units (a pipe is 27 across).
- */
+/** How the energy along the CAD's pipes (EnergyTrails) looks: drawn in 3D over the model, with its own bloom. */
 export interface TrailLook {
 	/** The trails' own brightness, over the frame. */
 	brightness: number;
-	/** The bloom's strength. */
 	bloom: number;
 	/** How far the bloom spreads: how many halvings it blurs down. */
 	reach: number;
 	/** Head to head along a pipe. */
 	spacing: number;
-	/**
-	 * The colours from the tail to the head, as #rrggbb: the dark ramp's,
-	 * the head the hot side's warm white (`HOT_HEAD`).
-	 */
+	/** Trail colours, tail to head, as #rrggbb. */
 	tail: string;
 	body: string;
 	head: string;
@@ -123,7 +107,7 @@ export const DEFAULT_TRAIL_PARAMS: EnergyParams = {
 	sparks: 0.04
 };
 
-/** The hot side's head, warm white (#FFD4B0), on the dark stage: see `headWarmth`. */
+/** The hot side's warm-white head on the dark stage; see `headWarmth`. */
 export const HOT_HEAD: [number, number, number] = [255, 212, 176];
 
 /** Multiplier on every line tier's weight. */
@@ -163,12 +147,10 @@ export type Theme = 'light' | 'dark';
 type Stop = { x: number; rgb: [number, number, number]; a: number };
 
 /**
- * Colour from the tail (0) to the head (1), fading out towards the tail. On
- * the light stage the heat stays orange; on dark it runs from a faint pink
- * wisp (#FF63CB) into orange (#FF751F) early, up to white-hot (#F9F9F9),
- * which only reads because the glow adds light there rather than covering.
- * Each route's temperature then cools it towards COOL, so hot pipes glow
- * orange and cold ones read grey-white.
+ * Colour from the tail (0) to the head (1), fading out towards the tail:
+ * orange on the light stage; on dark a faint pink wisp into orange, up to a
+ * white-hot head that reads only because the glow adds light rather than
+ * covering. Each route's temperature then cools it towards COOL.
  */
 export const RAMPS: Record<Theme, Stop[]> = {
 	light: [
@@ -177,8 +159,7 @@ export const RAMPS: Record<Theme, Stop[]> = {
 		{ x: 0.7, rgb: [255, 117, 31], a: 0.9 },
 		{ x: 1, rgb: [255, 132, 78], a: 1 }
 	],
-	// As the CAD's trails run it (DEFAULT_TRAIL_LOOK): the pink only a faint
-	// wisp at the very tail, orange from under a third of the way along.
+	// Matches DEFAULT_TRAIL_LOOK's colours.
 	dark: [
 		{ x: 0, rgb: [255, 99, 203], a: 0 },
 		{ x: 0.15, rgb: [255, 99, 203], a: 0.18 },
@@ -188,10 +169,9 @@ export const RAMPS: Record<Theme, Stop[]> = {
 };
 
 /**
- * What a pipe's colour cools towards: gas that has given its heat up. On
- * the light stage a warm grey, so it still reads as the same material; on
- * dark a crisp near-white, so the cooled half of the loop reads as the heat
- * drained out, not as the energy fading.
+ * What a pipe's colour cools towards once the gas has given its heat up: a
+ * warm grey on light, so it reads as the same material; near-white on dark,
+ * so the cooled half reads as heat drained out, not the energy fading.
  */
 export const COOL: Record<Theme, [number, number, number]> = {
 	light: [168, 160, 156],

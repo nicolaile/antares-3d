@@ -3,17 +3,10 @@
 	A person's panel, and the page it slides over. Wrap the page's content
 	in it; `show(person)` opens the panel.
 
-	The panel waits just past the page's right edge and slides in over it
-	by its own width; the page stays where it is, dimmed beside it.
-
-	The panel covers columns 7–12 and the margin (728px at 1440), with the
-	page dimmed beside it; full width on phones. Name and role (H4)
-	at the top; portrait, a rule and their bio pinned to the foot. While
-	it's open the page, and everything outside it (the menu button, the
-	wordmark), is inert and doesn't scroll, and the wrapper rises above the
-	menu button. Escape, the dimmed page and (on phones, where
-	there's no dimmed page) the close button close it, handing focus back
-	to the card that opened it.
+	The panel slides in from the right over the dimmed page (full width on
+	phones). While open, everything outside it is inert and doesn't scroll.
+	Escape, the dimmed page or (on phones) the close button close it, handing
+	focus back to the card that opened it.
 -->
 <script lang="ts">
 	import { tick, type Snippet } from 'svelte';
@@ -27,40 +20,37 @@
 
 	let person = $state<Person | null>(null);
 	let open = $state(false);
-	/** Where the panel sits: the scroll position when it opened. */
+	/** The scroll position when it opened, where the panel sits. */
 	let top = $state(0);
 	let stage: HTMLElement;
 	let panel: HTMLElement;
 	let dim: HTMLElement;
 	let opener: HTMLElement | null = null;
 	let tl: gsap.core.Timeline | null = null;
-	/** Undoes what opening did to the page: its scroll lock and inert. */
+	/** Undoes `holdPage`. */
 	let release: (() => void) | null = null;
 	const releaseAll = () => {
 		release?.();
 		release = null;
 	};
 
-	/** How far the page dims behind the panel. */
+	/** Overlay opacity when open. */
 	const DIM = 0.7;
 
-	/** Both ways: 650ms on the panel ease (see scroll.ts). */
+	/** The `panel` ease is defined in scroll.ts. */
 	const OPEN = { duration: 0.65, ease: 'panel' };
 	const CLOSE = OPEN;
 
 	/*
-	 * "Click to close", set against the dimmed page's edge where the panel
-	 * begins. It rides up and down that edge with the pointer, on quickTo,
-	 * and its letters rise through a mask (SplitText): up into place as it
-	 * appears, and on up and out as it goes. Mouse and trackpad only: on touch there's
-	 * no pointer to follow.
+	 * A cursor label against the panel's left edge, following the pointer's
+	 * height, its letters rising through a mask. Fine pointers only.
 	 */
 	const LABEL = 'Click to close';
 	let label: HTMLElement;
 	let labelText: HTMLElement;
 	let chars: Element[] = [];
 	let fade: gsap.core.Tween | null = null;
-	/** Open and finished sliding: the only time the label may show. */
+	/** Open and finished sliding; the label shows only then. */
 	let settled = false;
 	let fine = false;
 	let labelShown = false;
@@ -86,10 +76,8 @@
 				gsap.set(label, { autoAlpha: 0 });
 				return;
 			}
-			// The letters carry on up and out of the mask, then it hides.
 			fade = gsap.to(chars, {
 				yPercent: -100,
-				// Out-eased so it moves the moment the pointer leaves.
 				duration: 0.3,
 				ease: 'power3.out',
 				stagger: 0.008,
@@ -98,12 +86,11 @@
 			});
 			return;
 		}
-		// Start where the pointer is, so it doesn't glide in from where it was last.
+		// Start at the pointer, not gliding over from where it last was.
 		gsap.set(label, { x: panel.getBoundingClientRect().left });
 		yTo?.(pointer.y, pointer.y);
-		// Stop an exit in flight, so it can't hide the label once it's back.
-		// Not `overwrite` or killTweensOf on the label: those would take
-		// quickTo's y tween with it.
+		// Kill an exit in flight so it can't hide the label once it's back. Not
+		// `overwrite` or killTweensOf on the label: those would kill quickTo's tween.
 		fade?.kill();
 		gsap.set(label, { autoAlpha: 1 });
 		if (prefersReducedMotion()) return;
@@ -122,7 +109,6 @@
 	function onpointermove(e: PointerEvent) {
 		pointer = { x: e.clientX, y: e.clientY };
 		if (!fine || !settled) return;
-		// The panel's left edge, where the dimmed page ends.
 		gsap.set(label, { x: panel.getBoundingClientRect().left });
 		yTo?.(e.clientY);
 		setLabel(settled && e.target === dim);
@@ -153,8 +139,7 @@
 			return;
 		}
 		tl = gsap
-			// Once it lands, and not before, the label shows if the pointer is
-			// on the dimmed page.
+			// The label may show only once it lands.
 			.timeline({
 				defaults: OPEN,
 				onComplete: () => {
@@ -190,7 +175,7 @@
 		if (open && e.key === 'Escape') hide();
 	}
 
-	// Leaving the page with the panel open: let the next page scroll again.
+	// Navigating away while open: release so the next page scrolls.
 	$effect(() => () => {
 		tl?.kill();
 		releaseAll();
@@ -227,8 +212,7 @@
 
 			<div class="body">
 				<div class="portrait">
-					<!-- Eager, and the card's sizes, so it reuses the image the card
-					     already loaded and is there the moment the panel opens. -->
+					<!-- Eager, with the card's sizes, so it reuses the card's loaded image. -->
 					<Picture
 						{...person.image}
 						ratio="996 / 648"
@@ -245,16 +229,15 @@
 		{/if}
 	</div>
 
-	<!-- Fixed to the screen, so outside the sliding panel. -->
+	<!-- Fixed, so it lives outside the transformed panel. -->
 	<div class="cursor-label" bind:this={label} aria-hidden="true">
 		<span class="type-caption" bind:this={labelText}>{LABEL}</span>
 	</div>
 </div>
 
 <style>
-	/* Clips the panel waiting past the right edge, so it never adds a
-	   sideways scroll. `clip`, not `hidden`: no scroll container. Open, it
-	   rises above the fixed menu button, like a modal. */
+	/* Clips the waiting panel so it never adds a sideways scroll (`clip`, not
+	   `hidden`: no scroll container). Open, it rises above the menu button. */
 	.stage {
 		position: relative;
 		overflow-x: clip;
@@ -263,8 +246,7 @@
 		z-index: 60;
 	}
 
-	/* Both a screen tall, at the scroll position the panel opened at; the
-	   page doesn't scroll while it's open. */
+	/* Placed at the scroll position it opened at; the page is scroll-locked. */
 	.dim {
 		position: absolute;
 		left: 0;
@@ -278,9 +260,8 @@
 		pointer-events: auto;
 	}
 
-	/* Waits just past the page's right edge. Columns 7–12 and the margin:
-	   half the width plus half a gutter, 20px (the page margin) inside on
-	   every side. */
+	/* Waits past the right edge; half the width plus half a gutter covers
+	   columns 7–12 and the margin. */
 	.panel {
 		position: absolute;
 		left: 100%;
@@ -295,7 +276,7 @@
 		visibility: hidden;
 		background: var(--white);
 		color: var(--black);
-		/* Its own GPU layer, so the slide never waits on it being drawn. */
+		/* Its own layer, so the slide never waits on it being drawn. */
 		will-change: transform;
 	}
 	.open .panel {
@@ -305,8 +286,7 @@
 		outline: none;
 	}
 
-	/* GSAP pins its right side to the panel's edge and centres it on the
-	   pointer's height; the text ends a page margin short of the edge. */
+	/* GSAP pins its right side to the panel's edge at the pointer's height. */
 	.cursor-label {
 		position: fixed;
 		top: 0;
@@ -332,8 +312,7 @@
 		display: block;
 		color: var(--grey-700);
 	}
-	/* Phones only: there the panel covers the page, so there's nothing to
-	   tap outside it. */
+	/* Phones only, where the panel covers the page and there's nothing to tap outside. */
 	.close {
 		display: none;
 		padding: 0;
@@ -347,7 +326,7 @@
 		outline-offset: 2px;
 	}
 
-	/* Pinned to the foot of the panel, on its six columns. */
+	/* Pinned to the panel's foot. */
 	.body {
 		display: grid;
 		grid-template-columns: repeat(6, minmax(0, 1fr));

@@ -1,9 +1,8 @@
 <!--
 	@component
-	The label laid over a video's still: "Play" and the running time, on a
-	translucent pill. Place it in the corner of whatever holds the still
-	(position it from the parent). Without `onclick` it's only the label, the
-	player to come.
+	"Play" and the running time on a translucent pill, laid over a video's
+	still. Position it from the parent.
+	TODO(launch): no video player yet; without `onclick` it is label-only.
 -->
 <script lang="ts">
 	let {

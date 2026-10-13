@@ -1,14 +1,8 @@
 <!--
 	@component
-	The opening screen: the wordmark and a short intro above a full-bleed
-	image.
-
-	On scroll the image's mask rises with the page while the photo inside
-	moves slower, a parallax. The wordmark rides up with it, shrinking to
-	20px tall, until it reaches the top-left corner — level with the menu
-	button — and stays there for the rest of the page, sliding out of the way
-	as the visitor scrolls down and back as they scroll up. (The latest
-	updates live in the menu.)
+	Home's opening screen: the wordmark and a short intro above a full-bleed
+	image or video with parallax. On scroll the wordmark rides up and shrinks
+	into the top-left corner, then pins there and behaves like BrandMark.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -31,37 +25,30 @@
 		title: string;
 		text: string;
 		image: { src: PictureSource; alt: string };
-		/**
-		 * Plays in the image's place, muted and on a loop, the image its
-		 * poster until it's ready (LoopVideo). Decorative: the intro says
-		 * what the page is.
-		 */
+		/** Loops in the image's place, the image as poster. Decorative: the intro says what the page is. */
 		video?: string;
 	} = $props();
 
-	/** The film's pause, held by the button over the image. */
 	let paused = $state(false);
 
 	let brand: HTMLElement;
 	let mark: HTMLElement;
 	let mask: HTMLElement;
 	let photo: HTMLElement;
-	/** In the corner and pinned there: from then on it hides and returns with the header, as BrandMark does. */
+	/** Pinned in the corner; from then on it hides with the header, like BrandMark. */
 	let rested = $state(false);
 
 	onMount(() => {
 		initScroll();
 		const unit = () => parseFloat(getComputedStyle(document.body).fontSize);
-		/** The wordmark's height once it's in the corner, in units: --wordmark-rest (20px at 1440). */
+		/** Keep in step with app.css --wordmark-rest. */
 		const REST = 1.25;
-		// Where the wordmark comes to rest: centred on the 34px menu button,
-		// which is centred in the 68px header band (--header-height, 4.25 units).
+		// Centred in the header band; 4.25 is app.css --header-height, keep in step.
 		const restTop = () => unit() * (4.25 / 2 - REST / 2);
 
 		const ctx = gsap.context(() => {
-			// Rides the page up with the image, then holds in the corner. It
-			// pins when its bottom edge — the one anchored to the image — is
-			// REST below restTop, which is where the shrunk mark's top lands.
+			// Pins when its bottom edge (anchored to the image) is REST below
+			// restTop, where the shrunk mark's top lands.
 			const pin = ScrollTrigger.create({
 				trigger: brand,
 				start: () => `bottom ${restTop() + unit() * REST}px`,
@@ -70,9 +57,8 @@
 				pinSpacing: false,
 				onToggle: (self) => (rested = self.isActive)
 			});
-			// Shrinks the whole way up, from its hero size down to REST tall,
-			// landing at the moment it pins. Scaled from its bottom-left
-			// corner, so its gap to the image stays the same as it goes.
+			// Shrinks to REST tall, landing as it pins. Scaled from its
+			// bottom-left corner so its gap to the image holds.
 			gsap.to(mark, {
 				scale: () => (unit() * REST) / mark.offsetHeight,
 				ease: 'none',
@@ -84,8 +70,7 @@
 				}
 			});
 
-			// The photo drifts down inside its mask, 40% of the mask's height
-			// over the time the mask takes to leave the screen.
+			// Drift; keep 0.4 in step with .photo's inset.
 			if (!prefersReducedMotion()) {
 				gsap.fromTo(
 					photo,
@@ -114,7 +99,6 @@
 </script>
 
 <section class="hero">
-	<!-- The wordmark is the page's name on screen; this names it for headings. -->
 	<h1 class="visually-hidden">Antares</h1>
 	<div class="intro">
 		<Row align="end" gap={40}>
@@ -137,7 +121,6 @@
 		</Row>
 	</div>
 
-	<!-- Dark for the menu button, but the header bar over it stays white. -->
 	<div class="mask" data-tone="dark" data-header="light" bind:this={mask}>
 		<div class="photo" bind:this={photo}>
 			{#if video}
@@ -156,26 +139,21 @@
 </section>
 
 <style>
-	/* The intro, then an image a full screen tall, so it runs on past the
-	   first screen by the intro's height. */
 	.hero {
 		position: relative;
 	}
 
-	/* 308px tall at 1440, its content sitting on the bottom edge. */
 	.intro {
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
 		box-sizing: border-box;
 		height: calc(var(--size-font) * 19.25);
-		/* 24px between the wordmark (and blurb) and the image. */
 		padding: 0 var(--grid-margin) var(--space-24);
 	}
 
-	/* Above the page and footer once pinned, below the menu (z-index 50).
-	   White with a difference blend, so it reads black on the page and
-	   white over the image and the footer. */
+	/* Above the page once pinned, below the menu (z-index 50). A white
+	   difference blend keeps it legible on any background. */
 	.brand {
 		position: relative;
 		z-index: 40;
@@ -187,7 +165,6 @@
 	:global(.pin-spacer:has(> .brand)) {
 		mix-blend-mode: difference;
 	}
-	/* 72px tall at 1440 (20px once it has shrunk into the corner). */
 	.home {
 		display: block;
 		width: fit-content;
@@ -200,23 +177,21 @@
 		outline-offset: 4px;
 	}
 
-	/* The space the line height leaves under the text is trimmed off, and
-	   8px of padding set in its place: its last baseline 8px above the
-	   wordmark's bottom edge, 32px above the image. */
+	/* Trims the line height's space under the text so its last baseline
+	   sits a set distance above the wordmark's bottom edge. */
 	.blurb {
 		display: grid;
 		margin: 0;
 		padding-bottom: var(--space-8);
 		text-box: trim-end cap alphabetic; /* check-system: allow — trims the blurb's foot only */
 	}
-	/* 16px (body default), breaking where the copy does, 8px above the text. */
+	/* Breaks where the copy does. */
 	.title {
 		margin-bottom: var(--space-8);
 		color: var(--black);
 		white-space: pre-line;
 	}
-	/* Caption type without the caption's trim; a little narrower than its
-	   column, 296px at 1440. */
+	/* Caption type without the caption class's trim. */
 	.text {
 		max-width: calc(var(--size-font) * 18.5);
 		color: var(--grey-700);
@@ -225,9 +200,9 @@
 		letter-spacing: var(--type-caption-tracking); /* check-system: allow */
 	}
 
-	/* Full bleed. The photo is 40% taller than its mask and starts raised
-	   by that much, so it can drift down without opening a gap. Keep the
-	   inset in step with the drift in the script. */
+	/* The photo is 40% taller than its mask and starts raised by that much,
+	   so it can drift down without opening a gap. Keep in step with the
+	   script's drift. */
 	.mask {
 		position: relative;
 		height: 100svh;
@@ -254,13 +229,11 @@
 	}
 
 	@media screen and (max-width: 767px) {
-		/* The intro stacks, wordmark over the blurb, so it sizes to fit. */
 		.intro {
 			height: auto;
 			padding-top: var(--space-120);
 		}
-		/* The wordmark is about 5 times as wide as it is tall: 52px tall
-		   keeps it inside a phone's width (about 257px at 390). */
+		/* About 5:1, so this keeps it inside a phone's width. */
 		.home {
 			height: calc(var(--size-font) * 3.25);
 		}

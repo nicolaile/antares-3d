@@ -1,12 +1,8 @@
 <!--
 	@component
-	The site footer, in two equal halves: a statement and aside under a
-	hairline, then a rule, two link columns and the legal line pinned to the
-	bottom. Full-bleed and at least one screen tall. White by default;
-	`tone="dark"` sets it on the dark grey, for pages that are dark
-	throughout, and `tone="grey"` on the Progress page's mid grey. Content comes from `$lib/content/site`, so every page gets
-	the same footer with a single `<Footer {...footer} />`, the "Join
-	mission" pill (CtaButton, no arrow) under the aside included.
+	The site footer: a statement and aside, then the link columns and legal
+	line. Full-bleed, about a screen tall. Content comes from
+	`$lib/content/site`, so every page uses `<Footer {...footer} />`.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -27,13 +23,14 @@
 	}: {
 		statement: string[];
 		aside?: string;
-		/** Under the aside. */
+		/** A pill under the aside. */
 		link?: Link;
 		nav: Link[];
 		social: Link[];
 		legal: { owner: string; links: Link[] };
+		/** `dark` for pages dark throughout, `grey` for Progress' mid grey. */
 		tone?: 'white' | 'dark' | 'grey';
-		/** The hairline across its top. Off where a full-bleed image meets it (Progress). */
+		/** The hairline across its top; off where a full-bleed image meets it (Progress). */
 		rule?: boolean;
 	} = $props();
 
@@ -87,27 +84,22 @@
 </footer>
 
 <style>
-	/* Full-bleed: sits outside the page's padded container and carries its
-	   own margin, so its grid lines match the page's. The statement and the
-	   links each open their half, the same distance under their line. */
+	/* Full-bleed, carrying its own margin so its grid lines match the page's. */
 	.footer {
 		position: relative;
 		display: grid;
 		grid-template-rows: 1fr 1fr;
-		/* A screen tall, but never taller than 700px at 1440 — on a tall
-		   monitor the footer would otherwise be mostly empty. */
+		/* Capped so a tall monitor doesn't leave it mostly empty. */
 		min-height: min(100svh, calc(var(--size-font) * 43.75));
 		box-sizing: border-box;
 		padding: var(--space-24) var(--grid-margin);
-		/* The primary lines near-black, the rest the secondary grey. */
 		background: var(--white);
 		color: var(--grey-700);
-		/* The primary ink and the rules, swapped by `tone`. */
+		/* Swapped by `tone`. */
 		--ink: var(--black);
 		--rule: var(--grey-200);
 	}
-	/* A hairline across the top, inset to the grid like the rule above the
-	   links, marks where the footer starts. */
+	/* Inset to the grid, like the rule above the links. */
 	.ruled::before {
 		position: absolute;
 		top: 0;
@@ -150,7 +142,6 @@
 		border-top: 1px solid var(--rule);
 	}
 
-	/* One column each, side by side, so the two lists read as a pair. */
 	.links {
 		margin: 0;
 		padding: 0;
@@ -160,7 +151,6 @@
 	.links li + li {
 		margin-top: var(--space-4);
 	}
-	/* A little clear of the site links, so the two lists read apart. */
 	.social {
 		margin-left: var(--space-24);
 	}
@@ -177,7 +167,6 @@
 		outline: 1px solid var(--ink);
 		outline-offset: 2px;
 	}
-	/* 30px at 1440, top-aligned with the first link. */
 	.home {
 		display: block;
 		width: calc(var(--size-font) * 1.875);

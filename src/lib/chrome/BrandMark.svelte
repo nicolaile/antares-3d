@@ -1,12 +1,9 @@
 <!--
 	@component
-	The wordmark fixed in the top-left corner, linking home: 20px tall at
-	1440 (--wordmark-rest), centred on the menu button opposite, where the home page's hero
-	wordmark comes to rest. White with a difference blend, so it reads black
-	on light pages and white on dark ones and over images (and on the header
-	bar, white or dark). It slides up out of the way while the visitor
-	scrolls down, and back as they scroll up. The layout puts it on every
-	page but home, whose hero brings its own.
+	The fixed top-left wordmark linking home, at the size and spot where
+	home's hero wordmark comes to rest. A white difference blend keeps it
+	legible on any background. Hides on scroll down with the header. Used on
+	every page but home, whose hero brings its own.
 -->
 <script lang="ts">
 	import Wordmark from '$lib/components/Wordmark.svelte';
@@ -16,8 +13,7 @@
 <a class="mark" href="/" aria-label="Antares home" {@attach slideWithHeader(() => header.hidden, () => header.follow)}><Wordmark /></a>
 
 <style>
-	/* On the menu button's centre line, in the middle of the header band,
-	   as the hero's mark is. */
+	/* Centred on the menu button's line, matching the hero's resting mark. */
 	.mark {
 		--height: var(--wordmark-rest);
 		position: fixed;

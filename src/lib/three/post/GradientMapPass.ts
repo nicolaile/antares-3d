@@ -30,18 +30,13 @@ export const DEFAULT_STOPS: GradientStop[] = [
 ];
 
 /**
- * Luminance-to-colour gradient map, ported from the WGSL source in
- * `ref/Gradient-map-source` to GLSL for three's WebGL renderer.
+ * Luminance-to-colour gradient map, ported to GLSL from the WGSL in
+ * `ref/Gradient-map-source`.
  *
- * Runs AFTER OutputPass, i.e. in display space. The original converts its
- * linear input to sRGB before taking luma; ours is already sRGB by then, so
- * that conversion is dropped rather than applied twice.
- *
- * Alpha is the thing to get right. The canvas is transparent over the CSS
- * stage, and the composer's colour is premultiplied — so silhouette pixels
- * carry darkened RGB. Taking luma of that maps edges to the wrong end of the
- * ramp and fringes the model. The shader unmultiplies before luma and
- * re-premultiplies on the way out, exactly as the WGSL does.
+ * Runs after OutputPass, in display space, so the original's linear-to-sRGB
+ * step before luma is dropped. The composer's colour is premultiplied over a
+ * transparent canvas, so the shader unmultiplies before luma (or silhouette
+ * edges map to the wrong end of the ramp) and re-premultiplies on output.
  */
 export class GradientMapPass extends ShaderPass {
 	constructor(stops: GradientStop[] = DEFAULT_STOPS) {
@@ -187,10 +182,9 @@ export class GradientMapPass extends ShaderPass {
 		const positions = this.uniforms.uStopPos.value as number[];
 		for (let i = 0; i < MAX_STOPS; i++) {
 			const stop = sorted[Math.min(i, sorted.length - 1)];
-			// LinearSRGBColorSpace means "already in the working space" — i.e. do
-			// NOT convert. three's default would treat the hex as sRGB and
-			// linearise it, but this pass runs after OutputPass in display space
-			// and compares against sRGB luma, so the stops must stay as authored.
+			// LinearSRGBColorSpace means "don't convert": this pass runs in display
+			// space against sRGB luma, so the stops must stay as authored rather
+			// than be linearised as three would by default.
 			if (typeof stop.color === 'number') colors[i].setHex(stop.color, THREE.LinearSRGBColorSpace);
 			else colors[i].setStyle(stop.color, THREE.LinearSRGBColorSpace);
 			alphas[i] = stop.alpha ?? 1;

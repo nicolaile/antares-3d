@@ -1,8 +1,7 @@
 <!--
 	@component
-	"Recent articles": a label, then three update cards in a row (two on a
-	tablet, one on a phone), as on the updates page. Under an article, on a
-	light page; give it the stories to show (articles.ts `recentArticles`).
+	A labelled row of update cards, under an article. Pass the stories to show
+	(articles.ts `recentArticles`).
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -38,7 +37,6 @@
 {/if}
 
 <style>
-	/* The page's 160px to the footer under it. */
 	.recent {
 		padding: 0 var(--grid-margin) var(--space-160);
 	}

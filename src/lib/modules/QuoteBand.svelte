@@ -1,11 +1,8 @@
 <!--
 	@component
-	A quote set over a full-bleed photo, the speaker named under it. The
-	photo comes up the page inside the grid's margins and opens out to the
-	full width as it reaches the top, settling from a slight zoom. The quote
-	lights up letter by letter with the scroll (`highlightText`), the photo
-	drifting slower than the page behind it, and the speaker's name fades in once it's lit. With
-	reduced motion it's the still photo and the lit quote.
+	A quote over a full-bleed photo, the speaker named under it. On scroll the
+	photo opens out from the grid margins to full width, the quote lights up
+	letter by letter, and the name fades in once it's lit.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -21,10 +18,7 @@
 		image
 	}: { text: string; name: string; role?: string; image: { src: Source; alt: string } } = $props();
 
-	/**
-	 * Where the quote is fully lit: its middle at the middle of the
-	 * screen. The name fades in from there.
-	 */
+	/** Where the quote is fully lit; the name fades in from there. */
 	const QUOTE_END = 'center 50%';
 
 	let band: HTMLElement;
@@ -48,7 +42,6 @@
 		const ctx = gsap.context(() => {
 			const inset = () => `inset(0px ${px('var(--grid-margin)')}px round ${px('var(--card-radius)')}px)`;
 
-			// Opening out as it comes up to the top.
 			gsap
 				.timeline({
 					defaults: { ease: 'none' },
@@ -58,7 +51,6 @@
 				.fromTo(photo, { scale: 1.25 }, { scale: 1 }, 0);
 
 
-			// The name, once the quote is lit.
 			gsap.from(by, {
 				autoAlpha: 0,
 				y: 12,
@@ -67,9 +59,7 @@
 				scrollTrigger: { trigger: quote, start: QUOTE_END, toggleActions: 'play none none reverse' }
 			});
 
-			// The photo drifts down inside its frame as the band passes, 40% of
-			// the band's height, so it moves slower than the page: the landing
-			// hero's parallax.
+			// Drifts down in its frame so it moves slower than the page (the hero's parallax).
 			gsap.fromTo(
 				photo,
 				{ y: 0 },
@@ -99,7 +89,6 @@
 </section>
 
 <style>
-	/* A screen tall, the photo filling it. */
 	.band {
 		position: relative;
 		height: 100svh;
@@ -111,8 +100,7 @@
 		overflow: hidden;
 		background: var(--black);
 	}
-	/* Taller than the frame by the drift, reaching above it, so the photo
-	   can move down inside it without showing an edge. */
+	/* Taller than the frame by the drift, so moving down never shows an edge. */
 	.photo {
 		position: absolute;
 		inset: -40% 0 0;
@@ -122,7 +110,6 @@
 		height: 100%;
 	}
 
-	/* From the second column, four wide, well clear of the header. */
 	.quote {
 		position: relative;
 		display: grid;

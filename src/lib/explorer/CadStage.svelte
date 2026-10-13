@@ -1,12 +1,11 @@
 <!--
 	@component
 	One CAD model on the R1 stage (ModelViewer, through Scene). The model
-	turns the shortest way round to show the open feature's point on it
-	(unmarked: the shot frames it).
+	turns the shortest way round to show the open feature's point, unmarked.
 
-	A `look` opens the model up, as the product videos do, in the landing's
-	own finish: parts go entirely, and covers cut open in a wedge facing the
-	camera. Fills whatever holds it; the parent fades stages in and out.
+	A `look` opens the model up: groups hide, turn see-through, cut open in a
+	wedge facing the camera, come apart or glow. Fills whatever holds it; the
+	parent fades stages in and out.
 -->
 <script lang="ts" module>
 	/** What a feature shows of its model, by group (the CAD's f1_cradle, f2_drives, …). */
@@ -19,61 +18,47 @@
 		cut?: string[];
 		/** How far some of those cuts go, 0 to 1 (1, the default: a wedge fully open, a section to its axis). */
 		cutDepth?: Record<string, number>;
-		/**
-		 * Taken apart, as in the product video: each group's pieces `out`
-		 * from the axis along their own spokes, and the group `up`, in metres.
-		 * `sectors` splits the group into that many pieces round the axis
-		 * (12: a drum each), the first centred on `phase` (degrees about the
-		 * axis, in the model's frame from x towards z; without it, read from
-		 * the group's own pattern); or with `layers`, into its layers by height,
-		 * `out` apart each; without either the group moves as one. `at` is when it
-		 * starts, seconds in, so the outer layers can come away first; put
-		 * back together, the order runs the other way. `fade` fades the group
-		 * out as it goes (and back in as it returns). `from` runs it the other
-		 * way in: the group fades in where `from` puts it, then moves into
-		 * place, as pipes sliding down into a core. With `columns` it's split
-		 * one piece per upright run (a pipe each), and `stagger` sends those
-		 * in ring by ring, from the axis out, that many seconds apart: the
-		 * pieces as far out as each other together.
-		 */
+		/** Taken apart; a group not split by `sectors`, `layers` or `columns` moves as one. */
 		explode?: Record<
 			string,
 			{
+				/** Metres each piece moves out from the axis along its own spoke (with `layers`: apart per layer). */
 				out?: number;
+				/** Metres the group lifts. */
 				up?: number;
+				/** Pieces round the axis (12: a drum each). */
 				sectors?: number;
+				/** Degrees about the axis (model frame, x towards z) the first sector centres on; default: the group's own pattern. */
 				phase?: number;
+				/** Splits the group into its layers by height. */
 				layers?: boolean;
+				/** Splits the group one piece per upright run (a pipe each). */
 				columns?: boolean;
+				/** Seconds in it starts, so outer layers come away first; putting back runs in reverse. */
 				at?: number;
+				/** Fades out as it goes, back in as it returns. */
 				fade?: boolean;
+				/** Runs the move the other way in: fades in here, then moves into place (pipes sliding into a core). */
 				from?: { out?: number; up?: number };
+				/** With `from`: seconds between rings of pieces arriving, from the axis out. */
 				stagger?: number;
 			}
 		>;
 		/**
-		 * When, seconds in, the parts going see-through or away start fading
-		 * (`fade`), and the cuts start opening (`cut`), to stage a reveal one
-		 * step at a time, and how long the fades take (`fadeFor`): longer to
-		 * go with a big camera move. By default the fades start at once and
-		 * take AWAY, and the cuts start just after.
+		 * Stages a reveal: seconds in when fades start (`fade`) and cuts open
+		 * (`cut`), and how long fades take (`fadeFor`, longer under a big camera
+		 * move). By default fades start at once and take AWAY; cuts just after.
 		 */
 		stages?: { fade?: number; cut?: number; fadeFor?: number };
-		/**
-		 * A group taken apart whose open seam turns to face the camera, the
-		 * one nearest the open point, so the view looks in between its pieces
-		 * rather than at one of them.
-		 */
+		/** A group taken apart whose seam nearest the open point faces the camera, so the view looks between its pieces. */
 		seam?: string;
 		/** Energy running along the model's pipes (its `trails`), setting off `at` seconds in. */
 		trails?: { at?: number };
 		/**
-		 * Groups lit from within, as energy reaches them, `at` seconds in: each
-		 * up to its own glow (`groups`, the emissive's strength), then settling
-		 * to a soft part of that. With a `sweep`, the glow comes in from one
-		 * height to another (the authored frame's, metres), a brighter band
-		 * leading it, once: down when `to` is below `from` (04's core), up
-		 * when it's above (05's exchanger).
+		 * Groups lit from within as energy reaches them, `at` seconds in: each up
+		 * to its emissive strength (`groups`), then settling lower. A `sweep`
+		 * brings the glow in from one height to another (authored frame, metres)
+		 * behind a brighter band.
 		 */
 		warm?: { at?: number; groups: Record<string, number>; sweep?: { from: number; to: number } };
 	};
@@ -108,17 +93,14 @@
 		/** The model's files (ModelViewer's `url`). */
 		src: string[];
 		/**
-		 * Where the camera goes (`shot`), turned to show the open point
-		 * (`point`, if it's one of `points`), and how long before the stage
-		 * itself is seen (`lead`, seconds: the hand-off from another model;
-		 * the look's timings start from then too). One value, so the three
-		 * always arrive together: a new point read with the last shot would
-		 * replay that shot's entrance.
+		 * The shot, the open point to turn to (if one of `points`), and seconds
+		 * before the stage is seen (`lead`: the hand-off from another model; look
+		 * timings start then). One object so the three arrive together: a new
+		 * point read with the last shot would replay that shot's entrance.
 		 */
 		aim: { shot: Shot; point: number | null; lead: number };
 		/** Numbered points on the model, in its authored frame (Y-up metres, as on /cad). */
 		points: { number: number; at: [number, number, number] }[];
-		/** What shows of the model (see `Look`). */
 		look?: Look;
 		/** Parts carved into groups of their own (ModelViewer's `carve`). */
 		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
@@ -184,12 +166,10 @@
 				const open = cut.includes(g) ? (cutDepth[g] ?? 1) : 0;
 				const s = shownAs[g];
 				const update = () => v.setGroup(g, s);
-				// Fading with its move, going or coming back, or arriving from
-				// elsewhere: the move carries the level.
+				// When the group fades with its move, the move tweens the level.
 				const arrives = !!spec?.from;
 				const fades = spec?.fade || (!spec && faded.has(g)) || arrives;
-				// Going away is quick, so the eye goes to what stays; coming back
-				// is gentle. Each at its stage (`stages`), if the look sets one.
+				// Going away is quick, so the eye goes to what stays; coming back is gentle.
 				if (!fades) {
 					const fading = level < s.level;
 					gsap.to(s, {
@@ -320,13 +300,12 @@
 	$effect(() => {
 		const { shot: next, point: number, lead } = aim;
 		const v = viewer;
-		// Again once the points are in, if they weren't yet.
+		// Re-runs once the points are in.
 		const placed = anchors;
 		untrack(() => {
-			// The model's turn as it will settle: without the visitor's drag,
-			// which springs back to nothing once let go. From the rotation
-			// itself, not the last frame's pose, so working it out twice
-			// before a frame is drawn gives the same answer.
+			// The turn as it will settle, without the visitor's drag (which springs
+			// back). Read from the rotation, not the last frame's pose, so two runs
+			// before a frame is drawn agree.
 			const turned = v ? v.scrollRotation.y + v.autoTurn : 0;
 			// Coming in from the other model with no entrance of its own: cut
 			// to the shot while the stage is still hidden, so it's revealed
@@ -336,8 +315,8 @@
 			if (v && next.turn !== undefined) {
 				const by = next.turn - turned;
 				const spin = v.scrollRotation.y + Math.atan2(Math.sin(by), Math.cos(by));
-				// Arriving from another model: swung round out of sight first,
-				// then turned into place, the camera with it, as it's revealed.
+				// Arriving from another model: swung round out of sight, then turned
+				// into place with the camera as it's revealed.
 				if (lead > 0 && (next.swing || next.swingLean || next.swingFrom)) {
 					gsap.killTweensOf([v.scrollRotation, v.camera.position, v.target]);
 					v.scrollRotation.y = spin - (next.swing ?? 0);
@@ -455,7 +434,6 @@
 			for (const g of groups) {
 				const w = warmth[g];
 				const peak = warm?.groups[g] ?? 0;
-				// In the trails' body colour.
 				const update = () =>
 					v.setGlow(g, w.v, e?.initialLook.body ?? DEFAULT_TRAIL_LOOK.body, { front: w.front, crest: w.crest, up: w.up });
 				gsap.killTweensOf(w);

@@ -482,7 +482,7 @@
 	.color p {
 		margin: 0;
 	}
-	/* Hairline so White and Fog still read as swatches on the page. */
+	/* Hairline so White and Grey 50 still read as swatches on the page. */
 	.chip {
 		justify-self: stretch;
 		aspect-ratio: 1;

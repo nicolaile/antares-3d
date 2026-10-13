@@ -1,16 +1,9 @@
 <!--
 	@component
-	A full-bleed dark band: its title (and, unless `count` is off, the number
-	of images) centred at the top, then one image at a time on the middle
-	six columns, its caption, if it has one, centred under it. The band's
-	left and right halves are the Previous and Next buttons; it wraps round
-	at either end. For now the image and caption change at once; with
-	`ANIMATE` on, the new image slides in from the side it was asked for as
-	the old one slides out the other way, and the captions cross-fade.
-
-	Over either half a cursor label trails the pointer: "‹ Previous 01-08"
-	or "Next 03-08 ›", the image it would go to, cut to the band. Sits
-	outside anything transformed, like any CursorLabel.
+	A full-bleed dark band showing one image at a time with its caption. The
+	band's left and right halves are Previous and Next buttons (wrapping
+	round), each trailed by a CursorLabel naming the image it would go to.
+	Place it outside anything transformed, like any CursorLabel.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -31,13 +24,11 @@
 	}: {
 		title: string;
 		slides: Slide[];
-		/** Shows the number of images after the title: "Antares Prime (8)". */
+		/** The image count after the title: "Antares Prime (8)". */
 		count?: boolean;
 	} = $props();
 
-	/** The image showing, from 0. */
 	let current = $state(0);
-	/** The half under the pointer. */
 	let side = $state<Side | null>(null);
 	/** Ties the labels to this band, should a page have two. */
 	const id = $props.id();
@@ -49,14 +40,14 @@
 		return `${pad(current + step)}-${pad(n - 1)}`;
 	}
 
-	/** Off for now: the image and caption swap instantly. */
+	/** On: images slide in from the side clicked and captions cross-fade; off, they swap instantly. */
 	const ANIMATE = false;
 	const SLIDE = { duration: 1, ease: 'power3.inOut' };
 	const FADE = { duration: 0.5, ease: 'power2.out' };
 
 	let images: HTMLElement[] = $state([]);
 	let captions: HTMLElement[] = $state([]);
-	/** The slide in flight, so a quick second click finishes it first. */
+	/** In flight, so a quick second click finishes it first. */
 	let tl: gsap.core.Timeline | null = null;
 
 	function go(side: Side) {
@@ -67,10 +58,10 @@
 		const to = (from + (side === 'next' ? 1 : -1) + n) % n;
 		const dir = side === 'next' ? 1 : -1;
 		current = to;
-		// The last fade-in leaves its caption visible inline; it's no longer current.
+		// The last fade-in left inline visibility on a caption that's no longer current.
 		if (captions[from]) gsap.set(captions[from], { clearProps: 'opacity,visibility' });
 		if (!ANIMATE || prefersReducedMotion()) return;
-		// The outgoing image is no longer current, so held up until it's gone.
+		// No longer current, so held visible until it has slid out.
 		const out = images[from];
 		tl = gsap
 			.timeline({ onComplete: () => gsap.set(out, { clearProps: 'visibility,transform' }) })
@@ -111,7 +102,7 @@
 					</div>
 				{/each}
 			</div>
-			<!-- Announces each change whole: where it is in the run, then the caption. -->
+			<!-- Announces position and caption together on each change. -->
 			<div aria-live="polite" aria-atomic="true">
 				<span class="visually-hidden">Image {current + 1} of {slides.length}.</span>
 				{#if slides.some((slide) => slide.caption)}
@@ -160,8 +151,7 @@
 		text-align: center;
 	}
 
-	/* The images stack in one cell; only the current one shows when nothing
-	   is moving. Mid-slide, GSAP holds the outgoing one up too. */
+	/* Stacked in one cell; mid-slide GSAP holds the outgoing one visible too. */
 	.frame {
 		position: relative;
 		display: grid;
@@ -192,7 +182,7 @@
 	.next {
 		right: 0;
 	}
-	/* Above the image and caption, so the whole band is the two buttons. */
+	/* Above the content, so the whole band is the two buttons. */
 	.half {
 		z-index: 1;
 	}
@@ -201,8 +191,7 @@
 		outline-offset: calc(var(--space-4) * -2);
 	}
 
-	/* Captions stack too, so the line keeps the tallest one's height. Four
-	   of the six columns, centred. */
+	/* Stacked so the line keeps the tallest caption's height. */
 	.captions {
 		display: grid;
 		justify-items: center;
@@ -210,6 +199,7 @@
 	}
 	.caption {
 		grid-area: 1 / 1;
+		/* Four of the cell's six columns. */
 		max-width: calc((100% - 5 * var(--grid-gutter)) / 6 * 4 + 3 * var(--grid-gutter));
 		margin: 0;
 		color: var(--grey-400);

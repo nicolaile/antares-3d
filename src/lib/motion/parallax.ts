@@ -1,21 +1,8 @@
 import type { Attachment } from 'svelte/attachments';
 import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
-/**
- * Osmo's global parallax: the element (or a `[data-parallax="target"]`
- * inside it) moves from `start` to `end`, in % of its own size, while it
- * passes between `scrollStart` and `scrollEnd`, scrubbed to the scroll.
- * `disable` turns it off from a breakpoint down; gsap.matchMedia rebuilds
- * it as the screen crosses one. With reduced motion it holds still.
- *
- * An attachment: `<div {@attach parallax({ start: 20, end: -20 })}>`.
- *
- * For an image moving inside a frame: put this on the frame (overflow
- * hidden), and mark a taller wrapper inside it (say 120% high) as the
- * target, so the image has room to move without showing an edge.
- */
 export type ParallaxOptions = {
-	/** Where it starts and ends, in % of its own size. Defaults 20 and -20. */
+	/** In % of its own size. */
 	start?: number;
 	end?: number;
 	direction?: 'vertical' | 'horizontal';
@@ -28,6 +15,13 @@ export type ParallaxOptions = {
 	disable?: 'mobile' | 'mobileLandscape' | 'tablet';
 };
 
+/**
+ * Moves the element (or a `[data-parallax="target"]` inside it) from `start`
+ * to `end`, scrubbed to the scroll. For an image inside a frame, put this on
+ * the frame (overflow hidden) and mark a taller wrapper (say 120%) as the
+ * target, so the image moves without showing an edge.
+ * `<div {@attach parallax({ start: 20, end: -20 })}>`
+ */
 export function parallax({
 	start = 20,
 	end = -20,
@@ -39,8 +33,7 @@ export function parallax({
 }: ParallaxOptions = {}): Attachment<HTMLElement> {
 	return (trigger) => {
 		if (prefersReducedMotion()) return;
-		// Marked, so a parallax nested inside another keeps its own target:
-		// a target belongs to the nearest trigger around it.
+		// So a nested parallax keeps its own target: a target belongs to the nearest trigger.
 		trigger.setAttribute('data-parallax', 'trigger');
 		const mm = gsap.matchMedia();
 		mm.add(

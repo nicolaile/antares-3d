@@ -40,27 +40,26 @@
 /* ------------------------------- App tokens -------------------------------- */
 :root {
 	--grid-columns: 12;
-	/* 20px margin, 16px gutter at the 1440 design width, scaling with the
-	   Osmo system from there: a column is 102px, three are 338px, four 456px.
+	/* 20px margin, 16px gutter at 1440, scaling with Osmo: a column is
+	   102px, three 338px, four 456px, the grid 1400px.
 	   --page-margin is the inset from the screen's edges, for anything
 	   measured from the top or bottom (the menu button, fixed controls).
-	   --grid-margin is where the grid starts across: the same inset, plus
-	   half of any width past --content-max, so the content stays a centred
-	   1920 column on wider screens while full-bleed backgrounds still run
-	   edge to edge. Type and spacing stop scaling at the same width, 1920
-	   (--size-container-max above), so past it nothing grows; only the margins
-	   keep widening. */
+	   --grid-margin is where the grid starts across: the same inset plus
+	   half of any width past --content-max, so content stays a centred
+	   1920 column while full-bleed backgrounds run edge to edge. Type and
+	   spacing stop scaling at 1920 too (--size-container-max), so past it
+	   only the margins widen. */
 	--content-max: 1920px;
 	--page-margin: calc(var(--size-font) * 1.25);
 	--grid-margin: calc(var(--page-margin) + max(0px, (100vw - var(--content-max)) / 2));
 	--grid-gutter: calc(var(--size-font) * 1);
 	--stage-radius: 2px;
-	/* Image cards: the updates grid and the press kit. */
+	/* Cards and framed images across the site. */
 	--card-radius: 4px;
 	/* Inside the position cards, all round: 20px at 1440, the page margin's
 	   width rather than a step on the 8px spacing scale. */
 	--card-padding: calc(var(--size-font) * 1.25);
-	/* The wordmark at rest in the top-left corner: 12px tall at 1440. Home's
+	/* The wordmark at rest in the top-left corner: 20px tall at 1440. Home's
 	   hero shrinks to it; BrandMark holds it on every other page. */
 	--wordmark-rest: calc(var(--size-font) * 1.25);
 	/* The header: a 68px band at 1440 (the bar behind it, when it shows),

@@ -1,13 +1,7 @@
 <!--
 	@component
-	The filled call to action, from the mobile CTA in the design: the label
-	on a light grey pill, and beside it a black square holding a white
-	arrow, the two the same height. One control, so the pair is a single
-	link (with `href`) or button (without). On hover the pill darkens a
-	step and the arrow nudges forward. `arrow={false}` is the pill alone,
-	for a quieter action (the footer's "Join mission"). `tone="dark"`, on
-	dark pages: the pill Grey 900 with white text, lifting to Grey 800, and
-	the square turned white with a black arrow.
+	The filled call to action: a label pill beside an arrow square, as one
+	link (with `href`) or button (without).
 -->
 <script lang="ts">
 	import arrowIcon from '$lib/assets/icons/right-arrow.svg?raw';
@@ -22,7 +16,7 @@
 	}: {
 		tone?: 'light' | 'dark';
 		label: string;
-		/** The black arrow square beside the pill. */
+		/** False for the pill alone, a quieter action (the footer's "Join mission"). */
 		arrow?: boolean;
 		href?: string;
 		onclick?: (event: MouseEvent) => void;
@@ -68,10 +62,8 @@
 
 <style>
 	.cta {
-		/* 34px tall at 1440, the pill and the square alike; 8px corners on both. */
 		--cta-size: calc(var(--size-font) * 2.125);
 		--cta-radius: 8px;
-		/* The label 18px clear either side; the arrow 9px clear all round. */
 		--cta-inset: calc(var(--size-font) * 1.125);
 		--cta-icon-inset: calc(var(--size-font) * 0.5625);
 		display: inline-flex;
@@ -98,7 +90,6 @@
 		border-radius: var(--cta-radius);
 		background: var(--grey-100);
 	}
-	/* 34px square at 1440, the arrow 16px. */
 	.square {
 		display: grid;
 		place-items: center;

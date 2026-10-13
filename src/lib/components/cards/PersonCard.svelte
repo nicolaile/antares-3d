@@ -1,11 +1,8 @@
 <!--
 	@component
-	One person: their portrait (338×220 at 1440), then their name and, in
-	grey under it, their role. The whole card is a button that opens their
-	panel.
-
-	On hover the photo zooms in slightly inside its frame, which holds its
-	size. Mouse and trackpad only, and not with reduced motion.
+	One person: portrait, name and role. The whole card is a button that
+	opens their panel. On hover (fine pointers, no reduced motion) the photo
+	zooms slightly inside its frame.
 -->
 <script lang="ts">
 	import type { Picture as Source } from 'vite-imagetools';
@@ -24,9 +21,7 @@
 		onclick: () => void;
 	} = $props();
 
-	/** The photo's zoom on hover. */
 	const ZOOM = 1.03;
-	/** Long and gentle, with no snap at the start. */
 	const EASE = { duration: 0.9, ease: 'power3.out', overwrite: true };
 
 	let photo: HTMLElement;

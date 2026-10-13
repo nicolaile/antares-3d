@@ -1,10 +1,7 @@
 <!--
 	@component
-	A few big figures, each with a line under it, set down the page at
-	staggered columns. Each rolls up from zero like an odometer as it scrolls into view.
-	Hovered, its characters roll over (`letterRoll`).
-	A figure marked `mark` carries a crosshair after it. With reduced
-	motion they're the still figures.
+	A few big figures with a line under each, at staggered columns. Each rolls
+	in like an odometer on scroll, and its characters roll over on hover.
 -->
 <script lang="ts">
 	import { odometer } from '$lib/motion/odometer';
@@ -15,10 +12,11 @@
 		label: string;
 		/** First column on desktop. */
 		start: number;
-		/** After the figure: a unit, like `MW`. */
+		/** A unit, like `MW`. */
 		suffix?: string;
 		/** Between thousands, if any. */
 		separator?: string;
+		/** A crosshair after the figure. */
 		mark?: boolean;
 	};
 
@@ -65,17 +63,15 @@
 		color: var(--white);
 		white-space: nowrap;
 	}
-	/* A measure set by the text (384px at 1440), so it breaks the same at
-	   every width: "…elit, sed do / eiusmod tempor incididunt". */
+	/* In em, so the line breaks the same at every width. */
 	.label {
 		max-width: 24em;
 		margin: var(--space-12) 0 0;
 		color: var(--grey-750);
 	}
 
-	/* A thin cross, as tall as the figure's digits (their cap height, 0.74em
-	   in this face), a gutter clear of it; lifted a hair to sit on them
-	   rather than on the line box's centre. */
+	/* As tall as the digits (0.74em cap height in this face), lifted a hair
+	   to sit on them rather than on the line box's centre. */
 	.mark {
 		position: relative;
 		width: 0.74em;
@@ -102,7 +98,6 @@
 		width: 1px;
 	}
 
-	/* Phones: every figure from the first column, the lines wider. */
 	@media screen and (max-width: 767px) {
 		.row {
 			grid-column: 1 / -1;

@@ -1,7 +1,6 @@
 /**
- * Content for the legal pages: the Terms of Use and the Privacy Policy. The
- * copy is a placeholder until legal supplies the real text; each entry in
- * `body` is one paragraph, and `updated` is dd.mm.yyyy, as the design shows it.
+ * Content for the legal pages: the Terms of Use and the Privacy Policy. Each
+ * entry in `body` is one paragraph; `updated` is dd.mm.yyyy, as the design shows it.
  */
 export type LegalPage = {
 	title: string;
@@ -10,6 +9,7 @@ export type LegalPage = {
 	body: string[];
 };
 
+// TODO(launch): replace both pages' placeholder copy and `updated` dates with legal's final text.
 const termsPlaceholder =
 	'Please carefully read the following terms and conditions of use and all other rules, policies and guidelines that may be communicated from time to time through the Site (collectively, “Terms of Use”). By using this Site you agree to be bound by and comply with these Terms of Use. If you do not agree to the Terms of Use, do not use this Site.';
 

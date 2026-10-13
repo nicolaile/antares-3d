@@ -54,7 +54,7 @@ const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMap
 export type Tone = keyof typeof TONES;
 /** The canvas's pixel ratio at most: a retina screen's own. The frame itself is drawn at `maxPixelRatio`. */
 const OUTPUT_PIXEL_RATIO = 2;
-/** The black studio renders' print (scripts/lab/render/mark-0-black.json, render.py's grade; SweepPass `setGrade`). */
+/** The final colour grade (SweepPass `setGrade`), matched to the offline renders'. */
 const PRINT = { saturation: 0.6, tint: '#f2f6f8', contrast: 0.3, blackPoint: 0, shadows: '#c4cfdf', highlights: '#f6f8fa' };
 /** How sharply the last pass sharpens the frame it scales up, 0–1 (SweepPass `sharpen`). */
 const SHARPEN = 0.6;
@@ -115,40 +115,14 @@ function glowFromWithin(
 }
 
 /**
- * The bake (scripts/lab/bake-surface.mjs, the `_surf` attribute): occlusion and
- * finish per vertex.
- *
- * Its finish (z, w) is the approved studio renders' for the part's CAD
- * material: a shade, a roughness, and metal or not. The renders' shades
- * are far darker than this look, so they're mapped onto it from
- * `uFinishFloor` (the darkest, as a share of the look's colour) up to the
- * look's colour itself, `uFinish` of the way from the one shared finish.
- * Non-metals (the graphite core, moulded parts) are wholly themselves, at
- * their measured albedo (`uPolymer` scales it).
- *
- * And over it, the surface's own detail (static/textures/surface-detail.webp,
- * scripts/lab/surface-detail.mjs): roughness that varies across a finish as real
- * metal's does, brushed streaks on the polished parts and handling smudges on
- * the rest, `uDetail` of it. Projected from the three axes in each part's own
- * frame (`uLocalScale` to metres, a tile every `uDetailTile`), so it sticks to
- * a piece as it moves, and mipmapped, so it never sparkles from afar. The
- * same texture is its relief too, as render.py's bump: a fine grain
- * (`uSurfaceGrain`, in millimetres, more on the rougher finishes), bending
- * the normal by its screen-space slope, so the shadow side keeps some
- * texture where the reflections catch it.
- *
- * The key's light wraps a little past the terminator (`uWrap`, diffuse
- * only), as a large soft box's does, rather than falling off at the
- * cosine of a point.
- *
- * Its occlusion:
- * ray-traced per vertex, by everything in the group (y) and by the
- * vertex's own part alone (x), blended from the one to the other as the
- * group comes apart or opens (`uOpen`), so pieces moved away stop shading
- * each other. It darkens the light from the surroundings, the environment's
- * reflections most of all on this metal (`computeSpecularOcclusion`, as
- * three's own aoMap), and a share of the key's (`uBakedDirect`): the key
- * stands in for a softbox, and a crevice stays dark under one.
+ * The per-vertex bake (`_surf`, from scripts/lab/bake-surface.mjs): x, y the
+ * occlusion by the part alone and by the whole group, blended by `uOpen` so
+ * separated pieces stop shading each other; z, w the part's CAD finish (shade,
+ * roughness, metal or not). Metal shades map from `uFinishFloor` up to the
+ * look's colour; non-metals keep their measured albedo (`uPolymer`). Also adds
+ * triplanar roughness detail and grain relief (`tDetail`, in part-local metres
+ * so it sticks to moving pieces), a wrapped key (`uWrap`) for a soft-box
+ * falloff, and occlusion of the environment's specular and of `uBakedDirect` of the key.
  */
 function bakedSurface(
 	shader: THREE.WebGLProgramParametersWithUniforms,
@@ -177,11 +151,9 @@ function bakedSurface(
 			'#include <begin_vertex>\nvSurf = _surf;\nvDetailAt = position * uLocalScale;\nvDetailNormal = normal;'
 		);
 	shader.fragmentShader = shader.fragmentShader
-		// The environment map's diffuse light off while the soft boxes' own
-		// (a light probe, `syncProbe`) stands in: three takes it from the
-		// map's blurriest level, wider than a real surface's cosine, so the
-		// strips behind lit the front and nothing fell away to black.
-		// (The chunk expanded here: includes are only resolved after this hook.)
+		// Scales the env map's diffuse down while a light probe (`syncProbe`) stands in:
+		// three's is wider than a cosine, so strips behind would light the front.
+		// The chunk is expanded inline because includes resolve only after this hook.
 		.replace(
 			'#include <lights_fragment_maps>',
 			THREE.ShaderChunk.lights_fragment_maps.replace(
@@ -418,9 +390,9 @@ export interface ModelViewerOptions {
 	/** Depth of field, focused on the camera target. `false` disables. */
 	dof?: { maxblur?: number } | false;
 	/**
-	 * Join every non-instanced part into one mesh at load. They all share one
-	 * material, so the split into 110 draws was an accident of the export,
-	 * and each scene render per frame (shadow, beauty) paid for it. Default on.
+	 * Join every non-instanced part into one mesh at load. They share one
+	 * material, so the export's ~110 separate draws are pure overhead in each
+	 * scene render (shadow, beauty). Default on.
 	 */
 	mergeMeshes?: boolean;
 	/**
@@ -545,11 +517,11 @@ export interface RenderParams {
 	surfaceGrain: number;
 	/** The tone curve: ACES filmic (the look's), Khronos PBR Neutral, or AgX. */
 	tone: Tone;
-	/** Lit by soft boxes (createSoftboxEnvironment) rather than the HDR: 1 the approved studio's, 2 the black renders'. */
+	/** Lit by soft boxes (createSoftboxEnvironment) rather than the HDR: 1 the 'studio' rig, 2 the 'black' rig. */
 	softbox: number;
 	/** How sharply the frame is sharpened as it's scaled up to the screen, 0–1. */
 	sharpen: number;
-	/** How much of the black studio renders' print grade, 0–1. */
+	/** How much of the final colour grade (`PRINT`) applies, 0–1. */
 	grade: number;
 	/** Machined edges brightened, as the renders' edge polish (screen space, with occlusion). */
 	edges: number;
@@ -580,11 +552,6 @@ const STUDIO_PRESET: Partial<RenderParams> = {
 };
 const STUDIO_KEYS = Object.keys(STUDIO_PRESET) as (keyof RenderParams)[];
 
-/**
- * Framework-agnostic three.js scene. Deliberately does NOT own a rAF loop —
- * `render()` is called from the shared GSAP ticker so Lenis, ScrollTrigger and
- * the renderer all advance on one clock. See `$lib/motion/scroll.ts`.
- */
 /** The lens the establishing shot is composed for, in degrees. */
 const DEFAULT_FOV = 38;
 /** Draw rate for a turn that is only the slow auto-rotation (60: a smooth turn, at the cost of a frame each refresh). */
@@ -596,6 +563,11 @@ const STEP_GAIN = 0.92;
 /** The pixel ratios adaptive resolution steps down through. */
 const PIXEL_RATIOS = [2, 1.5, 1.25, 1];
 
+/**
+ * Framework-agnostic three.js scene. Deliberately does NOT own a rAF loop —
+ * `render()` is called from the shared GSAP ticker so Lenis, ScrollTrigger and
+ * the renderer all advance on one clock. See `$lib/motion/scroll.ts`.
+ */
 export class ModelViewer {
 	readonly scene = new THREE.Scene();
 	readonly camera: THREE.PerspectiveCamera;
@@ -698,13 +670,11 @@ export class ModelViewer {
 	}
 
 	/**
-	 * A group lit from within, `amount` 0 for not (the landing's 04: the
-	 * core and its heat pipes warming as the pipes seat): its own glow, in
-	 * the scene, so tone mapped with the rest. With a `sweep`, only what's
-	 * above `front` (a height in the authored frame, metres) glows, or below
-	 * it with `up` (the glow rising, as into 05's exchanger), a band at the
-	 * front brighter by `crest` (1: twice as bright); without, all of it
-	 * evenly.
+	 * A group lit from within (its emissive, so tone mapped with the scene),
+	 * `amount` 0 for off. With a `sweep`, only what's above `front` (a height
+	 * in the authored frame, metres) glows, or below it with `up` (a rising
+	 * glow), with a band at the front brighter by `crest` (1: twice as
+	 * bright); without, all of it evenly.
 	 */
 	setGlow(
 		name: string,
@@ -981,10 +951,9 @@ export class ModelViewer {
 			material.clippingPlanes = planes;
 			material.clipIntersection = true;
 			material.clipShadows = true;
-			// Drawn see-through, a group's own surfaces would blend in whatever
-			// order they come, flickering as the view turns: while it fades, a
-			// depth-only copy of each mesh goes first (renderOrder −1, among the
-			// see-through things), so only its nearest surface takes colour.
+			// See-through, a group's own surfaces would blend in arbitrary order and
+			// flicker as the view turns: while it fades, a depth-only copy of each mesh
+			// draws first (renderOrder −1), so only its nearest surface takes colour.
 			const depth = new THREE.MeshBasicMaterial({
 				colorWrite: false,
 				transparent: true,
@@ -1013,19 +982,13 @@ export class ModelViewer {
 	}
 
 	/**
-	 * Splits a group's meshes into pieces by their parts (`_part`), each
-	 * part going whole to one piece:
-	 *
-	 *  - round the axis (`fold`): equal sectors, centred on `phase` or else
-	 *    set to the group's own pattern (the phase of its parts' angles,
-	 *    `fold` times over), so each sector takes one drum and everything of
-	 *    it. Parts close to the axis stay put as a piece of their own. Each
-	 *    piece moves out along its sector's spoke.
-	 *  - by height (`layers`): the distinct heights of its broad parts (a
-	 *    core's block layers), every part with the nearest. The pieces move
-	 *    apart up and down about the middle one, a step each.
-	 *
-	 * The pieces share the mesh's vertex data, each with its own triangles.
+	 * Splits a group's meshes into pieces by part (`_part`), each part whole.
+	 * `fold`: equal sectors round the axis, centred on `phase` or on the parts'
+	 * own angular pattern, so each takes one drum; each moves out along its
+	 * spoke, and parts near the axis stay put as a piece of their own.
+	 * `layers`: the distinct heights of the broad parts, moving apart about the
+	 * middle one. `columns`: one piece per upright run. Pieces share the mesh's
+	 * vertex data, each with its own triangles.
 	 */
 	private async splitPieces(
 		node: THREE.Object3D,
@@ -1089,9 +1052,9 @@ export class ModelViewer {
 				let sin = 0;
 				let cos = 0;
 				for (let p = 0; p < n; p++) {
-					// A part index with no vertices (left out of the landing's
-					// files, never seen) has no middle: one NaN here and every
-					// part went to the first piece.
+					// A part index with no vertices (stripped from the landing's
+					// files) has no middle; one NaN here sends every part to the
+					// first piece.
 					if (!(lo[p * 3] <= hi[p * 3])) continue;
 					const x = mid(p, 0) - ax;
 					const z = mid(p, 2) - az;
@@ -1113,15 +1076,12 @@ export class ModelViewer {
 			const pieceOfPart = new Int32Array(n);
 			for (let p = 0; p < n; p++) pieceOfPart[p] = classOf(mid(p, 0), mid(p, 1), mid(p, 2));
 
-			// Triangles by piece.
 			const buckets = await trianglesBy(geometry, part, ways.length, (p) => pieceOfPart[p]);
 			const lods = await lodsBy(geometry, part, ways.length, (p) => pieceOfPart[p]);
 			// Directions in the mesh's parent's frame, which carries the file's Z-up turn.
 			const toLocal = new THREE.Matrix3().setFromMatrix4(mesh.parent!.matrixWorld).invert();
-			// Each piece's own bounds, its parts' put together (in world space,
-			// then back into the mesh's own): culled on its own, a close shot
-			// skips the pieces out of frame, where the whole group's bounds kept
-			// every one of them in.
+			// Each piece gets its own bounds (its parts', built in world space, then
+			// moved into the mesh's frame) so a close shot culls the pieces out of frame.
 			const toMesh = mesh.matrixWorld.clone().invert();
 			const boxes = ways.map(() => new THREE.Box3());
 			const corner = new THREE.Vector3();
@@ -1156,17 +1116,13 @@ export class ModelViewer {
 	}
 
 	/**
-	 * Draws the model once in every state it can be shown in, before it's
-	 * seen: see-through (each group fading, with its depth-first copy) and
-	 * solid, through the whole chain of passes and the shadow map. The first
-	 * frame of anything new otherwise pays for it on the spot, mid-move:
-	 * a shader linking, buffers uploading, the GPU building a pipeline for a
-	 * blend it hasn't drawn with. A tenth to a third of a second, the first
-	 * time 02 took the reactor apart or 05 brought the other model on. The
-	 * programs compile in parallel first (compileAsync), so the draws that
-	 * follow find them ready; each draw is a task of its own. Call it once
-	 * the look is final and the camera is on its first shot; it leaves the
-	 * canvas blank, for the first real frame.
+	 * Draws the model once, unseen, in every state it can show (each group
+	 * see-through with its depth-first copy, then solid) through every pass and
+	 * the shadow map. Otherwise the first frame of anything new pays mid-move for
+	 * shader links, buffer uploads and new blend pipelines: 100–300 ms. Programs
+	 * compile in parallel first (compileAsync); each draw is a task of its own.
+	 * Call once the look is final and the camera is on its first shot; it leaves
+	 * the canvas blank for the first real frame.
 	 */
 	async warmUp({ groups = true } = {}) {
 		if (this.disposed) return;
@@ -1190,8 +1146,8 @@ export class ModelViewer {
 		await this.compilePasses();
 		if (this.disposed) return;
 		// Each group first on its own, a task each: a part's first draw sets up
-		// its buffers and bindings, and all of them in one frame held the main
-		// thread for a tenth of a second on a slower laptop.
+		// its buffers and bindings, and all of them in one frame block the main
+		// thread for ~100 ms on a slower laptop.
 		const all = [...this.groups.values()];
 		for (const seeThrough of groups ? [true, false] : [false]) {
 			const set = (g: (typeof all)[number]) => this.syncGroup(seeThrough ? { ...g, level: 0.5 } : g);
@@ -1225,17 +1181,16 @@ export class ModelViewer {
 	 * A group's finish from the shared material, at its level: below 1 it
 	 * turns see-through, its opacity the level (and its light, in the last
 	 * stretch), so it fades into whatever is behind it (the backdrop, or the
-	 * parts inside) and is gone by 0. While
-	 * see-through it casts no shadow, which can't fade with it.
+	 * parts inside) and is gone by 0. While see-through it casts no shadow,
+	 * which can't fade with it.
 	 */
 	private syncGroup(g: { node: THREE.Object3D; material: THREE.MeshPhysicalMaterial; level: number }) {
 		const base = this.material;
 		const m = g.material;
 		const k = g.level;
-		// The light it gives back dims too, below a tenth: the canvas is
-		// composited over the backdrop with its colour as drawn, so a highlight
-		// on a part all but gone would still glint at full strength, and a
-		// faint ghost reads darker for it. Above that it keeps its full light.
+		// Below a level of 0.1 its light dims too: the canvas composites over the
+		// backdrop as drawn, so a highlight on a part all but gone would still
+		// glint at full strength.
 		const light = Math.min(1, k / 0.1);
 		m.color.copy(base.color).multiplyScalar(light);
 		m.roughness = base.roughness;
@@ -1383,12 +1338,10 @@ export class ModelViewer {
 	private observer: ResizeObserver;
 	private disposed = false;
 
-	/*
-	 * Render on demand. Every tick still advances the rotation, but the frame
-	 * is only drawn when something visible changed since the last one — a
-	 * paused model costs nothing. A turn that is only the slow auto-rotation
-	 * is drawn at SPIN_FPS: 60, so it glides like everything else on the
-	 * page; on faster displays the moves still draw every refresh.
+	/**
+	 * Render on demand: every tick advances the rotation, but a frame is drawn
+	 * only when something visible changed, so a paused model costs nothing. A
+	 * turn that is only the slow auto-rotation draws at SPIN_FPS.
 	 */
 	private dirty = true;
 	/** Everything a frame depends on apart from the slow turn, this tick's and the last drawn frame's (`shouldDraw`). */
@@ -1502,20 +1455,13 @@ export class ModelViewer {
 	) {
 		this.container = container;
 
-		// alpha:true so the page's own background shows through untouched —
-		// tone mapping would otherwise shift a solid scene.background colour.
-		// antialias:false is deliberate. Every frame reaches the canvas as a
-		// fullscreen quad from the composer, whose own 8× MSAA target does
-		// the antialiasing; multisampling the canvas as well only bought a
-		// second set of sample buffers and a resolve per frame.
-		// No depth buffer either: only full-screen quads reach the canvas, the
-		// scene's own depth is the beauty target's (a 2× screen's worth of
-		// memory saved: 16 MB at 2770×1478).
+		// alpha: the page shows through untouched (tone mapping would shift a solid
+		// scene.background). No antialias or depth: only full-screen quads reach the
+		// canvas; the beauty target holds the MSAA and depth (16 MB saved at 2770×1478).
 		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, depth: false, powerPreference: 'high-performance' });
-		// The canvas at the screen's own resolution (a retina screen's 2); the
-		// frame drawn at `maxPixelRatio` (and adaptive quality's steps below
-		// it), scaled up and sharpened by the last pass (SweepPass), as an
-		// upscaler would, rather than left for the browser to blur up.
+		// The canvas at the screen's resolution; the frame at `maxPixelRatio` (or
+		// adaptive quality's lower steps), scaled up and sharpened by the last pass
+		// (SweepPass) rather than left for the browser to blur up.
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, OUTPUT_PIXEL_RATIO));
 		this.renderRatio = Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2);
 		this.renderer.setClearColor(0x000000, 0);
@@ -1584,13 +1530,10 @@ export class ModelViewer {
 		// OutputPass owns tone mapping, so the scene pass sees linear HDR.
 		const size = new THREE.Vector2();
 		this.renderer.getDrawingBufferSize(size);
-		// Only the scene is multisampled, into a target of its own (BeautyPass);
-		// the composer's ping-pong buffers stay single-sampled. Multisampling
-		// those too made every full-screen pass after the scene write and
-		// resolve 4× the samples: half the frame's cost, for nothing, since a
-		// full-screen quad has no edges to smooth. 4×, what Apple GPUs top out
-		// at (8× was asked for, and silently clamped to 4 there); at a pixel
-		// ratio of 2 that holds the thin rails steady under the slow turn.
+		// Only the scene is multisampled (BeautyPass); the composer's buffers stay
+		// single-sampled, since full-screen quads have no edges and multisampling
+		// them doubles the frame's cost. 4× is Apple GPUs' max (more is silently
+		// clamped) and at a pixel ratio of 2 holds the thin rails steady.
 		const samples = Math.min(4, this.renderer.capabilities.maxSamples);
 		this.beauty = new THREE.WebGLRenderTarget(size.x, size.y, {
 			type: THREE.HalfFloatType,
@@ -1605,12 +1548,10 @@ export class ModelViewer {
 		this.renderPass = new BeautyPass(this.scene, this.camera, this.beauty);
 		this.composer.addPass(this.renderPass);
 		if (opts.ao !== false) {
-			// Occlusion multiplies onto scene colour; its alpha is the scene's
-			// own, so the transparent backdrop survives the pass. It reads the
-			// scene pass's own depth, normals rebuilt from it (SceneGTAOPass):
-			// GTAO would otherwise draw the whole model a second time for its
-			// normals, and that copy ignored the cutaways, shading the inside of
-			// a cut part as if its cover were still there.
+			// Occlusion multiplies onto scene colour, keeping the scene's alpha so the
+			// transparent backdrop survives. It reads the scene pass's depth and
+			// rebuilds normals from it (SceneGTAOPass): GTAO's own normal pass redraws
+			// the model ignoring the cutaways, shading inside cut parts.
 			const gtao = new SceneGTAOPass(this.scene, this.camera, size.x, size.y);
 			gtao.setGBuffer(this.beauty.depthTexture!, gtao.normals.texture);
 			this.gtao = gtao;
@@ -1669,13 +1610,9 @@ export class ModelViewer {
 		// pan-y keeps vertical touch scrolling alive on mobile; drag is a cursor affordance.
 		el.style.touchAction = 'pan-y';
 		el.addEventListener('pointerdown', this.onPointerDown);
-		// Move and release listen on the WINDOW, not the canvas. Releasing off
-		// the canvas — over the mode bar, over the controls, or outside the
-		// window entirely — otherwise never ends the drag: `active` stays true,
-		// the model keeps spinning with the button up, and it never resets.
-		// (Pointer capture is deliberately not used; it does not reliably
-		// survive the pointer leaving the window.) `blur` covers alt-tabbing
-		// away mid-drag, where no pointerup is ever delivered.
+		// Move and release listen on the window: a release off the canvas would
+		// otherwise never end the drag, leaving the model spinning. Pointer capture
+		// doesn't reliably survive leaving the window; `blur` covers alt-tabbing.
 		window.addEventListener('pointermove', this.onPointerMove);
 		window.addEventListener('pointerup', this.endDrag);
 		window.addEventListener('pointercancel', this.endDrag);
@@ -1700,10 +1637,9 @@ export class ModelViewer {
 
 	/**
 	 * SSR, depth of field and bloom are dynamic imports so that a scene which
-	 * ships them off — this one — never downloads their shader source. They
-	 * slot into the chain where the constructor used to put them: SSR takes
-	 * over from the RenderPass at the front; DoF and bloom go just before
-	 * OutputPass, in that order.
+	 * ships them off never downloads their shader source. SSR replaces the
+	 * RenderPass at the front; DoF and bloom go just before OutputPass, in that
+	 * order.
 	 */
 	private async addOptionalPasses() {
 		const opts = this.opts;
@@ -1738,10 +1674,9 @@ export class ModelViewer {
 				aperture: 0.0007,
 				maxblur: opts.dof?.maxblur ?? 0.006
 			});
-			// Stock BokehShader forces alpha to 1, which would turn the
-			// transparent canvas into an opaque black rectangle. Dropping that
-			// line keeps the blurred alpha — and on a premultiplied canvas,
-			// averaging RGBA jointly is exactly the correct edge math.
+			// Stock BokehShader forces alpha to 1, turning the transparent canvas into
+			// an opaque black rectangle. Without that line the blurred alpha stays, and
+			// on a premultiplied canvas averaging RGBA jointly is the correct edge math.
 			this.bokeh.materialBokeh.fragmentShader = this.bokeh.materialBokeh.fragmentShader.replace(
 				'gl_FragColor.a = 1.0;',
 				''
@@ -1827,10 +1762,9 @@ export class ModelViewer {
 
 		this.radius = Math.max(size.x, size.y, size.z) * (this.opts.fitOffset ?? 1.95);
 
-		// Shadow frustum hugs the model's bounds — a loose one wastes the
-		// map on empty space and the shadow goes blotchy.
-		// 1.1× so the key's shadow on the floor, which falls away from the light
-		// by roughly the model's height, is inside the map.
+		// Shadow frustum hugs the model's bounds (a loose one wastes the map and the
+		// shadow goes blotchy), 1.1× so the floor shadow, which falls about the
+		// model's height away from the light, stays inside the map.
 		const half = Math.max(size.x, size.y, size.z) * 1.1;
 		const { key } = this.lights;
 		key.position.normalize().multiplyScalar(this.radius * 1.2);
@@ -1913,13 +1847,9 @@ export class ModelViewer {
 		this.fitRadius = size.length() / 2;
 		this.fitDistance = this.camera.position.length();
 
-		// Depth precision is governed by the NEAR plane, not the far/near ratio:
-		// resolution at distance z is roughly z² / (near · 2^bits). The default
-		// 0.1 near spends almost the whole 24-bit buffer on empty space in front
-		// of the camera, leaving too little where the model actually is — so
-		// CAD parts that touch exactly z-fight, and the breathing animation
-		// turns that into a constant flicker. Derived from the model instead:
-		// still ~3× clear of the closest shot, with ~10× the precision.
+		// Depth precision is set by the near plane (resolution at z ≈ z² / (near · 2^bits)):
+		// at 0.1, touching CAD parts z-fight and flicker as the model breathes. This
+		// stays ~3× clear of the closest shot with ~10× the precision.
 		this.camera.near = this.fitRadius * 0.15;
 		this.camera.far = this.fitDistance + this.fitRadius * 4;
 		// Re-run framing now the model's size is known.
@@ -1936,11 +1866,9 @@ export class ModelViewer {
 		// After params, so the preset saves (and later restores) the dialled-in look.
 		if (this.opts.studio !== false && this.opts.studio?.on) this.setParam('studio', 1);
 
-		// Compile every material variant now, off the first frame. Without
-		// this the reveal animation stutters through its opening beats while
-		// physical + shadow + depth programs link one after another. The
-		// see-through ones, and everything a frame needs beyond the scene's
-		// own materials, compile in `warmUp`.
+		// Compile every material variant now, so the reveal doesn't stutter while
+		// physical, shadow and depth programs link one after another. The
+		// see-through variants and the passes' shaders compile in `warmUp`.
 		await this.renderer.compileAsync(this.scene, this.camera);
 		if (!this.disposed) this.opts.onProgress?.(1);
 
@@ -1974,24 +1902,17 @@ export class ModelViewer {
 		return model;
 	}
 
-	/**
-	 * Image-based lighting. The model is a single material, so the environment
-	 * does most of the visual work: with a flat one it reads as grey plastic.
-	 * Prefers the HDRI (a real studio with soft boxes and contrast); falls back
-	 * to a procedural strip-light room when none is configured.
-	 */
 	/** Lit by the soft boxes (`softbox`), their environment built the first time. */
 	private softbox = false;
 	/** Each rig's environment map, made the first time it's lit by. */
 	private softboxRT: Partial<Record<'studio' | 'black', THREE.WebGLRenderTarget>> = {};
-	/** Which soft boxes (`softbox` 1 the approved studio's, 2 the black renders'). */
+	/** Which soft-box rig lights the model (`softbox` 1 'studio', 2 'black'). */
 	private rig: 'studio' | 'black' = 'studio';
 	/**
-	 * The soft boxes' diffuse light, as spherical harmonics (three's light
-	 * probe): what a matte surface facing each way receives from them, the
-	 * way the raspberry lights its fruit. The key's own comes from the
-	 * directional key, which casts its shadows; the rest are summed over
-	 * their area, as bright as in the environment map, round the camera.
+	 * The broad soft boxes' diffuse light as spherical harmonics (three's light
+	 * probe): what a matte surface facing each way receives, summed over each
+	 * box's area as bright as in the environment map, turned with the camera.
+	 * The key's own comes from the directional key, which casts the shadows.
 	 */
 	private light = new THREE.LightProbe();
 	private probeYaw = NaN;
@@ -2034,7 +1955,7 @@ export class ModelViewer {
 	 * The rig's strips (the rims and the side strip) as directional lights,
 	 * round the camera with the rest: a strip lights what faces it and
 	 * nothing else, the bright edge it traces down a silhouette. Each as
-	 * strong against the key as render.py has it (power for power); their
+	 * strong against the key as in the offline rig (power for power); their
 	 * reflections stay the environment map's.
 	 */
 	private strips: THREE.DirectionalLight[] = [];
@@ -2068,7 +1989,7 @@ export class ModelViewer {
 		this.softbox = on;
 		this.rig = which >= 2 ? 'black' : 'studio';
 		// The black rig's diffuse light is the probe's and the strips'; the
-		// studio's, the environment map's own, as it was approved.
+		// studio rig's is the environment map's own.
 		const black = on && this.rig === 'black';
 		this.baked.uEnvDiffuse.value = black ? 0 : 1;
 		this.light.intensity = black ? this.scene.environmentIntensity : 0;
@@ -2099,6 +2020,12 @@ export class ModelViewer {
 		}
 	}
 
+	/**
+	 * Image-based lighting. The model is a single material, so the environment
+	 * does most of the visual work: with a flat one it reads as grey plastic.
+	 * Prefers the HDRI (a real studio with soft boxes and contrast); falls back
+	 * to a procedural strip-light room when none is configured.
+	 */
 	private async loadEnvironment() {
 		if (this.opts.hdr) {
 			const tex = await new RGBELoader().loadAsync(this.opts.hdr, (e) => this.report('hdr', e));
@@ -2200,11 +2127,6 @@ export class ModelViewer {
 		};
 	}
 
-	/**
-	 * Parameters actually backed by a live pass. Anything omitted here has no
-	 * effect — a disabled pass leaves its setter a silent no-op, so the
-	 * controls panel hides those rows rather than showing a dead slider.
-	 */
 	/** True once the gradient pass exists, so the stops editor can show itself. */
 	get hasGradient() {
 		return this.gradient !== null;
@@ -2229,6 +2151,11 @@ export class ModelViewer {
 		this.gradient?.setStops(this.gradientStops);
 	}
 
+	/**
+	 * Parameters actually backed by a live pass. Anything omitted here has no
+	 * effect — a disabled pass leaves its setter a silent no-op, so the
+	 * controls panel hides those rows rather than showing a dead slider.
+	 */
 	availableParams(): Set<keyof RenderParams> {
 		const keys: (keyof RenderParams)[] = [
 			'color',
@@ -2487,13 +2414,6 @@ export class ModelViewer {
 		for (const g of this.groups.values()) this.syncGroup(g);
 	}
 
-	/**
-	 * Aim the real key from the shade direction, so the soft cast shadows
-	 * (deck hardware onto the vessel) fall the same way the terminator does.
-	 * The direction is view-space; rotating it by the camera puts it in world
-	 * space, and it is re-done every frame because the scroll shots move the
-	 * camera. Distance is kept, so the shadow frustum set up in load() holds.
-	 */
 	/** The key back where the look puts it, aimed at the model's centre again (`fitShadow` moves its aim). */
 	private homeKey() {
 		const { key } = this.lights;
@@ -2503,20 +2423,13 @@ export class ModelViewer {
 	}
 
 	/**
-	 * The key's shadow map, fitted on every tick to what's drawn: the
-	 * bounds of the meshes shown (pieces wherever they've been taken apart
-	 * to, groups put away left out), in the light's own frame, and across
-	 * the light no wider than the view (a directional light's shadows fall
-	 * along it, so nothing outside the view casts into it). It was the
-	 * model's longest side 2.2 times over, room once for a floor that's
-	 * gone: now the map's texels go to what the camera sees, about twice as
-	 * fine on the wide shots, several times on the close ones.
-	 * Its sides move in steps of a twentieth (shrinking only by two), and
-	 * its middle by whole texels of the light's grid, so a glide doesn't set
-	 * the shadow's edges crawling.
-	 * The light's direction stays as it is; only where it's aimed moves.
-	 * With a floor to shadow (`groundShadow`), the map keeps the fixed frame
-	 * set in `load`, which reaches it.
+	 * Fits the key's shadow map each tick to what's drawn, so its texels go to
+	 * what the camera sees: the shown meshes' bounds (pieces wherever they've
+	 * moved, hidden groups left out) in the light's frame, no wider than the
+	 * view, since nothing outside it casts into it. Sides move in 5% steps
+	 * (shrinking only by two) and the middle by whole texels, so a glide doesn't
+	 * set shadow edges crawling. Only the light's aim moves, not its direction.
+	 * With a floor to shadow (`groundShadow`) the map keeps `load`'s fixed frame.
 	 */
 	private fitShadow() {
 		const { key } = this.lights;
@@ -2596,6 +2509,13 @@ export class ModelViewer {
 	private shadowBox = new THREE.Box3();
 	private shadowCentre = new THREE.Vector3();
 
+	/**
+	 * Aim the real key from the shade direction, so the soft cast shadows
+	 * (deck hardware onto the vessel) fall the same way the terminator does.
+	 * The direction is view-space; rotating it by the camera puts it in world
+	 * space, and it is re-done every frame because the scroll shots move the
+	 * camera. Distance is kept, so the shadow frustum set up in load() holds.
+	 */
 	private aimKey() {
 		const { key } = this.lights;
 		const dist = this.keyHome.length();
@@ -2702,7 +2622,7 @@ export class ModelViewer {
 		this.resize();
 	}
 
-	/** The bake's occlusion, shared by every group (`bakedSurface`). */
+	/** The bake's uniforms, shared by every group (`bakedSurface`). */
 	private baked = {
 		uBakedAO: { value: 1 },
 		uBakedDirect: { value: 0.6 },
@@ -2720,15 +2640,13 @@ export class ModelViewer {
 	};
 
 	/**
-	 * Dev tooling (perf.ts `visibility`): which CAD parts can be seen in the
-	 * view as it stands, the model turned right round in `turns` steps at
-	 * each of `tilts` (the drag's range), as the frame would draw it: groups
-	 * put away left out, cuts open, pieces where they are. Each part drawn in
-	 * its own colour, with its group's clipping, and every colour that
-	 * shows counts; see-through groups each on their own (they hide nothing
-	 * behind them). Wider than the frame by `widen`, so a part only a taller
-	 * phone frame would take in still counts. Needs `keepParts`. Returns
-	 * part indices by the file they're numbered in.
+	 * Dev tooling (perf.ts `visibility`): which CAD parts can be seen from the
+	 * view as it stands, the model turned through `turns` steps at each of
+	 * `tilts` (the drag's range) and drawn as the frame would (hidden groups out,
+	 * cuts open, pieces in place), each part in its own colour. See-through
+	 * groups draw on their own, as they hide nothing. `widen` widens the frame so
+	 * parts a taller phone frame would show still count. Needs `keepParts`.
+	 * Returns part indices by the file they're numbered in.
 	 */
 	async visibleParts({ turns = 24, tilts = [-0.6, -0.3, 0, 0.3, 0.6], scale = 1.25, widen = 1.5 } = {}) {
 		const seen = new Map<string, Set<number>>();
@@ -2841,13 +2759,11 @@ export class ModelViewer {
 	private profiling = false;
 
 	/**
-	 * Dev measuring (perf.ts): the GPU's time for this view's frame, ms, and
-	 * how it splits: `shadow`, the key's shadow map; `scene`, the model
-	 * drawn once; `post`, everything after it (occlusion, tone mapping,
-	 * overlays, the backdrop). Each the best of `trials` runs of `frames`
-	 * frames back to back, to the GPU's finish (as `probe`): good to a
-	 * tenth of a millisecond or so, the fence's polling spread over them. With the
-	 * render targets and geometry it holds, bytes.
+	 * Dev measuring (perf.ts): the GPU's time for this view's frame, ms, split
+	 * into `shadow` (the key's shadow map), `scene` (the model drawn once) and
+	 * `post` (everything after it). Each is the best of `trials` runs of `frames`
+	 * frames to the GPU's finish (as `probe`), good to ~0.1 ms. Also returns the
+	 * render targets' and geometry's memory, bytes.
 	 */
 	async profile(frames = 12, trials = 4): Promise<ViewProfile | null> {
 		const gl = this.renderer.getContext();
@@ -2968,12 +2884,9 @@ export class ModelViewer {
 
 	private updateFov() {
 		const aspect = this.camera.aspect;
-		// Aspect-aware framing. three's `fov` is the VERTICAL angle, so visible
-		// height is the same at any aspect — but visible width is height ×
-		// aspect, which collapses on a tall, narrow stage and crops the model's
-		// sides. Widen the vertical FOV until the bounding sphere fits both
-		// axes. `max` with the base FOV means wide viewports keep the composed
-		// framing exactly; only narrow ones pull back.
+		// three's `fov` is vertical, so a tall, narrow stage crops the model's
+		// sides. Widen it until the bounding sphere fits both axes; wide
+		// viewports keep the composed framing exactly.
 		if (this.fitRadius > 0) {
 			// A longer lens is used from further back (see `fov`), so the guard
 			// measures from the distance that keeps the framing, not the default.
@@ -2999,9 +2912,8 @@ export class ModelViewer {
 		this.updateFov();
 		this.canvasRect = this.container.getBoundingClientRect();
 		this.renderer.setSize(w, h, false);
-		// The frame in whole pixels: at a pixel ratio of 1.5 an odd width came
-		// to a half pixel, which the targets dropped and the passes didn't,
-		// stretching the frame by a hair.
+		// The frame in whole pixels: at a pixel ratio of 1.5 an odd width gives a
+		// half pixel that the targets drop and the passes don't, stretching the frame.
 		const rw = Math.round(w * this.renderRatio);
 		const rh = Math.round(h * this.renderRatio);
 		this.composer.setPixelRatio(1);
@@ -3058,7 +2970,7 @@ export class ModelViewer {
 	/** Puts the model, camera, cuts and key where this frame has them (`render`, and the visibility sampler). */
 	private pose() {
 		this.chooseLod();
-		// The soft boxes stay where render.py puts them: round the camera.
+		// The soft boxes turn with the camera, as in the offline rig.
 		if (this.softbox) {
 			const c = this.camera.position;
 			const yaw = Math.atan2(c.x - this.target.x, c.z - this.target.z);
@@ -3109,13 +3021,9 @@ export class ModelViewer {
 		if (this.opts.autoRotate && this.spinning && !this.drag.active) this.autoRotation += this.opts.autoRotate * dt;
 
 		if (this.gradient) {
-			// Averaging both axes gives 0 at top-left and 1 at bottom-right with
-			// equal weight regardless of aspect — the behaviour the source's
-			// brief describes (its shipped code only used X).
-			//
-			// The target is held while dragging: the pointer is busy turning the
-			// model, and letting it sweep the ramp at the same time couples two
-			// unrelated things. It resumes from wherever the pointer ended up.
+			// Averaging both axes gives 0 at top-left and 1 at bottom-right whatever
+			// the aspect. Held while dragging, so turning the model doesn't also
+			// sweep the ramp; it resumes from wherever the pointer ends up.
 			if (this.gradientFollow && this.pointer.seen && !this.drag.active) {
 				const aim = (this.pointer.x + this.pointer.y) / 2;
 				// Frame-rate independent easing, so the feel is identical at 30 or 120fps.
@@ -3135,10 +3043,9 @@ export class ModelViewer {
 			return;
 		}
 		this.contact?.update(this.scene);
-		// One shadow pass per frame, consumed by the scene render; for the slow
-		// turn alone, every other frame. It moves the model about a
-		// thousandth of a radian a frame, so a shadow a frame behind is out by
-		// a fraction of a pixel, and the shadow is the whole model drawn again.
+		// One shadow pass per frame, consumed by the scene render; for the slow turn
+		// alone, every other frame: at ~1 mrad a frame a one-frame-old shadow is out
+		// by a fraction of a pixel, and the shadow pass redraws the whole model.
 		this.spinShadow = this.spinOnly ? !this.spinShadow : true;
 		this.renderer.shadowMap.needsUpdate = this.spinShadow;
 		const submit = performance.now();
@@ -3151,21 +3058,12 @@ export class ModelViewer {
 	}
 
 	/**
-	 * Adaptive quality, for GPUs the full frame is too much for (an
-	 * integrated laptop GPU at a pixel ratio of 2): the aim is frames at the
-	 * display's rate, 60 at least. The steps (`ladder`), least seen first:
-	 * occlusion at half resolution, the pixel ratio down through 1.5 and 1.25
-	 * to 1, then occlusion off.
-	 *
-	 * It starts where the GPU can keep up: `warmUp` times a few frames before
-	 * the model is seen (`probe`) and steps down until one fits. Then, while
-	 * frames are drawn back to back (a camera move, a reveal, the slow turn on
-	 * a 60 Hz display), the median of the
-	 * last 40 intervals is checked: under ~55 fps, one step down. A step that
-	 * doesn't make frames at least 8% faster is undone, and that's where it
-	 * stays: the time is going somewhere a smaller frame can't help (the CPU,
-	 * the vertices). Never back up, so it settles rather than hunts. A GPU
-	 * with headroom never leaves the first step.
+	 * Adaptive quality for GPUs the full frame is too much for, aiming at the
+	 * display's rate (60 fps at least) by stepping down `ladder`, least visible
+	 * first; `probe` picks the starting step. While frames draw back to back,
+	 * the median of the last 40 intervals over SLOW_FRAME_MS steps down once. A
+	 * step that isn't STEP_GAIN faster is undone and pacing stops (the time is
+	 * the CPU's or the vertices'). It never steps back up, so it settles rather than hunts.
 	 */
 	private keepPace() {
 		const p = this.pace;
@@ -3195,20 +3093,16 @@ export class ModelViewer {
 	}
 
 	/**
-	 * Times a few frames to the GPU's finish, without stalling the main
-	 * thread (a fence, polled), and steps down until one takes less than
-	 * SLOW_FRAME_MS less a margin (about 14 ms, room for 60 fps), as long as
-	 * each step helps. For `warmUp`,
-	 * out of sight. The polling rounds up by a few milliseconds: the fastest
-	 * of three counts.
+	 * For `warmUp`, out of sight: times frames to the GPU's finish (a polled
+	 * fence, so the main thread never stalls) and steps down while a frame takes
+	 * over SLOW_FRAME_MS × 0.8 (~14 ms, room for 60 fps) and each step helps.
 	 */
 	private async probe(draw: () => void) {
 		const gl = this.renderer.getContext();
 		if (!(gl instanceof WebGL2RenderingContext)) return;
-		// Four frames back to back, timed to the last one's finish: a single
-		// frame's time is mostly the GPU waking up and the queue ahead of it
-		// (a fast GPU read as 15 ms for a 3 ms frame), four in a row its
-		// throughput. The better of two.
+		// Frames back to back, timed to the last one's finish: a single frame's
+		// time is mostly the GPU waking up and the queue ahead of it (15 ms for a
+		// 3 ms frame on a fast GPU); several in a row measure throughput.
 		const time = () => gpuTime(gl, draw, () => this.disposed);
 		let ms = await time();
 		while (ms > SLOW_FRAME_MS * 0.8 && this.pace.step < this.ladder.length - 1 && !this.disposed) {
@@ -3259,10 +3153,10 @@ export class ModelViewer {
 
 	/**
 	 * With occlusion on, its composite reads the scene straight from the
-	 * beauty target and tone maps as it shades: the copy into the composer's
-	 * buffer and the output pass were each one more full-screen pass at the
-	 * frame's size (and the copy one more write of it). With occlusion off
-	 * (adaptive quality's last step), or SSR drawing the scene, both are back.
+	 * beauty target and tone maps as it shades, saving the copy into the
+	 * composer's buffer and the output pass (a full-screen pass each). With
+	 * occlusion off (adaptive quality's last step) or SSR drawing the scene,
+	 * both come back.
 	 */
 	private syncPasses() {
 		const merged = !!this.gtao?.enabled && !this.ssr;
@@ -3274,7 +3168,6 @@ export class ModelViewer {
 		this.outputPass.enabled = !merged;
 	}
 
-	/** Moves to step `i` of the ladder. */
 	private setStep(i: number) {
 		this.pace.step = i;
 		const { ratio, ao } = this.ladder[i];
@@ -3299,7 +3192,6 @@ export class ModelViewer {
 		/** Intervals between frames drawn back to back, ms. */
 		intervals: [] as number[],
 		settleUntil: 0,
-		/** Where on the ladder it is. */
 		step: 0,
 		/** The last step down, to judge whether it helped. */
 		stepped: null as { from: number; median: number } | null,
@@ -3408,23 +3300,6 @@ type Piece = {
 	lift?: number;
 };
 
-/**
- * Ambient occlusion from the scene pass's own depth (GTAOPass), made cheap
- * without changing a pixel of it, and able to run at a lower resolution:
- *
- *  - Normals once. With only depth to go on, GTAO and its denoiser rebuild a
- *    surface normal from nine depth reads wherever they need one, and the
- *    denoiser needs one for each of its 17 taps: some 150 depth reads a
- *    pixel, most of the occlusion's cost. Here a pass rebuilds each pixel's
- *    normal once, the same way, into a texture both read instead.
- *  - At a lower resolution (`aoScale`, phones), a joint bilateral upsample:
- *    each pixel takes the occlusion of the four nearest low-resolution
- *    samples, weighted as bilinear would but also by how close each one's
- *    depth is to its own (allowing for the surface's slope), so a sample from
- *    the surface behind a silhouette doesn't bleed across it, and edges keep
- *    the frame's resolution rather than stepping.
- *  - The stock pass's copy of the frame and its multiply folded into one draw.
- */
 /** GTAOPass's denoise noise (its `_generateNoise`), from a fixed seed rather than Math.random. */
 function seededNoise(size = 64) {
 	let seed = 0x5eed;
@@ -3451,6 +3326,15 @@ function seededNoise(size = 64) {
 	return noise;
 }
 
+/**
+ * Ambient occlusion from the scene pass's own depth (GTAOPass), cheaper with
+ * identical pixels, and able to run at a lower resolution:
+ *  - Normals once: GTAO and its 17-tap denoiser rebuild a normal from nine depth
+ *    reads per use (~150 a pixel); here one pass writes them to a texture.
+ *  - Below full resolution (`aoScale`), a joint bilateral upsample weights the
+ *    four nearest samples by depth too, so silhouettes keep sharp edges.
+ *  - The stock pass's frame copy and multiply fold into one draw.
+ */
 class SceneGTAOPass extends GTAOPass {
 	/** The view normals, rebuilt once a frame from the depth (`setGBuffer` with it). */
 	readonly normals = new THREE.WebGLRenderTarget(1, 1, {
@@ -3517,8 +3401,8 @@ class SceneGTAOPass extends GTAOPass {
 	constructor(...args: ConstructorParameters<typeof GTAOPass>) {
 		super(...args);
 		// The denoise's noise, as GTAOPass makes it but from a fixed seed: its
-		// own draws on Math.random, so each load shaded the edges a little
-		// differently and no two captures of the same view matched (perf.ts).
+		// own uses Math.random, so each load would shade edges a little
+		// differently and captures of the same view (perf.ts) wouldn't match.
 		this.pdNoiseTexture.dispose();
 		this.pdNoiseTexture = seededNoise();
 		this.pdMaterial.uniforms.tNoise.value = this.pdNoiseTexture;
@@ -3741,9 +3625,9 @@ class SceneGTAOPass extends GTAOPass {
 	private quad = new FullScreenQuad(this.composite);
 
 	/**
-	 * The print grade (`grade` in the composite), as render.py's
-	 * look_settings give it, on the finished frame (when it finishes it):
-	 * `amount` 0 leaves it as drawn. Colours as `#rrggbb`, taken as sRGB.
+	 * The print grade (`grade` in the composite), matched to the offline
+	 * renders', on the finished frame (when this pass finishes it): `amount` 0
+	 * leaves it as drawn. Colours as `#rrggbb`, taken as sRGB.
 	 */
 	setGrade(g: { amount: number; saturation: number; tint: string; contrast: number; blackPoint: number; shadows: string; highlights: string }) {
 		const u = this.composite.uniforms;
@@ -3751,7 +3635,7 @@ class SceneGTAOPass extends GTAOPass {
 		u.uSaturation.value = g.saturation;
 		u.uContrast.value = g.contrast;
 		u.uBlackPoint.value = g.blackPoint;
-		// render.py's srgb_to_linear(colour) / srgb_to_linear('#ffffff'): three's Color.set linearises.
+		// Color.set linearises the sRGB colours, as the offline grade does.
 		(u.uTint.value as THREE.Color).set(g.tint);
 		(u.uShadowTone.value as THREE.Color).set(g.shadows);
 		(u.uHighTone.value as THREE.Color).set(g.highlights);
@@ -3859,20 +3743,13 @@ function piece(mesh: THREE.Object3D, out: THREE.Vector3): Piece {
 }
 
 /**
- * Collapse the model's non-instanced parts into a single mesh.
- *
- * Every part shares one material, so nothing distinguishes 110 draws from
- * one except the exporter's node structure — and each frame renders the
- * scene twice (shadow depth, beauty). Instanced
- * parts are left alone: they are already one draw each.
- *
- * The quantised attributes (Int16 positions, Int8 normals from
- * KHR_mesh_quantization) are widened to float first. Baking a node's world
- * transform into a normalised Int16 attribute would clamp everything to
- * [-1, 1]; widening is exact, so the vertices land where the vertex shader
- * would have put them. UVs are dropped: the material samples no textures
- * and the surface-variation noise is world-space, so they were dead weight
- * and their mixed types (Uint16 / Float32) would have blocked the merge.
+ * Collapses the model's non-instanced parts into a single mesh: they share one
+ * material, so separate draws are pure overhead in each scene render (shadow,
+ * beauty). Instanced parts are already one draw each and stay. Quantised
+ * attributes (KHR_mesh_quantization) are widened to float first, exactly, since
+ * baking a world transform into a normalised Int16 would clamp it to [-1, 1].
+ * UVs are dropped: nothing samples them (the surface variation is world-space)
+ * and their mixed types (Uint16 / Float32) would block the merge.
  */
 function mergeStaticMeshes(model: THREE.Object3D, material: THREE.Material) {
 	model.updateMatrixWorld(true);
@@ -3921,11 +3798,10 @@ function mergeStaticMeshes(model: THREE.Object3D, material: THREE.Material) {
 }
 
 /*
- * Loading works on the CAD's vertex data directly, as typed arrays. The
- * groups run to hundreds of thousands of vertices; through three's per-
- * vertex accessors (getX, fromBufferAttribute: a call, a normalisation and a
- * bounds check per component) carving and splitting them held the main
- * thread for a third of a second, mid-scroll.
+ * Loading works on the CAD's vertex data directly, as typed arrays: the groups
+ * run to hundreds of thousands of vertices, and three's per-vertex accessors
+ * (getX, fromBufferAttribute: a call, a normalisation and a bounds check per
+ * component) would block the main thread for ~300 ms mid-scroll.
  */
 
 /** An attribute's raw storage: quantised (KHR_mesh_quantization) or not, interleaved or not. */
@@ -4119,7 +3995,7 @@ async function lodsBy(geometry: THREE.BufferGeometry, part: Uint32Array, count: 
 /**
  * Waits for the next frame to be drawn, then a moment more: for work that
  * should land one piece per frame (the warm-up's draws), however the tasks
- * between frames fall. Two in one frame made a frame twice as long.
+ * between frames fall: two in one frame make it twice as long.
  */
 function nextFrame() {
 	return new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
@@ -4128,10 +4004,9 @@ function nextFrame() {
 /**
  * The GPU's time for a frame, ms: `frames` of `draw` back to back, timed
  * to the last one's finish with a fence, polled so the main thread isn't
- * stalled; the best of `trials`. In two halves, the page given the main
- * thread between them (the GPU busy with the first meanwhile): four draws'
- * submission in one task held a slow laptop's main thread for 70 ms.
- * The polling rounds up by a few milliseconds over the whole run.
+ * stalled; the best of `trials`. Submitted in two halves with a yield
+ * between (the GPU busy with the first meanwhile): four draws in one task
+ * block a slow laptop's main thread ~70 ms. Polling adds a few ms per run.
  */
 async function gpuTime(gl: WebGL2RenderingContext, draw: () => void, stop: () => boolean, frames = 4, trials = 2) {
 	let best = Infinity;
@@ -4271,11 +4146,10 @@ const isStrip = (b: { width: number }) => b.width < 0.2;
 type Softbox = { azimuth: number; elevation: number; distance: number; width: number; length: number; power: number };
 
 /**
- * The approved studio light from before the black renders (render.py RIGS
- * 'studio-classic'): a big soft box overhead and a little to one side for
- * broad, even form, and a tall strip either side behind to cut the
- * silhouette out. As it was approved: its azimuths read back mirrored
- * (the cube PMREM's), and all its light, reflected and diffuse, from the
+ * The 'studio' rig (offline rig 'studio-classic'): a big soft box overhead and
+ * a little to one side for broad, even form, and a tall strip either side
+ * behind to cut out the silhouette. Its azimuths read back mirrored (the cube
+ * PMREM's), and all its light, reflected and diffuse, comes from the
  * environment map.
  */
 const STUDIO_SOFTBOXES: Softbox[] = [
@@ -4285,16 +4159,12 @@ const STUDIO_SOFTBOXES: Softbox[] = [
 ];
 
 /**
- * The black studio renders' light (render.py RIGS 'studio-black', which
- * the reference frames, renders/mark-0-black, were lit with; the -v2 set's
- * json rig came after): one smallish soft box far round at camera-right,
- * so the right side lights and the rest falls away; two strips behind at
- * camera-left tracing that side's silhouette; a faint wash from above; on
- * black, nothing in front at camera-left. Camera-relative, as render.py
- * places them (`azimuth` 0 the camera's side, degrees round to the right;
- * sizes and `distance`, 3 unless given, in subject radii). The first is
- * the key: the directional key stands for it (`shadeAzimuth` 30,
- * `shadeElevation` 9 is the same direction in its terms).
+ * The 'black' rig (offline rig 'studio-black'): one smallish soft box far round
+ * at camera-right, so that side lights and the rest falls away; two strips
+ * behind at camera-left tracing its silhouette; a faint wash from above.
+ * Camera-relative (`azimuth` 0 the camera's side, degrees round to the right;
+ * sizes and `distance` in subject radii). The first is the key, which the
+ * directional key stands in for (`shadeAzimuth` 30, `shadeElevation` 9).
  */
 const SOFTBOXES: Softbox[] = [
 	{ azimuth: 80, elevation: 30, distance: 2.2, width: 0.5, length: 1.0, power: 1.0 },
@@ -4304,15 +4174,12 @@ const SOFTBOXES: Softbox[] = [
 ];
 
 /**
- * SOFTBOXES as an environment, for the metal to reflect and the surfaces
- * to be lit by: each a panel where render.py puts it, in a black room, with
- * the camera's side along +z (`softbox` turns it with the camera). A
- * panel's brightness is render.py's: its power is what the subject receives
- * at any size and distance (Blender's energy scaled by distance squared),
- * so what a reflection of it shows, its radiance, is power times distance
- * squared over area: the key broad and soft, the strips thin and bright.
- * Normalised so the key is 1; `environment` scales the lot.
- * Monochrome: the parts' colour is the finishes'.
+ * A rig as an environment, for the metal to reflect and the surfaces to be lit
+ * by: each box a panel in a dark room, the camera's side along +z (`softbox`
+ * turns it with the camera). A box's power is what the subject receives at any
+ * size and distance, so its radiance is power × distance² / area: the key
+ * broad and soft, the strips thin and bright. Normalised so the key is 1;
+ * `environment` scales the lot. Monochrome: the parts' colour is the finishes'.
  */
 function createSoftboxEnvironment(boxes: Softbox[], room = 0x000000): THREE.Scene {
 	const env = new THREE.Scene();

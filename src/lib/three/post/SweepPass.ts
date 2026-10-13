@@ -18,7 +18,7 @@ export interface SweepOptions {
 	lift?: number;
 	/** How much the OBJECT darkens along the backdrop axis, 0..1. 0 = none. */
 	falloff?: number;
-	/** Grain over the whole frame, backdrop included. */
+	/** Film grain over the model; the backdrop stays clean. */
 	grain?: number;
 	/** Grain cell size in device pixels. Real film grain is coarser than a pixel. */
 	grainSize?: number;
@@ -41,12 +41,10 @@ export interface SweepUniforms {
 
 /**
  * The backdrop, as a function of screen uv (0..1, y up). Shared verbatim with
- * `studioShade.ts`, where the object samples it for bounce light, so the two
- * can never drift apart. Colours mix in linear light: an sRGB mix of a pale
- * grey and a near-black lands on a muddy mid grey; linear gives the long
- * light plateau and quick drop the reference photographs have.
- *
- * Expects the SweepUniforms to be declared by the caller.
+ * `studioShade.ts`, which samples it for bounce light, so the two can't drift
+ * apart. Colours mix in linear light: an sRGB mix of pale grey and near-black
+ * lands on a muddy mid grey; linear gives a long light plateau and quick drop.
+ * The caller declares the SweepUniforms.
  */
 export const SWEEP_GLSL = /* glsl */ `
 	vec3 sweepToLinear( vec3 c ) { return pow( max( c, 0.0 ), vec3( 2.2 ) ); }
@@ -75,27 +73,14 @@ export const SWEEP_GLSL = /* glsl */ `
 `;
 
 /**
- * Studio sweep: a lit backdrop behind the model, in display space.
- *
- * Product photography lights the backdrop separately from the subject, so
- * this pass knows nothing about the lights: it paints a two-colour linear
- * gradient wherever the scene left the canvas transparent, and outputs an
- * opaque frame. The subject's own shadow is a material term (see
- * `studioShade.ts`) with its own direction; the two never have to agree.
- *
- * Extras that share the gradient axis ride along:
- *  - `falloff` darkens the object towards the dark end, which ties its
- *    bottom into the backdrop the way a real floor-level falloff does.
- *  - `grain` covers everything, in cells coarser than a pixel, weighted to
- *    midtones and shadows and away from highlights and true black, and
- *    fixed to the frame by default (optionally re-rolled a few times a
- *    second) — the way film grain reads.
- *  - a 1-bit dither on the backdrop, because a long near-black gradient
- *    bands at 8 bits and grain only half hides it.
- *
- * Runs last. Input is premultiplied (see GradientMapPass), so compositing is
- * the plain `src + bg * (1 - a)`. Output alpha is 1: the CSS stage behind the
- * canvas is hidden while this pass is on.
+ * Studio sweep: a two-colour backdrop painted wherever the scene left the
+ * canvas transparent, in display space. Like product photography it ignores
+ * the scene's lights; the subject's shadow is a separate material term
+ * (`studioShade.ts`). `falloff` darkens the object towards the dark end to
+ * tie it into the backdrop, `grain` adds static film grain to the model, and
+ * a dither stops the long near-black gradient banding at 8 bits. Runs last:
+ * input is premultiplied, so compositing is `src + bg * (1 - a)`, and the
+ * opaque output hides the CSS stage while the pass is on.
  */
 export class SweepPass extends ShaderPass {
 	constructor(opts: SweepOptions = {}) {

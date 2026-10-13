@@ -2,10 +2,10 @@
  * Colour system — the only place colour is defined.
  *
  * White, a grey scale numbered by darkness (50 the lightest, 950 the
- * darkest) and Black. A cool slate beside it. One accent, Orange, for
- * energy and the markers that carry it — never for UI chrome. Components use these tokens directly; no hex, rgb(), hsl() or
- * color-mix() anywhere else. `npm run check` fails on them
- * (scripts/check-system.mjs).
+ * darkest) and Black, with a cool slate beside it. One accent, Orange, for
+ * energy and the markers that carry it, never for UI chrome. Components use
+ * these tokens directly; `npm run check` (scripts/check-system.mjs) fails
+ * on hex, rgb(), hsl() or color-mix() anywhere else.
  *
  * The /design-system page reads this file directly. A step's doc comment is
  * its description there, so keep the format:
@@ -14,19 +14,19 @@
  *     --name: #hex;
  */
 :root {
-	/** Text and fills on dark: the page background, text on dark bands. */
+	/** The page background; text and fills on dark bands. */
 	--white: #ffffff;
 	/** Surfaces: the stage, mode bar, controls panel, image placeholders. */
 	--grey-50: #f3f3f3;
-	/** Cards on light: the download card on Missions. */
+	/** Cards on light: the download and position cards, light CTA buttons. */
 	--grey-100: #e7e7e7;
 	/** Borders and hairlines; at 40%, buttons (--button). */
 	--grey-200: #cacacb;
-	/** Background. */
+	/** Scale step between 200 and 400; no fixed role. */
 	--grey-300: #b2b3b3;
-	/** The Progress page's canvas; tertiary text on light, secondary text on dark, slider tracks. */
+	/** Secondary text on dark, the Progress canvas, slider tracks, dividers and decorative marks; not text on light (2.6:1 on white fails contrast). */
 	--grey-400: #9f9fa0;
-	/** Mid grey. */
+	/** Scale step between 400 and 700; no fixed role. */
 	--grey-500: #878788;
 	/** Secondary text: spec labels, the line under a page title. */
 	--grey-700: #636464;

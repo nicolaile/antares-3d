@@ -2,18 +2,11 @@ import type { Attachment } from 'svelte/attachments';
 import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
- * Fades an element in the first time it scrolls into view, once its top
- * is a fifth of the way up the screen. With reduced motion it's simply
- * there.
- *
- * With `items`, a selector, it's those of its descendants that fade in
- * instead, one after another in page order, `stagger` seconds apart.
- *
- * Each element gets a `reveal` event as its fade starts, so what's inside
- * can make an entrance of its own (ReactorExplorer's model turns in).
- *
- * An attachment: `<div {@attach reveal()}>`, or on a layout `Cell`, which
- * passes it on to its element.
+ * Fades an element in the first time it scrolls into view. With `items` (a
+ * selector), its matching descendants fade in instead, staggered.
+ * Each target gets a `reveal` event as its fade starts, so what's inside can
+ * make an entrance of its own (ReactorExplorer's model turns in).
+ * `<div {@attach reveal()}>`, or on a layout `Cell`.
  */
 export function reveal({
 	items,

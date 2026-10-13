@@ -1,18 +1,19 @@
 /**
  * The systems page's numbered points (01–07, $lib/lab/content/systems.ts),
  * pinned to their parts in the CAD test bench (/cad), per model view.
- * Positions are in each STEP file's own frame, Y-up metres, about 1 cm
- * proud of a surface of the part that faces out, so a label shows only
- * while that surface does (internal ones, the core, the heat pipes, once a
- * section cut opens them; see CadViewer's anchor test, whose slack is 3 cm). The Assembled view
- * places them as assembly.ts stacks the files: Mark-0 turned, the
- * exchanger lifted.
+ *
+ * Positions are in each STEP file's own frame, Y-up metres, about 1 cm proud
+ * of an outward-facing surface, so a label shows only while that surface
+ * does (internal ones once a section cut opens them; CadViewer's anchor test
+ * allows 3 cm of slack). The Assembled view places them as assembly.ts
+ * stacks the files: Mark-0 turned, the exchanger lifted.
  *
  * 07, power management, has no part of its own in either file, so no label.
  *
  * Plain data, free of three.js, so a page can read it without loading the
  * renderer (the landing's R1 section); cadLabels.ts makes vectors of it.
  */
+
 export interface CadLabel {
 	point: number;
 	model: 'mark-0' | 'power-conversion-system';
@@ -41,8 +42,8 @@ export const CAD_POINTS: CadLabel[] = [
 	{ point: 4, group: 'f4_heatpipes', model: 'power-conversion-system', at: [-0.1085, 3.0, 0.188], assembled: false },
 	// The exchanger's shell (r 0.64 m), just under the dome.
 	{ point: 5, group: 'f5_phx', model: 'power-conversion-system', at: [0.46, 3.7, 0.46], lifts: true },
-	// The skid's horizontal vessel: first taken for the recuperator, by its
-	// insides (a shaft, a stack of discs) more likely the turbo-alternator's
-	// housing; to confirm. Its group is the landing's carve (`f6_turbo`).
+	// The skid's horizontal vessel: by its insides (a shaft, a stack of discs)
+	// likely the turbo-alternator's housing. Group is the landing's carve (`f6_turbo`).
+	// TODO(launch): confirm this part's identity with Antares.
 	{ point: 6, group: 'f6_turbo', model: 'power-conversion-system', at: [0.43, 1.475, -3.815] }
 ];

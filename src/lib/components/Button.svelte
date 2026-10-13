@@ -1,9 +1,7 @@
 <!--
 	@component
-	A call to action led by a right arrow: "→ Join our mission", set in the
-	Button style. With an `href` it's a link; without, a button that runs
-	`onclick`. Takes the surrounding text colour, so it works on light and
-	dark. On hover the arrow nudges forward.
+	A call to action led by a right arrow: "→ Join our mission". With an
+	`href` it's a link; without, a button. Takes the surrounding text colour.
 -->
 <script lang="ts">
 	import arrow from '$lib/assets/icons/right-arrow.svg?raw';
@@ -67,7 +65,6 @@
 		outline: 1px solid currentColor;
 		outline-offset: 2px;
 	}
-	/* 16px at 1440: one em of the label's own size. */
 	.icon {
 		display: block;
 		width: 1em;

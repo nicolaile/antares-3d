@@ -1,8 +1,8 @@
 <!--
 	@component
-	A large statement, optionally with a short label: when there is one, the
-	statement's first line is indented to clear it by whole columns. Place in
-	a full-width (12-column) cell: the indent is measured against the full row.
+	A large statement with an optional label, its first line indented by
+	whole columns to clear the label. Place in a full-width (12-column) cell:
+	the indent is measured against the full row.
 -->
 <script lang="ts">
 	import type { Column } from '$lib/layout/types';

@@ -1,6 +1,5 @@
 <script lang="ts">
-	// Layout guide matching the Figma column grid: 12 stretch columns,
-	// 20px margin, 16px gutter, red at 10%. Press G to toggle.
+	// Layout guide over the design's 12-column grid (the --grid-* tokens). Press G to toggle.
 	let { visible = true }: { visible?: boolean } = $props();
 
 	// `visible` sets the default; the G key overrides it from then on.

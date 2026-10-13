@@ -2,20 +2,12 @@ import type { Attachment } from 'svelte/attachments';
 import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
- * Made With GSAP's effect 041, calmer: hovering a line of text rolls its
- * letters down out of view while a copy drops in from above, rippling
- * out from the letter the pointer came in on. Lands softly, no overshoot.
- * Then the letters are swapped back for the plain text.
- *
- * Built on the first hover, not before, so it sits happily alongside
- * anything else that rewrites the text first (the odometer): while that's
- * still running, a hover does nothing. Each letter is set to its own
- * advance in the text, kerning and all, so nothing shifts as it's built.
- * Real pointers only; with reduced motion it's the still text. While it
- * rolls, the letters are hidden from screen readers and a visually hidden
- * copy of the text reads instead.
- *
- * An attachment: `<span {@attach letterRoll()}>935MW</span>`.
+ * On hover, letters roll down out of view while a copy drops in from above,
+ * rippling out from the letter the pointer entered on; then the plain text
+ * is restored. Built on hover, not before, so it coexists with anything else
+ * that rewrites the text (the odometer): while that runs, hover does nothing.
+ * Each letter keeps its kerned advance, so nothing shifts as it's built.
+ * `<span {@attach letterRoll()}>935MW</span>`
  */
 export function letterRoll({
 	duration = 0.6,
@@ -41,7 +33,7 @@ export function letterRoll({
 			});
 
 			el.textContent = '';
-			// The text as it reads, for screen readers: the letters would read one by one.
+			// For screen readers, which would read the letters one by one.
 			const label = document.createElement('span');
 			label.className = 'visually-hidden';
 			label.textContent = text;
@@ -70,13 +62,12 @@ export function letterRoll({
 
 		const onOver = (e: MouseEvent) => {
 			if (rolling) return;
-			// The odometer (or anything else) still has the text in pieces.
+			// Something else (the odometer) still has the text in pieces.
 			if (el.children.length) return;
 			const parts = build();
 			if (!parts) return;
 			rolling = true;
 
-			// The letter under the pointer, by where it is across.
 			const x = e.clientX;
 			let from = parts.cells.findIndex((c) => c.getBoundingClientRect().right >= x);
 			if (from < 0) from = parts.cells.length - 1;

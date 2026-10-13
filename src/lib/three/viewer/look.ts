@@ -24,10 +24,9 @@ export const LOOK: Partial<RenderParams> = {
 	coatRoughness: 0.5,
 	materialEnv: 1.2,
 
-	// Each part its own finish, as in the studio renders (the landing's
-	// models, scripts/lab/bake-surface.mjs), mapped onto this lighter look at 60%,
-	// with a little roughness detail over them. No grain in the relief: it
-	// costs and barely shows.
+	// Each part its own finish, baked by the private model pipeline
+	// (scripts/lab/bake-surface.mjs), mapped onto this lighter look at 60%,
+	// with a little roughness detail. No grain in the relief: it costs and barely shows.
 	finish: 0.6,
 	finishFloor: 0.6,
 	polymer: 1,
@@ -35,11 +34,9 @@ export const LOOK: Partial<RenderParams> = {
 	detailTile: 1.2,
 	surfaceGrain: 0,
 
-	// Light: the studio renders' soft boxes (a big key overhead, a tall strip
-	// either side behind, round the camera) as the environment, so the metal
-	// reflects broad soft light rather than one hard highlight; the
-	// directional key down from 9, kept for the shadows it casts. (2 for the
-	// black renders' rig instead.)
+	// Light: softboxes as the environment (a big key overhead, a tall strip
+	// either side behind), so the metal reflects broad soft light rather than
+	// one hard highlight; the directional key is kept for the shadows it casts.
 	softbox: 1,
 	key: 5,
 	// The key's light doesn't wrap past the terminator.
@@ -79,15 +76,15 @@ export const LOOK: Partial<RenderParams> = {
 	studioGrainSize: 1,
 	studioGrainSpeed: 0,
 
-	// Occlusion: the bake's (within each group, ray-traced), most of it on
-	// the light from the surroundings and a little on the key's; the
-	// screen-space pass, at 0.6 now, for contact between groups.
+	// Occlusion: the bake's (ray-traced within each group), mostly on the
+	// environment light and a little on the key's; the screen-space pass for
+	// contact between groups.
 	bakedAO: 1,
 	bakedDirect: 0.15,
 	ao: 0.6,
 
-	// The black renders' finish in post, off: machined edges catching the
-	// light, creases holding shadow, and their print grade.
+	// Post finish, off: machined edges catching the light, creases holding
+	// shadow, and a print grade.
 	edges: 0,
 	cavity: 0,
 	grade: 0

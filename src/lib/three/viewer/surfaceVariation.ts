@@ -2,14 +2,11 @@ import * as THREE from 'three';
 
 /**
  * Breaks up a mathematically uniform surface with fine world-space value
- * noise that modulates roughness and albedo by a few percent. Fine only: a
- * broader low-frequency term reads as smudges on large smooth panels. It is the single biggest cue separating "CG material" from
- * "painted metal" — real coatings are never the same roughness twice.
- *
- * World space (not UV) so it works on the instanced parts, which share one
- * geometry and would otherwise repeat an identical pattern 432 times. The
- * pattern follows `worldPosition`, which moves with the model, so it sticks
- * to the surface as the vessel turns.
+ * noise that modulates roughness and albedo by a few percent, since real
+ * coatings are never the same roughness twice. Fine only: a broader term
+ * reads as smudges on large smooth panels. World space (not UV) so the
+ * instanced parts, which share one geometry, don't repeat one pattern 432
+ * times; `worldPosition` moves with the model, so it sticks as it turns.
  */
 export function applySurfaceVariation(
 	material: THREE.MeshPhysicalMaterial,

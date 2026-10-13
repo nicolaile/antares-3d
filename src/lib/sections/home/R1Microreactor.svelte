@@ -1,8 +1,7 @@
 <!--
 	@component
-	Product section, on a full-bleed dark band: the header, the interactive
-	model with its features, then the system's drawing (section or
-	isometric, SystemViews).
+	Home's product section on a full-bleed dark band: the header, the
+	interactive model with its features, then the system's drawing.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -24,13 +23,13 @@
 		title: string;
 		aside?: string;
 		features: Feature[];
-		/** The CAD models' files and setup (ReactorExplorer). */
+		/** See ReactorExplorer. */
 		models: Partial<Record<CadModel, CadModelSetup>>;
 		/** The scale rule's label beside the model. */
 		scale?: string;
 		/** Accessible description of the energy diagram. */
 		diagram: { alt: string };
-		/** Over the drawing, centred: a title over a line. */
+		/** Centred over the drawing. */
 		views: { title: string; text: string };
 	} = $props();
 
@@ -39,14 +38,13 @@
 
 <section class="band" data-tone="dark">
 	<Row gap={80}>
-		<!-- In turn: the title, the line under it, the tabs, then the model (which turns in, too). -->
-		<!-- 160px between the heading's aside and the tabs. -->
+		<!-- Reveals the title, aside, tabs, then the model (which turns in, too). -->
 		<Cell subgrid gap={160} {@attach reveal({ items: REVEAL, stagger: 0.12 })}>
 			<Cell subgrid>
 				<SectionHeader {title} {aside} />
 			</Cell>
 			<Cell subgrid>
-				<!-- The models aren't final yet. -->
+				<!-- TODO(launch): the models aren't final; drop `wip` once they are. -->
 				<ReactorExplorer {features} {models} {scale} wip />
 			</Cell>
 		</Cell>
@@ -60,8 +58,7 @@
 </section>
 
 <style>
-	/* Full bleed: the negative margin takes it to the screen edges, and the
-	   matching padding keeps its columns on the page grid. */
+	/* Full bleed, with matching padding to keep its columns on the page grid. */
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
@@ -70,7 +67,6 @@
 		color: var(--white);
 	}
 
-	/* The section's drawing (SystemViews): on desktop a panel one screen tall. */
 	.diagram {
 		grid-column: 1 / -1;
 		display: grid;

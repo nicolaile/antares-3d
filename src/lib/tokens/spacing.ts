@@ -1,7 +1,4 @@
-/**
- * The spacing scale, read straight out of its stylesheet, for the design
- * system page.
- */
+/** The spacing scale, parsed from spacing.css for the design system page. */
 import source from '$lib/styles/spacing.css?raw';
 
 export type SpaceToken = { token: string; px: number; usage: string };

@@ -1,9 +1,8 @@
 <!--
 	@component
-	A live readout of the R1 explorer's 3D, for the optimisation work (with
-	?perf): for each model's viewer, the frames it draws a second, the last
-	frame's draw calls, triangles and CPU time, and its quality step. Profile
-	times the view on stage on the GPU, split into shadow, scene and post;
+	A live readout of the R1 explorer's 3D (with ?perf): per model viewer, its
+	frame rate, last frame's draw calls, triangles and CPU time, and quality
+	step. Profile times the view on stage on the GPU (shadow, scene, post);
 	Run steps through every feature and saves a run (perf.ts), dev only.
 -->
 <script lang="ts">

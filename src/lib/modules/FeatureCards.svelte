@@ -1,17 +1,10 @@
 <!--
 	@component
-	A titled set of three cards: a title and a line about it on the first
-	four columns, then the cards, and optionally a banner under them.
-
-	A dark card (for now just its label, if any) and a slate one (a statement over
-	numbered points) stack on four columns; a photo card fills the other
-	eight, with an optional second photo inset at its centre. The photo's
-	shape sets the row's height and the two beside it split it. The photo
-	is on the right, or the left with `flip`. On tablet the pair sit side by
-	side over the photo; on phones all three stack. The banner, if there is
-	one, runs the full width under them: a line and a link.
-
-	Company's Culture & Operations and the landing's Graphite Machining.
+	A titled set of three cards: a dark card and a slate note (a statement
+	over numbered points) stacked beside a photo card, whose shape sets the
+	row's height. Optionally a full-width banner with a link underneath.
+	Used by Company's Culture & Operations and home's Graphite Machining.
+	TODO(launch): the dark card shows only its label; its content isn't final.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -34,7 +27,6 @@
 	}: {
 		title: string;
 		intro: string;
-		/** Its label, if it has one. */
 		dark: { label?: string };
 		note: {
 			label: string;
@@ -44,12 +36,11 @@
 		};
 		photo: { label: string; background: Image; inset?: Image };
 		join?: { text: string; link: Link };
-		/** The photo on the left, the pair on the right. */
+		/** Photo on the left (desktop only). */
 		flip?: boolean;
 	} = $props();
 
 	const id = $props.id();
-	/** The photo's own shape, from its source. */
 	const ratio = (image: Image) => `${image.src.img.w} / ${image.src.img.h}`;
 </script>
 
@@ -100,8 +91,7 @@
 </section>
 
 <style>
-	/* A little more room above than the page's gap between sections (40px
-	   at 1440), so the heading starts its own part of the page. */
+	/* Extra room above, so the heading starts its own part of the page. */
 	.cards-section {
 		padding-top: var(--space-40);
 	}
@@ -117,8 +107,7 @@
 		color: var(--grey-700);
 	}
 
-	/* Columns 1–4 and 5–12 of the page's grid. Iterative spans both rows,
-	   so its photo's height is the row's. */
+	/* The photo card spans both rows, so its photo's height sets the row's. */
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
@@ -135,8 +124,6 @@
 	.photo {
 		grid-area: 1 / 5 / 3 / span 8;
 	}
-	/* Flipped: the photo on columns 1–8, the pair on 9–12. Tablet and
-	   phones stack the same either way. */
 	@media screen and (min-width: 992px) {
 		.flip .dark {
 			grid-area: 1 / 9 / 2 / span 4;
@@ -194,7 +181,6 @@
 		color: var(--black);
 	}
 
-	/* The photo fills the card; the label and the inset sit over it. */
 	.photo {
 		padding: 0;
 		color: var(--white);
@@ -204,7 +190,6 @@
 		top: var(--space-24);
 		left: var(--space-24);
 	}
-	/* 400px of the card's 928 at 1440, centred both ways. */
 	.inset {
 		position: absolute;
 		top: 50%;
@@ -230,7 +215,7 @@
 		margin: 0;
 	}
 
-	/* The left pair side by side, Iterative full width under them. */
+	/* The pair side by side, the photo full width under them. */
 	@media screen and (max-width: 991px) {
 		.cards {
 			grid-template-rows: auto auto;
@@ -247,7 +232,7 @@
 		}
 	}
 
-	/* One above the other. Scalable, having only its label, keeps a shape. */
+	/* Stacked; the dark card, having only its label, keeps a shape. */
 	@media screen and (max-width: 767px) {
 		.cards {
 			grid-template-columns: minmax(0, 1fr);

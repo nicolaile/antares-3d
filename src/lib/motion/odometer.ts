@@ -1,32 +1,27 @@
 import type { Attachment } from 'svelte/attachments';
 import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
-/**
- * Osmo's number odometer: each digit rolls up through a strip of 0–9, like
- * a mechanical counter, right to left, landing on the element's own text
- * the first time it scrolls into view. Anything that isn't a digit (a
- * separator, a unit) stays put. Once landed, the strips are swapped back
- * for plain digits. With reduced motion it's simply the number. While it
- * rolls, the strips are hidden from screen readers and a visually hidden
- * copy of the text reads instead.
- *
- * An attachment: `<span {@attach odometer()}>10.000.000</span>`.
- */
 const defaults = {
 	duration: 1,
 	ease: 'power3.out',
 	digitStagger: 0.04,
 	triggerStart: 'top 100%',
-	/** How many times 0–9 repeats in each strip, so every digit rolls forward. */
+	/** Times 0–9 repeats in each strip, so every digit rolls forward. */
 	digitCycles: 2
 };
 
-/** The line's height as a share of the font size: one digit's step in the strip. */
+/** Line height over font size: one digit's step in the strip. */
 function lineHeightRatio(el: HTMLElement) {
 	const cs = getComputedStyle(el);
 	return cs.lineHeight === 'normal' ? 1.2 : parseFloat(cs.lineHeight) / parseFloat(cs.fontSize);
 }
 
+/**
+ * Each digit rolls up through a 0–9 strip, right to left, landing on the
+ * element's own text the first time it scrolls into view. Non-digits stay
+ * put; plain text is restored once landed.
+ * `<span {@attach odometer()}>10.000.000</span>`
+ */
 export function odometer({
 	duration = defaults.duration,
 	delay = 0,
@@ -36,7 +31,7 @@ export function odometer({
 }: {
 	duration?: number;
 	delay?: number;
-	/** How many steps each digit rolls to land, instead of all the way up from 0: a calmer roll. */
+	/** Steps each digit rolls to land, instead of all the way up from 0: a calmer roll. */
 	travel?: number;
 	ease?: string;
 	digitStagger?: number;
@@ -47,10 +42,8 @@ export function odometer({
 		const step = lineHeightRatio(el);
 		const box = 'display:inline-block;overflow:clip;padding:0.05em;margin:-0.05em;';
 
-		// Each character's advance in the set text, kerning and all, so the
-		// cells add up to exactly the number's own width: it keeps its spacing
-		// while it rolls, and nothing after it (a unit) moves when the plain
-		// text comes back.
+		// Kerned advances, so the cells add up to the number's own width and
+		// nothing after it shifts when the plain text comes back.
 		el.textContent = text;
 		const node = el.firstChild as Text;
 		const range = document.createRange();
@@ -63,10 +56,9 @@ export function odometer({
 		});
 		const widths = [...text].map((_, i) => (edges[i + 1] - edges[i]) / em);
 
-		// Build: a clipped cell per digit holding its strip, statics as they are.
 		el.textContent = '';
 		el.style.cssText += 'display:inline-flex;align-items:center;';
-		// The number as it reads, for screen readers: the strips would read as 0–9.
+		// For screen readers, which would read the strips as 0–9.
 		const label = document.createElement('span');
 		label.className = 'visually-hidden';
 		label.textContent = text;
@@ -89,9 +81,8 @@ export function odometer({
 			cell.appendChild(roller);
 			el.appendChild(cell);
 			const end = Number(char);
-			// From 0: a 0 rolls a full turn to land, everything else straight up.
-			// With `travel`, every digit starts that many steps short of its own
-			// place in the second turn, and rolls only those.
+			// A 0 rolls a full turn to land. With `travel`, each digit starts that
+			// many steps short of its place in the second turn.
 			const target = travel ? 10 + end : end > 0 ? end : 10;
 			if (travel) gsap.set(roller, { y: `${-(target - travel) * step}em` });
 			rollers.push({ roller, target });

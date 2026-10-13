@@ -276,7 +276,6 @@ export const r1 = {
 		'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
 	features,
 	models,
-	scale: '2.5M/8.2ft',
 	diagram: { alt: 'Diagram of the R1 power conversion system' },
 	views: {
 		title: 'Engineering',

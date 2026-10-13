@@ -20,7 +20,6 @@
 		aside,
 		features,
 		models,
-		scale,
 		diagram,
 		views
 	}: {
@@ -29,8 +28,6 @@
 		features: Feature[];
 		/** See ReactorExplorer. */
 		models: Partial<Record<CadModel, CadModelSetup>>;
-		/** The scale rule's label beside the model. */
-		scale?: string;
 		/** Accessible description of the energy diagram. */
 		diagram: { alt: string };
 		/** Centred over the drawing. */
@@ -49,7 +46,7 @@
 			</Cell>
 			<Cell subgrid>
 				<!-- TODO(launch): the models aren't final; drop `wip` once they are. -->
-				<ReactorExplorer {features} {models} {scale} wip />
+				<ReactorExplorer {features} {models} wip />
 			</Cell>
 		</Cell>
 

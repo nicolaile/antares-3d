@@ -2,7 +2,7 @@
 	@component
 	The features as a strip of numbered card tabs, scrolling sideways when
 	they overflow, over a panel with the open feature's title and description,
-	a scale rule beside the model, step arrows and a pause button.
+	and a pause button.
 
 	The CAD fills the panel: each feature names the model it's shown on, and
 	the stage cuts between models one at a time. Opening a feature turns its
@@ -90,14 +90,11 @@
 	let {
 		features,
 		models,
-		scale,
 		wip = false
 	}: {
 		features: Feature[];
 		/** Tags the 3D models as stand-ins (WipBadge, under the model). */
 		wip?: boolean;
-		/** The scale rule's label beside the model, e.g. its height. */
-		scale?: string;
 		models: Partial<Record<CadModel, CadModelSetup>>;
 	} = $props();
 
@@ -576,8 +573,6 @@
 	const TURN_IN = { from: -Math.PI / 2, duration: 2.4, ease: 'power3.out' };
 	let viewportEl: HTMLDivElement;
 	let revealed = false;
-	/** The section has come into view: the rule waits for it before drawing. */
-	let seen = $state(false);
 	let turnedIn = false;
 	let turnIn: gsap.core.Tween | null = null;
 	$effect(() => {
@@ -591,55 +586,8 @@
 	}
 	function onRevealed() {
 		revealed = true;
-		seen = true;
 		if (viewer && !turnedIn) spinIn(viewer);
 	}
-
-	/**
-	 * The scale rule frames the reactor's height on the first feature only.
-	 * Coming in, its line draws down from the top, ticks and all, and the
-	 * label fades up beside the top once the line is under way; leaving, it
-	 * fades. It waits for the section to come into view, and for the model
-	 * to be back on stage when returning from another one.
-	 */
-	const RULE_ON = 0;
-	let ruleEl = $state<HTMLDivElement>();
-	let ruleLabelEl = $state<HTMLSpanElement>();
-	let ruleTl: gsap.core.Timeline | null = null;
-	let ruleShown = false;
-	$effect(() => {
-		const show = seen && active === RULE_ON;
-		const el = ruleEl;
-		const label = ruleLabelEl;
-		if (!el || !label) return;
-		untrack(() => {
-			// Clipped from the bottom up; open above and to the right so the
-			// label, which sits across the top edge, isn't cut.
-			const shut = 'inset(-50% -100vw 100% -50%)';
-			const open = 'inset(-50% -100vw 0% -50%)';
-			if (ruleTl === null && !ruleShown && !show) {
-				gsap.set(el, { autoAlpha: 0, clipPath: shut });
-				return;
-			}
-			if (show === ruleShown) return;
-			ruleShown = show;
-			ruleTl?.kill();
-			const reduce = prefersReducedMotion();
-			if (show) {
-				ruleTl = gsap
-					.timeline({ delay: reduce ? 0 : HANDOFF.in })
-					.set(el, { autoAlpha: 1, clipPath: reduce ? open : shut })
-					.set(label, { autoAlpha: 0, y: reduce ? 0 : 6 })
-					.to(el, { clipPath: open, duration: reduce ? 0 : 1.1, ease: 'power3.inOut' }, 0)
-					.to(label, { autoAlpha: 1, y: 0, duration: reduce ? 0.2 : 0.6, ease: 'power3.out' }, reduce ? 0 : 0.45);
-			} else {
-				ruleTl = gsap
-					.timeline()
-					.to(el, { autoAlpha: 0, duration: 0.25, ease: 'power1.in' })
-					.set(el, { clipPath: shut });
-			}
-		});
-	});
 
 	onMount(() => {
 		const undrag = dragStrip();
@@ -765,12 +713,6 @@
 			<h3 class="detail-title type-body-large">{firstWords.title}</h3>
 			<p class="detail-text type-caption">{firstWords.text}</p>
 		</div>
-
-		{#if scale}
-			<div class="rule" aria-hidden="true" bind:this={ruleEl}>
-				<span class="rule-label type-caption" bind:this={ruleLabelEl}>{scale}</span>
-			</div>
-		{/if}
 
 		<!-- Under the model, centred on the panel's foot: on the model it's about, not the panel. -->
 		{#if wip}<WipBadge label="3D model · WIP" corner="bottom" />{/if}
@@ -906,45 +848,6 @@
 		color: var(--grey-400);
 	}
 
-	/* The scale rule, right of the model: a vertical hairline with ticks
-	   and its label at the top, framing the vessel's height. */
-	.rule {
-		--tick: calc(var(--size-font) * 0.625);
-		position: absolute;
-		top: 15%;
-		bottom: 15%;
-		left: 67%;
-		width: var(--tick);
-		border-left: 1px solid var(--grey-700);
-		background: repeating-linear-gradient(to bottom, var(--grey-700) 0 1px, transparent 1px 20%) left / var(--tick)
-			calc(100% + 1px) no-repeat;
-		pointer-events: none;
-	}
-	.rule::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: calc(var(--size-font) * 3);
-		border-top: 1px solid var(--grey-700);
-	}
-	.rule::after {
-		content: '';
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: var(--tick);
-		border-top: 1px solid var(--grey-700);
-	}
-	.rule-label {
-		position: absolute;
-		top: 0;
-		left: calc(var(--size-font) * 3.5);
-		translate: 0 -50%;
-		color: var(--button);
-		white-space: nowrap;
-	}
-
 	/* Each model and each panel fill the stage, stacked; GSAP fades between
 	   them (see the script). Panels start hidden: the page opens on a model. */
 	.layer {
@@ -1037,9 +940,6 @@
 		/* The model starts under the description, not behind it. */
 		.layer {
 			top: calc(var(--size-font) * 9);
-		}
-		.rule {
-			display: none;
 		}
 		/* No room beside the image: the figure takes the bottom corner. */
 		.figure {

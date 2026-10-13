@@ -159,6 +159,26 @@ export async function run(
 }
 
 /**
+ * One look tried on a feature's viewer (`feature`, from 0, as it stands: open
+ * it first), without a whole run: `params` set, a moment to draw, and the
+ * frame saved as captures/perf/<label>/<name>.png. The slow turn is held,
+ * so shots line up; settings stay as set.
+ *
+ *   await __perf.shot('looks', 'metal-half', { finishMetal: 0.5 })
+ */
+export async function shot(target: PerfTarget, label: string, name: string, params: Partial<RenderParams> = {}, feature = 0) {
+	if (!/^[\w-]+$/.test(label) || !/^[\w-]+$/.test(name)) throw new Error('label, name: letters, digits, - and _ only');
+	const v = target.viewerFor(feature);
+	if (!v) throw new Error(`feature ${feature + 1}'s viewer hasn't loaded`);
+	target.setPaused(true);
+	for (const [k, value] of Object.entries(params)) v.setParam(k as keyof RenderParams, value as number | string);
+	v.invalidate();
+	await wait(600);
+	const png = await v.snapshot();
+	if (png) await save(label, `${name}.png`, png);
+}
+
+/**
  * Which CAD parts can ever be seen, for scripts/bake-surface.mjs to leave
  * the rest out of the landing's models: every feature, settled, sampled all
  * the way round and through the drag's tilt (`ModelViewer.visibleParts`),

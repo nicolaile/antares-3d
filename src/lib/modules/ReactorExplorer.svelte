@@ -16,6 +16,7 @@
 	import type { Shot } from '$lib/three/shot';
 	import type { CadLabel } from '$lib/three/cadPoints';
 	import type { TrailSet } from '$lib/three/EnergyTrails';
+	import type { ColourSlots } from '$lib/three/ModelViewer';
 	import type { Look } from '$lib/components/CadStage.svelte';
 
 	/**
@@ -54,12 +55,14 @@
 
 	/**
 	 * A model on the stage: its files (its groups under
-	 * static/models/cad/web/), and any parts carved into groups of their own
-	 * and cut in half-section (ModelViewer's `carve` and `sections`).
+	 * static/models/cad/web/), any parts carved into groups of their own and
+	 * cut in half-section (ModelViewer's `carve` and `sections`), and any
+	 * given a colour of their own (its `colours`).
 	 */
 	export type CadModelSetup = {
 		files: string[];
 		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		colours?: ColourSlots;
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Pipes energy can run along, where a feature's look turns it on (CadStage's `trails`). */
 		trails?: TrailSet;
@@ -70,6 +73,7 @@
 	import { onMount, untrack } from 'svelte';
 	import FeatureTab from '$lib/components/FeatureTab.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
+	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import WipBadge from '$lib/components/WipBadge.svelte';
 	import CadStage from '$lib/components/CadStage.svelte';
 	import Picture from '$lib/components/Picture.svelte';
@@ -84,8 +88,6 @@
 	import { gsap, prefersReducedMotion } from '$lib/scroll';
 	import { InertiaPlugin } from 'gsap/InertiaPlugin';
 	import { SplitText } from 'gsap/SplitText';
-	import chevronLeft from '$lib/assets/icons/chevron-left.svg?raw';
-	import chevronRight from '$lib/assets/icons/chevron-right.svg?raw';
 
 	let {
 		features,
@@ -272,6 +274,46 @@
 		});
 	}
 	const step = (d: number) => select((active + d + features.length) % features.length);
+
+	/**
+	 * Autoplay: each feature open for AUTOPLAY seconds, its tab filling as
+	 * the time runs (FeatureTab's `progress`), then on to the next, round
+	 * from the last to the first. A pick starts the count again from the
+	 * picked one. It runs only while the explorer is in view, holds while
+	 * the model is being dragged or the pause button is down (and so for
+	 * the perf runs, which pause), and is off for reduced motion.
+	 */
+	const AUTOPLAY = 15;
+	let progress = $state(0);
+	let explorerEl: HTMLDivElement;
+	let inView = false;
+	let holding = false;
+	let autoplay: gsap.core.Tween | null = null;
+	const clock = { t: 0 };
+	function syncAutoplay() {
+		if (autoplay) autoplay.paused(!inView || holding || untrack(() => paused));
+	}
+	$effect(() => {
+		void paused;
+		syncAutoplay();
+	});
+	$effect(() => {
+		void active;
+		untrack(() => {
+			autoplay?.kill();
+			clock.t = 0;
+			progress = 0;
+			if (prefersReducedMotion()) return;
+			autoplay = gsap.to(clock, {
+				t: 1,
+				duration: AUTOPLAY,
+				ease: 'none',
+				onUpdate: () => (progress = clock.t),
+				onComplete: () => step(1)
+			});
+			syncAutoplay();
+		});
+	});
 
 	/**
 	 * The open feature's title and description, in the panel's corner. A
@@ -611,8 +653,23 @@
 		const resized = new ResizeObserver(edges);
 		resized.observe(tabsEl);
 		viewportEl.addEventListener('reveal', onRevealed, { once: true });
-		const grab = () => turnIn?.kill();
+		const grab = () => {
+			turnIn?.kill();
+			holding = true;
+			syncAutoplay();
+		};
+		const letGo = () => {
+			holding = false;
+			syncAutoplay();
+		};
 		viewportEl.addEventListener('pointerdown', grab);
+		window.addEventListener('pointerup', letGo);
+		window.addEventListener('pointercancel', letGo);
+		const seenOnPage = new IntersectionObserver(([e]) => {
+			inView = e.isIntersecting;
+			syncAutoplay();
+		});
+		seenOnPage.observe(explorerEl);
 		paused = prefersReducedMotion();
 		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
 		showEnergyControls = new URLSearchParams(location.search).has('controls');
@@ -620,6 +677,10 @@
 		return () => {
 			viewportEl.removeEventListener('reveal', onRevealed);
 			viewportEl.removeEventListener('pointerdown', grab);
+			window.removeEventListener('pointerup', letGo);
+			window.removeEventListener('pointercancel', letGo);
+			seenOnPage.disconnect();
+			autoplay?.kill();
 			turnIn?.kill();
 			undrag();
 			resized.disconnect();
@@ -628,7 +689,7 @@
 
 </script>
 
-<div class="explorer">
+<div class="explorer" bind:this={explorerEl}>
 	<ol
 		class="tabs"
 		bind:this={tabsEl}
@@ -638,7 +699,7 @@
 		onscroll={edges}
 	>
 		{#each features as feature, i (feature.title)}
-			<FeatureTab index={i} title={feature.title} open={i === active} onselect={() => !dragged && select(i)} />
+			<FeatureTab index={i} title={feature.title} open={i === active} progress={i === active ? progress : 0} onselect={() => !dragged && select(i)} />
 		{/each}
 	</ol>
 
@@ -650,6 +711,7 @@
 				<CadStage
 					src={models[model]!.files}
 					carve={models[model]!.carve}
+					colours={models[model]!.colours}
 					sections={models[model]!.sections}
 					trails={models[model]!.trails}
 					aim={aims[model]}
@@ -688,7 +750,7 @@
 
 		<div class="detail" bind:this={detailEl}>
 			<!-- The opening feature's words; each pick writes its own in (see `reveal`). -->
-			<h3 class="detail-title type-body-default">{firstWords.title}</h3>
+			<h3 class="detail-title type-body-large">{firstWords.title}</h3>
 			<p class="detail-text type-caption">{firstWords.text}</p>
 		</div>
 
@@ -702,8 +764,8 @@
 		{#if wip}<WipBadge label="3D model · WIP" corner="bottom" />{/if}
 
 		<div class="steps">
-			<button type="button" class="step" aria-label="Previous feature" onclick={() => step(-1)}>{@html chevronLeft}</button>
-			<button type="button" class="step" aria-label="Next feature" onclick={() => step(1)}>{@html chevronRight}</button>
+			<ArrowButton direction="previous" tone="dark" label="Previous feature" onclick={() => step(-1)} />
+			<ArrowButton direction="next" tone="dark" label="Next feature" onclick={() => step(1)} />
 		</div>
 
 		<div class="pause" data-tool>
@@ -828,8 +890,8 @@
 	.viewport {
 		position: relative;
 		overflow: hidden;
-		border-radius: var(--stage-radius);
-		background: var(--grey-825);
+		border-radius: var(--card-radius);
+		background: var(--grey-950);
 	}
 	.detail {
 		position: absolute;
@@ -857,8 +919,8 @@
 		bottom: 15%;
 		left: 67%;
 		width: var(--tick);
-		border-left: 1px solid var(--grey-500);
-		background: repeating-linear-gradient(to bottom, var(--grey-500) 0 1px, transparent 1px 20%) left / var(--tick) calc(100% + 1px) no-repeat;
+		border-left: 1px solid var(--grey-700);
+		background: repeating-linear-gradient(to bottom, var(--grey-700) 0 1px, transparent 1px 20%) left / var(--tick) calc(100% + 1px) no-repeat;
 		pointer-events: none;
 	}
 	.rule::before {
@@ -867,7 +929,7 @@
 		top: 0;
 		left: 0;
 		width: calc(var(--size-font) * 3);
-		border-top: 1px solid var(--grey-500);
+		border-top: 1px solid var(--grey-700);
 	}
 	.rule::after {
 		content: '';
@@ -875,14 +937,14 @@
 		bottom: 0;
 		left: 0;
 		width: var(--tick);
-		border-top: 1px solid var(--grey-500);
+		border-top: 1px solid var(--grey-700);
 	}
 	.rule-label {
 		position: absolute;
 		top: 0;
 		left: calc(var(--size-font) * 3.5);
 		translate: 0 -50%;
-		color: var(--grey-300);
+		color: var(--button);
 		white-space: nowrap;
 	}
 
@@ -893,33 +955,6 @@
 		z-index: 1;
 		display: flex;
 		gap: var(--space-8);
-	}
-	.step {
-		display: grid;
-		place-items: center;
-		width: calc(var(--size-font) * 1.5);
-		height: calc(var(--size-font) * 1.5);
-		padding: 0;
-		border: 0;
-		border-radius: var(--stage-radius);
-		background: var(--grey-775);
-		color: var(--grey-0);
-		cursor: pointer;
-		transition: background 0.25s ease;
-	}
-	.step:hover {
-		background: var(--grey-750);
-	}
-	.step:focus-visible {
-		outline: 1px solid var(--grey-0);
-		outline-offset: 2px;
-	}
-	.step :global(svg) {
-		width: calc(var(--size-font) * 0.875);
-		height: auto;
-	}
-	.step :global(path) {
-		stroke: currentColor;
 	}
 	/* Each model and each panel fill the stage, stacked; GSAP fades between
 	   them (see the script). Panels start hidden: the page opens on a model. */
@@ -959,7 +994,7 @@
 		display: grid;
 		justify-items: start;
 		gap: var(--space-4);
-		color: var(--grey-0);
+		color: var(--white);
 	}
 	.value,
 	.detail-figure {
@@ -976,7 +1011,7 @@
 		height: auto;
 	}
 	.detail-figure {
-		color: var(--grey-300);
+		color: var(--button);
 	}
 	.graphic {
 		display: block;

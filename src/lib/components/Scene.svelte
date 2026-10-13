@@ -23,7 +23,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
 	// Types only: three.js itself loads on demand, as its own chunk (see start()).
-	import type { ModelViewer, RenderParams } from '$lib/three/ModelViewer';
+	import type { ColourSlots, ModelViewer, RenderParams } from '$lib/three/ModelViewer';
 	import poster from '$lib/assets/images/model-poster.webp?w=2560;1600;900&enhanced';
 	import type { Shot } from '$lib/three/shot';
 	import { LOOK } from '$lib/three/look';
@@ -33,6 +33,7 @@
 		groups = undefined,
 		explode = undefined,
 		carve = undefined,
+		colours = undefined,
 		sections = undefined,
 		shot,
 		paused = false,
@@ -50,6 +51,8 @@
 		explode?: Record<string, { fold?: number; phase?: number; layers?: boolean; columns?: boolean }>;
 		/** Parts carved into groups of their own (ModelViewer's `carve`). */
 		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		/** Parts given a colour of their own (ModelViewer's `colours`). */
+		colours?: ColourSlots;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Where the camera is. Changing it glides the camera to the new shot. */
@@ -182,6 +185,7 @@
 					groups,
 					explode,
 					carve,
+					colours,
 					sections,
 					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
 					hdr: '/hdr/studio_small_09_512.hdr',

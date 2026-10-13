@@ -4,15 +4,15 @@
 	hairline, then a rule, two link columns and the legal line pinned to the
 	bottom. Full-bleed and at least one screen tall. White by default;
 	`tone="dark"` sets it on the dark grey, for pages that are dark
-	throughout. Content comes from `$lib/content/site`, so every page gets
-	the same footer with a single `<Footer {...footer} />`, the "Join our
-	mission" call to action under the aside included.
+	throughout, and `tone="grey"` on the Progress page's mid grey. Content comes from `$lib/content/site`, so every page gets
+	the same footer with a single `<Footer {...footer} />`, the "Join
+	mission" pill (CtaButton, no arrow) under the aside included.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Logo from '$lib/components/Logo.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import CtaButton from '$lib/components/CtaButton.svelte';
 	import type { Link } from '$lib/content/site';
 
 	let {
@@ -22,7 +22,8 @@
 		nav,
 		social,
 		legal,
-		tone = 'white'
+		tone = 'white',
+		rule = true
 	}: {
 		statement: string[];
 		aside?: string;
@@ -31,24 +32,26 @@
 		nav: Link[];
 		social: Link[];
 		legal: { owner: string; links: Link[] };
-		tone?: 'white' | 'dark';
+		tone?: 'white' | 'dark' | 'grey';
+		/** The hairline across its top. Off where a full-bleed image meets it (Progress). */
+		rule?: boolean;
 	} = $props();
 
 	const year = new Date().getFullYear();
 </script>
 
-<footer class="footer {tone}" data-tone={tone === 'dark' ? 'dark' : undefined}>
+<footer class="footer {tone}" class:ruled={rule} data-tone={tone === 'dark' ? 'dark' : undefined}>
 	<div class="top">
 		<Row gap={40}>
 			<Cell span={6} tablet={{ span: 8 }}>
-				<p class="statement type-h2">
+				<p class="statement type-h3">
 					{#each statement as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
 				</p>
 			</Cell>
 			{#if aside || link}
 				<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
-					{#if aside}<p class="aside type-body-large">{aside}</p>{/if}
-					{#if link}<div class="cta"><Button {...link} /></div>{/if}
+					{#if aside}<p class="aside type-body-default">{aside}</p>{/if}
+					{#if link}<div class="cta"><CtaButton {...link} arrow={false} tone={tone === 'dark' ? 'dark' : 'light'} /></div>{/if}
 				</Cell>
 			{/if}
 		</Row>
@@ -97,15 +100,15 @@
 		box-sizing: border-box;
 		padding: var(--space-24) var(--grid-margin);
 		/* The primary lines near-black, the rest the secondary grey. */
-		background: var(--grey-0);
+		background: var(--white);
 		color: var(--grey-700);
 		/* The primary ink and the rules, swapped by `tone`. */
-		--ink: var(--grey-950);
+		--ink: var(--black);
 		--rule: var(--grey-200);
 	}
 	/* A hairline across the top, inset to the grid like the rule above the
 	   links, marks where the footer starts. */
-	.footer::before {
+	.ruled::before {
 		position: absolute;
 		top: 0;
 		right: var(--grid-margin);
@@ -113,11 +116,17 @@
 		border-top: 1px solid var(--rule);
 		content: '';
 	}
+	.grey {
+		background: var(--grey-400);
+		color: var(--grey-900);
+		--ink: var(--black);
+		--rule: var(--grey-700);
+	}
 	.dark {
-		background: var(--grey-850);
+		background: var(--grey-950);
 		color: var(--grey-400);
-		--ink: var(--grey-0);
-		--rule: var(--grey-800);
+		--ink: var(--white);
+		--rule: var(--grey-900);
 	}
 
 	.statement,
@@ -130,7 +139,6 @@
 	}
 	.cta {
 		margin-top: var(--space-32);
-		color: var(--ink);
 	}
 
 	.bottom {
@@ -169,10 +177,10 @@
 		outline: 1px solid var(--ink);
 		outline-offset: 2px;
 	}
-	/* 40px at 1440, top-aligned with the first link. */
+	/* 30px at 1440, top-aligned with the first link. */
 	.home {
 		display: block;
-		width: var(--space-40);
+		width: calc(var(--size-font) * 1.875);
 		color: var(--ink);
 	}
 

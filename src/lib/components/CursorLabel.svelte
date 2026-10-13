@@ -238,7 +238,7 @@
 		/* Off the pointer: 12px down and 20px right at 1440. */
 		padding: calc(var(--space-8) + var(--space-4)) 0 0 var(--space-20);
 		/* White: it sits on dark bands, like the slideshow's. */
-		color: var(--grey-0);
+		color: var(--white);
 		white-space: nowrap;
 		pointer-events: none;
 		visibility: hidden;

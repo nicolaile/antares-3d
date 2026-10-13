@@ -5,7 +5,7 @@
  * article opens on the picture its card shows.
  */
 import type { Picture } from 'vite-imagetools';
-import { slug, updates } from './updates';
+import { slug, updates, type UpdateItem } from './updates';
 import { bodies } from './articleBodies';
 
 export type Image = { src: Picture; alt: string };
@@ -60,4 +60,12 @@ export function formatDate(date: string) {
 			timeZone: 'UTC'
 		})
 	};
+}
+
+/**
+ * The stories to read next under an article: the newest `count` others
+ * from the updates list (newest first there), never the article itself.
+ */
+export function recentArticles(current: string, count = 3): UpdateItem[] {
+	return updates.items.filter((item) => slug(item.label) !== current).slice(0, count);
 }

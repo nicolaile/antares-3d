@@ -36,7 +36,7 @@
 <main class="updates" data-tone="dark">
 	<Row>
 		<Cell span={4} tablet={{ span: 6 }}>
-			<h1 class="intro type-h3">
+			<h1 class="intro type-h5">
 				{title}
 				<span class="secondary">{intro}</span>
 			</h1>
@@ -68,14 +68,14 @@
 <style>
 	/* The whole page is dark, html included, so overscroll doesn't flash white. */
 	:global(html:has(main.updates)) {
-		background: var(--grey-850);
+		background: var(--grey-950);
 	}
 
 	.updates {
 		display: grid;
 		padding: var(--space-160) var(--grid-margin) var(--space-160);
-		background: var(--grey-850);
-		color: var(--grey-0);
+		background: var(--grey-950);
+		color: var(--white);
 	}
 
 	.intro {
@@ -117,7 +117,7 @@
 		justify-content: space-between;
 		margin-top: var(--space-64);
 		padding: var(--space-24);
-		border: 1px solid var(--grey-750);
+		border: 1px solid var(--grey-800);
 		border-radius: var(--stage-radius);
 		background: none;
 		color: inherit;

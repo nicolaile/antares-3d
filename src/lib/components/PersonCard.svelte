@@ -78,7 +78,7 @@
 		cursor: pointer;
 	}
 	.person:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 
@@ -97,6 +97,6 @@
 	}
 	.role {
 		display: block;
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 </style>

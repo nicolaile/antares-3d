@@ -62,7 +62,7 @@
 		const on = open;
 		if (!cardEl) return;
 		const root = getComputedStyle(document.documentElement);
-		const fill = root.getPropertyValue(on ? '--accent-500' : '--grey-775').trim();
+		const fill = root.getPropertyValue(on ? '--orange' : '--grey-800').trim();
 		const shut = align === 'end' ? 'inset(0% 0% 0% 100%)' : 'inset(0% 100% 0% 0%)';
 		const quick = prefersReducedMotion() ? 0 : 1;
 		tl?.kill();
@@ -137,8 +137,8 @@
 		display: grid;
 		place-items: center;
 		border-radius: var(--stage-radius);
-		background: var(--grey-775);
-		color: var(--grey-0);
+		background: var(--grey-800);
+		color: var(--white);
 	}
 	.box svg {
 		position: relative;
@@ -157,7 +157,7 @@
 		outline: none;
 	}
 	.marker:focus-visible .box {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--white);
 		outline-offset: 2px;
 	}
 
@@ -173,8 +173,8 @@
 		box-sizing: border-box;
 		padding: var(--space-16);
 		border-radius: var(--stage-radius);
-		background: var(--grey-800);
-		color: var(--grey-0);
+		background: var(--grey-900);
+		color: var(--white);
 		text-align: left;
 		opacity: 0;
 		visibility: hidden;

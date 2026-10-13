@@ -36,15 +36,15 @@
 		box-sizing: border-box;
 		padding: var(--card-padding);
 		border-radius: var(--card-radius);
-		background: var(--grey-100);
+		background: var(--grey-50);
 		color: inherit;
 		text-decoration: none;
 	}
 	.card:hover {
-		background: var(--grey-150);
+		background: var(--grey-100);
 	}
 	.card:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 

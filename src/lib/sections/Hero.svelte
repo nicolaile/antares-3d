@@ -195,7 +195,7 @@
 		position: relative;
 		z-index: 40;
 		mix-blend-mode: difference;
-		color: var(--grey-0);
+		color: var(--white);
 	}
 	/* ScrollTrigger wraps the pinned wordmark in a spacer that copies its
 	   z-index, which isolates the blend inside it; the spacer blends too. */
@@ -227,7 +227,7 @@
 	/* 16px (body default), breaking where the copy does, 8px above the text. */
 	.title {
 		margin-bottom: var(--space-8);
-		color: var(--grey-950);
+		color: var(--black);
 		white-space: pre-line;
 	}
 	/* 14px, at the caption's size and leading; a little narrower than its
@@ -248,7 +248,7 @@
 		height: 100svh;
 		min-height: calc(var(--size-font) * 40);
 		overflow: clip;
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 	.photo {
 		position: absolute;

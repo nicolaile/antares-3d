@@ -35,7 +35,7 @@
 	</div>
 	<div class="body">
 		<div>
-			<p class="title type-h4">{title}</p>
+			<p class="title type-sub-headline">{title}</p>
 			<p class="size type-caption">{size}</p>
 		</div>
 		{#if tone === 'dark'}
@@ -53,16 +53,16 @@
 		column-gap: var(--grid-gutter);
 		overflow: hidden;
 		border-radius: var(--card-radius);
-		background: var(--grey-150);
-		color: var(--grey-950);
+		background: var(--grey-100);
+		color: var(--black);
 		text-decoration: none;
-		--ink: var(--grey-950);
+		--ink: var(--black);
 		--muted: var(--grey-700);
 	}
 	.dark {
-		background: var(--grey-800);
-		color: var(--grey-0);
-		--ink: var(--grey-0);
+		background: var(--grey-900);
+		color: var(--white);
+		--ink: var(--white);
 		--muted: var(--grey-400);
 	}
 	.card:focus-visible {
@@ -114,7 +114,7 @@
 		border-radius: 50%;
 	}
 	.card:hover .icon {
-		border-color: var(--grey-950);
+		border-color: var(--black);
 	}
 	.icon :global(svg) {
 		display: block;

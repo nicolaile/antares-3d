@@ -213,7 +213,7 @@
 	>
 		{#if person}
 			<header class="head">
-				<h2 id="person-name" class="name type-h4">
+				<h2 id="person-name" class="name type-sub-headline">
 					{person.name}
 					<span class="role">{person.role}</span>
 				</h2>
@@ -265,7 +265,7 @@
 		left: 0;
 		width: 100%;
 		height: 100svh;
-		background: var(--grey-950);
+		background: var(--black);
 		opacity: 0;
 		pointer-events: none;
 	}
@@ -288,8 +288,8 @@
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		visibility: hidden;
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 		/* Its own GPU layer, so the slide never waits on it being drawn. */
 		will-change: transform;
 	}
@@ -308,7 +308,7 @@
 		left: 0;
 		z-index: 1;
 		padding-right: var(--page-margin);
-		color: var(--grey-0);
+		color: var(--white);
 		white-space: nowrap;
 		pointer-events: none;
 		visibility: hidden;
@@ -325,7 +325,7 @@
 	}
 	.role {
 		display: block;
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 	/* Phones only: there the panel covers the page, so there's nothing to
 	   tap outside it. */
@@ -334,11 +334,11 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		color: var(--grey-500);
+		color: var(--grey-700);
 		cursor: pointer;
 	}
 	.close:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 
@@ -372,7 +372,7 @@
 	}
 	.bio {
 		grid-column: 3 / span 4;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 
 	@media screen and (max-width: 767px) {

@@ -18,7 +18,7 @@ import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;180
 import heroVideo from '$lib/assets/images/landing/hero_example.mp4';
 // The mission video's still, three columns (338px at 1440): the source is 676px wide.
 import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;700&enhanced';
-import videoStill from '$lib/assets/images/landing/video.jpg?w=676;338&enhanced';
+// import videoStill from '$lib/assets/images/landing/video.jpg?w=676;338&enhanced';
 
 import type { Feature, CadModel, CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
 import type { Shot } from '$lib/three/shot';
@@ -39,14 +39,15 @@ export const mission = {
 		{ value: '30+', label: 'Experts' },
 		{ value: '$600M+', label: 'Capital Raised' }
 	],
-	images: {
-		secondary: {
-			src: videoStill,
-			alt: 'A machinist in a hard hat working on a graphite block, seen from above, in black and white',
-			ratio: '676 / 420',
-			duration: '02:23'
-		}
-	}
+	// The machinist video, held back for now; put `images` back to show it.
+	// images: {
+	// 	secondary: {
+	// 		src: videoStill,
+	// 		alt: 'A machinist in a hard hat working on a graphite block, seen from above, in black and white',
+	// 		ratio: '676 / 420',
+	// 		duration: '02:23'
+	// 	}
+	// }
 };
 
 /*
@@ -80,10 +81,32 @@ const close = (distance: number, below = 0): Shot => ({
 const cad = (model: string, groups: string[]) => groups.map((g) => `/models/landing/${model}/${g}.glb`);
 
 const models: Partial<Record<CadModel, CadModelSetup>> = {
-	'mark-0': { files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']) },
+	'mark-0': {
+		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
+		// Colour slots, a group each (ModelViewer's `colours`, changed live
+		// with its `setColour` and in the controls panel): off but for a test,
+		// the control drums in the accent (colors.css --orange).
+		colours: {
+			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#ff751f' },
+			drives: { group: 'f2_drives', label: 'Drive mechanisms', colour: '#ff751f' },
+			reactivity: { group: 'f2_reactivity', label: 'Control drums', colour: '#ff751f', amount: 1 },
+			core: { group: 'f3_core', label: 'Core', colour: '#ff751f' },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
+			context: { group: 'context', label: 'Context', colour: '#ff751f' }
+		}
+	},
 	'power-conversion-system': {
 		// `standalone`: the exchanger's stand, which the stacked system leaves out.
 		files: cad('power-conversion-system', ['f4_heatpipes', 'f5_phx', 'standalone', 'f6_brayton', 'context']),
+		// Colour slots, a group each, off (as mark-0's). The skid's carved
+		// turbo-alternator takes the skid's.
+		colours: {
+			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#ff751f' },
+			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#ff751f' },
+			brayton: { group: 'f6_brayton', label: 'Brayton skid', colour: '#ff751f' },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
+			context: { group: 'context', label: 'Context', colour: '#ff751f' }
+		},
 		// The horizontal vessel at the back of the skid, carved out of it to
 		// cut open: by what's inside (a shaft on its axis, a stack of ~1 m
 		// discs, two inlets on top) the turbo-alternator's housing, which the
@@ -288,7 +311,8 @@ export const r1 = {
 	scale: '2.5M/8.2ft',
 	diagram: { alt: 'Diagram of the R1 power conversion system' },
 	views: {
-		text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.'
+		title: 'Engineering',
+		text: 'Simple design optimized for reliability, uptime, and manufacturability'
 	},
 };
 

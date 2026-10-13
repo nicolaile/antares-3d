@@ -24,8 +24,8 @@
 <header class="header" class:center={align === 'center'}>
 	{#if align === 'center'}
 		<Cell start={5} span={4} tablet={{ start: 3, span: 8 }}>
-			<h2 class="title type-h2-small">{title}</h2>
-			{#if aside}<p class="aside type-h2-small">{aside}</p>{/if}
+			<h2 class="title type-h4">{title}</h2>
+			{#if aside}<p class="aside type-h4">{aside}</p>{/if}
 		</Cell>
 	{:else}
 		<Cell span={8} tablet={{ span: 12 }}>
@@ -33,7 +33,7 @@
 		</Cell>
 		{#if aside}
 			<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
-				<p class="aside type-body-large">{aside}</p>
+				<p class="aside type-body-default">{aside}</p>
 			</Cell>
 		{/if}
 	{/if}

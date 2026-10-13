@@ -11,6 +11,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import ToggleRing from '$lib/components/ToggleRing.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
@@ -23,7 +24,8 @@
 		items,
 		closeSiblings = true
 	}: {
-		label: string;
+		/** Optional: without one (and no intro), the list stands on its own. */
+		label?: string;
 		/** With an intro, the label becomes a heading over a short paragraph. */
 		intro?: string;
 		items: Capability[];
@@ -35,32 +37,22 @@
 	let open = $state(untrack(() => items.map((_, i) => i === 0)));
 	const id = $props.id();
 	let panels: HTMLElement[] = $state([]);
-	/** Each row's button ring, whose dark ring fades in on hover and while open. */
-	let rings: HTMLElement[] = $state([]);
-	/** Each row's upright stroke, which lies flat to make the − . */
-	let uprights: SVGPathElement[] = $state([]);
+	/** Which row the pointer is over: its ring darkens (ToggleRing). */
+	let hovered = $state(-1);
 
 	const MOTION = { duration: 0.6, ease: 'power3.inOut' };
 
-	/** Opens or closes row `i`'s panel by height, its + morphing to − with it. */
+	/** Opens or closes row `i`'s panel by height; its ring turns + to − with it. */
 	function set(i: number, on: boolean) {
 		if (open[i] === on) return;
 		open[i] = on;
 		const el = panels[i];
-		gsap.killTweensOf([el, uprights[i]]);
+		gsap.killTweensOf(el);
 		if (prefersReducedMotion()) {
 			gsap.set(el, { height: on ? 'auto' : 0 });
-			gsap.set(uprights[i], { rotate: on ? 90 : 0, svgOrigin: '8 8' });
 			return;
 		}
-		ring(i, on);
 		gsap.fromTo(el, { height: el.offsetHeight }, { height: on ? 'auto' : 0, ...MOTION });
-		gsap.to(uprights[i], { rotate: on ? 90 : 0, svgOrigin: '8 8', ...MOTION });
-	}
-
-	/** Fades row `i`'s dark ring in or out. */
-	function ring(i: number, on: boolean) {
-		gsap.to(rings[i], { '--ring': on ? 1 : 0, duration: 0.4, ease: 'power2.out', overwrite: true });
 	}
 
 	function toggle(i: number) {
@@ -70,15 +62,15 @@
 	}
 </script>
 
-<section class="capabilities" class:headed={intro} aria-labelledby="{id}-label">
+<section class="capabilities" class:headed={intro} aria-labelledby={label ? `${id}-label` : undefined}>
 	{#if intro}
 		<Row>
 			<Cell span={3} tablet={{ span: 5 }}>
-				<h2 id="{id}-label" class="section-title type-h3">{label}</h2>
+				<h2 id="{id}-label" class="section-title type-h5">{label}</h2>
 				<p class="intro type-body-default">{intro}</p>
 			</Cell>
 		</Row>
-	{:else}
+	{:else if label}
 		<h2 id="{id}-label" class="label type-caption">{label}</h2>
 	{/if}
 	<ol class="list">
@@ -91,23 +83,12 @@
 						aria-expanded={open[i]}
 						aria-controls="{id}-{i}"
 						onclick={() => toggle(i)}
-						onpointerenter={() => ring(i, true)}
-						onpointerleave={() => ring(i, open[i])}
+						onpointerenter={() => (hovered = i)}
+						onpointerleave={() => (hovered = -1)}
 					>
 						<span class="number type-caption type-tabular">{i + 1}</span>
-						<span class="title type-h2">{item.title}</span>
-						<span class="toggle" aria-hidden="true" bind:this={rings[i]} style:--ring={i === 0 ? 1 : 0}>
-							<!-- add.svg / minus.svg's strokes, drawn here so the upright can turn. -->
-							<svg viewBox="0 0 16 16" fill="none">
-								<path d="M15 8H1" stroke="currentColor" />
-								<path
-									d="M8 15V1"
-									stroke="currentColor"
-									bind:this={uprights[i]}
-									transform={i === 0 ? 'rotate(90 8 8)' : undefined}
-								/>
-							</svg>
-						</span>
+						<span class="title type-h3">{item.title}</span>
+						<span class="toggle"><ToggleRing open={open[i]} active={hovered === i} /></span>
 					</button>
 				</h3>
 				<div class="panel" id="{id}-{i}" bind:this={panels[i]} style:height={i === 0 ? 'auto' : '0px'}>
@@ -124,6 +105,12 @@
 </section>
 
 <style>
+	/* A little more room above than the page's gap between sections (40px
+	   at 1440), so the heading starts its own part of the page. */
+	.capabilities {
+		padding-top: var(--space-40);
+	}
+
 	.label,
 	.section-title,
 	.intro,
@@ -132,7 +119,7 @@
 	}
 	.intro {
 		margin-top: var(--space-16);
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 	.label {
 		color: var(--grey-700);
@@ -154,8 +141,10 @@
 		border-top: 1px solid var(--grey-200);
 	}
 
-	/* The row's head and body both on the page's twelve columns, so the
-	   title and paragraph line up with the grid outside the box. */
+	/* The row's head and body both on the page's twelve columns, edge to
+	   edge in the box (which spans the grid), so the title and paragraph
+	   start on the page's second column; the number, ring and photo keep
+	   16px in from the box's sides. */
 	.head,
 	.body {
 		display: grid;
@@ -166,52 +155,33 @@
 	.head {
 		align-items: start;
 		width: 100%;
-		padding: var(--space-16);
+		padding: var(--space-16) 0;
 		border: 0;
 		background: none;
-		color: var(--grey-950);
+		color: var(--black);
 		font: inherit;
 		text-align: left;
 		cursor: pointer;
 	}
 	.head:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: -4px;
 	}
 	.number {
 		grid-column: 1;
 		padding-top: var(--space-8);
+		padding-left: var(--space-16);
 	}
 	.title {
 		grid-column: 2 / span 9;
 	}
 
-	/* 36px round, a light ring closed; the dark one fades in over it on
-	   hover and while open (--ring, 0 to 1, tweened by GSAP). */
+	/* The ring's place in the row; the ring itself is ToggleRing. */
 	.toggle {
 		grid-column: 12;
 		justify-self: end;
-		display: grid;
-		place-items: center;
-		width: calc(var(--size-font) * 2.25);
-		height: calc(var(--size-font) * 2.25);
-		box-sizing: border-box;
-		position: relative;
-		border: 1px solid var(--grey-300);
-		border-radius: 50%;
-	}
-	.toggle::after {
-		position: absolute;
-		inset: -1px;
-		border: 1px solid var(--grey-950);
-		border-radius: 50%;
-		opacity: var(--ring, 0);
-		content: '';
-	}
-	.toggle :global(svg) {
-		display: block;
-		width: calc(var(--size-font) * 0.875);
-		height: calc(var(--size-font) * 0.875);
+		margin-right: var(--space-16);
+		display: flex;
 	}
 
 	.panel {
@@ -221,7 +191,7 @@
 	   off the next row's rule. */
 	.body {
 		align-items: end;
-		padding: 0 var(--space-16) var(--space-32);
+		padding: 0 0 var(--space-32);
 	}
 	.text {
 		grid-column: 2 / span 4;
@@ -230,6 +200,7 @@
 	}
 	.image {
 		grid-column: 10 / span 3;
+		margin-right: var(--space-16);
 		overflow: hidden;
 		border-radius: var(--card-radius);
 	}
@@ -245,6 +216,19 @@
 
 	/* The number above the title; the photo, then the paragraph. */
 	@media screen and (max-width: 767px) {
+		/* One column of text: back to 16px in on both sides. */
+		.head {
+			padding: var(--space-16);
+		}
+		.body {
+			padding: 0 var(--space-16) var(--space-32);
+		}
+		.number,
+		.toggle,
+		.image {
+			padding-left: 0;
+			margin-right: 0;
+		}
 		.number {
 			grid-column: 1 / span 6;
 			grid-row: 1;

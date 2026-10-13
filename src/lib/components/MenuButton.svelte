@@ -22,6 +22,7 @@
 	} = $props();
 
 	let button: HTMLButtonElement;
+	let face: HTMLSpanElement;
 
 	/**
 	 * Light to dark and back as a crossfade: the dark fill (--dark, 0 to 1)
@@ -30,40 +31,50 @@
 	 * from the system's tokens, resolved, so GSAP can blend them.
 	 */
 	const FADE = { duration: 0.15, ease: 'power1.out' };
+	/* Opening and closing crossfade on the white fill's own timing, so the
+	   dark one never drops out ahead of it and flashes the translucent grey. */
+	const TOGGLE = { duration: 0.3, ease: 'menu' };
 	let first = true;
+	let wasOpen = false;
 	$effect(() => {
 		const dark = tone === 'dark';
 		const isOpen = open;
 		const token = (name: string) => getComputedStyle(button).getPropertyValue(name).trim();
-		const to = { '--dark': dark ? 1 : 0, color: token(dark && !isOpen ? '--grey-0' : '--grey-950') };
+		const to = {
+			'--dark': dark && !isOpen ? 1 : 0,
+			color: token(dark && !isOpen ? '--white' : '--black')
+		};
 		if (first || prefersReducedMotion()) gsap.set(button, to);
-		else gsap.to(button, { ...to, ...FADE, overwrite: 'auto' });
+		else gsap.to(button, { ...to, ...(isOpen !== wasOpen ? TOGGLE : FADE), overwrite: 'auto' });
 		first = false;
+		wasOpen = isOpen;
 	});
 
 	/**
 	 * A tiny bounce on every press: a quick dip to 95%, then a spring back
 	 * with a slight overshoot. GSAP rather than :active, because a quick
-	 * click holds :active for only a few milliseconds.
+	 * click holds :active for only a few milliseconds. It scales the face, not
+	 * the button: scaling the element that carries the backdrop blur makes
+	 * browsers re-rasterise the blur mid-tween, and the fill flickers.
 	 */
 	function bounce() {
 		if (prefersReducedMotion()) return;
+		gsap.killTweensOf(face, 'scale');
 		gsap
-			.timeline({ overwrite: true })
-			.to(button, { scale: 0.95, duration: 0.08, ease: 'power2.out' })
-			.to(button, { scale: 1, duration: 0.45, ease: 'back.out(3)' });
+			.timeline({ defaults: { force3D: true } })
+			.to(face, { scale: 0.95, duration: 0.08, ease: 'power2.out' })
+			.to(face, { scale: 1, duration: 0.45, ease: 'back.out(3)' });
 	}
 
 	/**
 	 * Each dot's resting place (a square, 5px out on each axis) and its hover
-	 * place (a diamond, 7px out on one axis) — the square turned 45°, each
-	 * dot moving a quarter-turn to its neighbour's side.
+	 * place: the same square, eased 1px further out from the centre.
 	 */
 	const DOTS = [
-		{ x: -5, y: -5, hx: 0, hy: -7 },
-		{ x: 5, y: -5, hx: 7, hy: 0 },
-		{ x: -5, y: 5, hx: -7, hy: 0 },
-		{ x: 5, y: 5, hx: 0, hy: 7 }
+		{ x: -5, y: -5, hx: -6, hy: -6 },
+		{ x: 5, y: -5, hx: 6, hy: -6 },
+		{ x: -5, y: 5, hx: -6, hy: 6 },
+		{ x: 5, y: 5, hx: 6, hy: 6 }
 	] as const;
 </script>
 
@@ -80,6 +91,7 @@
 		onclick(e);
 	}}
 >
+	<span class="face" bind:this={face}>
 	<!-- 34-unit box centred on 0,0, so a dot's resting place is its offset. -->
 	<svg viewBox="-17 -17 34 34" aria-hidden="true">
 		{#each DOTS as dot, i (i)}
@@ -96,6 +108,7 @@
 			/>
 		{/each}
 	</svg>
+	</span>
 </button>
 
 <style>
@@ -110,7 +123,7 @@
 		border: 0;
 		border-radius: 50%;
 		background: none;
-		color: var(--grey-950);
+		color: var(--black);
 		cursor: pointer;
 		/* Frosted glass behind the translucent fill. Only a 34px circle, so
 		   the blur costs next to nothing. */
@@ -120,12 +133,22 @@
 	/* Grey 300 at 40%, on its own layer: the colour system allows no
 	   translucent colour values, so opacity does it — and the layer
 	   cross-fades to solid white when open. */
-	.menu-button::before {
+	/* What bounces on a press: the fills and the dots, inside the blur. */
+	.face {
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		/* Always its own layer. Left to GSAP, it's promoted when the bounce
+		   starts and dropped when it ends, and each switch re-composites the
+		   fills under the blur: a one-frame flash. */
+		will-change: transform;
+	}
+	.face::before {
 		content: '';
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		background: var(--grey-300);
+		background: var(--button);
 		opacity: 0.4;
 		transition:
 			opacity 300ms var(--ease),
@@ -133,26 +156,23 @@
 	}
 	/* Dark: Grey 775 under white dots, so it holds its own on a dark page
 	   the way the light one does on white. Faded in over the light fill by
-	   --dark (GSAP, above); gone while open, the white showing. */
-	.menu-button::after {
+	   --dark (GSAP, above), which falls to 0 while open, the white showing. */
+	.face::after {
 		content: '';
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		background: var(--grey-775);
+		background: var(--grey-800);
 		opacity: var(--dark, 0);
 	}
-	.open::after {
-		opacity: 0;
-	}
 	/* Open: solid white, matching the panel it opened. */
-	.open::before,
-	.open:hover::before {
-		background: var(--grey-0);
+	.open .face::before,
+	.open:hover .face::before {
+		background: var(--white);
 		opacity: 1;
 	}
 	.menu-button:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 	svg {
@@ -164,7 +184,7 @@
 		overflow: visible;
 	}
 
-	/* Rest: a square of dots. Hover: turned into a diamond. Open: all four
+	/* Rest: a square of dots. Hover: the square spread slightly. Open: all four
 	   pulled to the centre, where they overlap into one. All on the menu
 	   curve. */
 	.dot {

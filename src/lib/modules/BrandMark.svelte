@@ -26,7 +26,7 @@
 		z-index: 40;
 		display: block;
 		height: var(--height);
-		color: var(--grey-0);
+		color: var(--white);
 		mix-blend-mode: difference;
 	}
 	.mark:focus-visible {

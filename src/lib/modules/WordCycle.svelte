@@ -217,13 +217,13 @@
 	.stage {
 		position: relative;
 		height: 100svh;
-		color: var(--grey-0);
+		color: var(--white);
 	}
 	.frame {
 		position: absolute;
 		inset: 0;
 		overflow: hidden;
-		background: var(--grey-950);
+		background: var(--black);
 	}
 
 	/* The slides stacked, each later one over the last. Each photo a fifth
@@ -246,8 +246,8 @@
 	   grid; the words stacked beside the phrase, the first level with it. */
 	.line {
 		position: absolute;
-		/* 240px at 1440. */
-		bottom: calc(var(--space-160) + var(--space-80));
+		/* 200px at 1440. */
+		bottom: calc(var(--space-160) + var(--space-40));
 		left: calc(var(--grid-margin) * 2);
 		display: flex;
 		gap: var(--space-16);
@@ -255,6 +255,10 @@
 	}
 	.words {
 		display: grid;
+	}
+	/* Stacked a little tighter than the type's own leading. */
+	.word + .word {
+		margin-top: calc(var(--space-8) * -1);
 	}
 
 	@media screen and (max-width: 767px) {

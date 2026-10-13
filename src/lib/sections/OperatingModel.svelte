@@ -1,8 +1,10 @@
 <!--
 	@component
-	A labelled set of points: the label on its own line, then up to three
-	points under it, three columns each (4–6, 7–9, 10–12), each a title over
-	a short paragraph. Stacks to two columns on tablet and one on phones.
+	A labelled set of points: the label in the first three columns, and up
+	to three points on the same line beside it, three columns each (4–6,
+	7–9, 10–12), their tops level with the label's, each a title over
+	a short paragraph. On tablet the label takes its own line, the points two
+	columns under it; on phones everything stacks.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
@@ -21,8 +23,8 @@
 </script>
 
 <Row as="section" gap={48} align="start">
-	<Cell span={12}>
-		<h2 class="label type-h4">{label}</h2>
+	<Cell span={3} tablet={{ span: 12 }}>
+		<h2 class="label type-h5">{label}</h2>
 	</Cell>
 	{#each points.slice(0, 3) as point, i (i)}
 		<Cell start={START[i]} span={3} tablet={{ start: i % 2 ? 7 : 1, span: 6 }}>

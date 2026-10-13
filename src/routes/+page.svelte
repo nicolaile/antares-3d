@@ -29,7 +29,7 @@
 	<R1Microreactor {...r1} />
 	<Capabilities {...capabilities} />
 	<FeatureCards {...graphite} />
-	<OperatingModel {...operating} />
+	<div class="operating"><OperatingModel {...operating} /></div>
 	<PosterCard {...progress} />
 </main>
 
@@ -42,5 +42,10 @@
 		/* One page margin under the hero image, so the copy starts as close
 		   to it as it sits to the screen's edge. */
 		padding: var(--page-margin) var(--grid-margin) var(--space-160);
+	}
+	/* A little more room after the graphite cards than the page's usual
+	   gap, so the operating model opens a new part of the page. */
+	.operating {
+		padding-top: var(--space-48);
 	}
 </style>

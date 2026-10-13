@@ -16,36 +16,37 @@ export const LOOK: Partial<RenderParams> = {
 	// value below has to land on top of that. Object order is apply order.
 	studio: 1,
 
-	// Material: a light satin coating, mostly matte, as the black studio
-	// renders' parts read (renders/mark-0-black), so the key's light falls
-	// off across a surface into black instead of a metal mirroring its
-	// surroundings evenly.
+	// Material
 	color: '#dedede',
-	roughness: 0.45,
-	metalness: 0.15,
+	roughness: 0.55,
+	metalness: 1,
 	clearcoat: 0.3,
-	coatRoughness: 0.35,
+	coatRoughness: 0.5,
 	materialEnv: 1.2,
 
 	// Each part its own finish, as in the studio renders (the landing's
-	// models, scripts/bake-surface.mjs), at 30%: the housings stay near
-	// white, as in the renders, with a little roughness detail over them.
-	finish: 0.3,
+	// models, scripts/bake-surface.mjs), mapped onto this lighter look at 60%,
+	// with a little roughness detail over them. No grain in the relief: it
+	// costs and barely shows.
+	finish: 0.6,
 	finishFloor: 0.6,
 	polymer: 1,
 	detail: 0.35,
 	detailTile: 1.2,
+	surfaceGrain: 0,
 
-	// Light: the black studio renders' rig (render.py 'studio-black', round
-	// the camera): a soft box far round at camera-right as the directional
-	// key (its shadows; `shadeAzimuth`/`shadeElevation` below aim it), two
-	// strips behind at camera-left tracing that silhouette, a faint wash from
-	// above, on black (ModelViewer's SOFTBOXES).
+	// Light: the studio renders' soft boxes (a big key overhead, a tall strip
+	// either side behind, round the camera) as the environment, so the metal
+	// reflects broad soft light rather than one hard highlight; the
+	// directional key down from 9, kept for the shadows it casts. (2 for the
+	// black renders' rig instead.)
 	softbox: 1,
-	key: 12,
+	key: 5,
+	// The key's light doesn't wrap past the terminator.
+	wrap: 0,
 	rim: 0,
 	ambient: 0,
-	environment: 1,
+	environment: 6,
 	exposure: 1.13,
 
 	// Gradient map: off, kept tuned for when it's switched on.
@@ -56,20 +57,18 @@ export const LOOK: Partial<RenderParams> = {
 	gradientOffset: 1,
 	gradientTrack: 0,
 
-	// Studio: on. The backdrop matches the R1 explorer's panel (grey-825,
-	// #1a1a1a), so the model stands on the panel itself.
-	sweepLight: '#1a1a1a',
-	sweepDark: '#1a1a1a',
+	// Studio: on. The backdrop matches the R1 explorer's panel and tabs
+	// (grey-950, #161718), so the model stands on the panel itself.
+	sweepLight: '#161718',
+	sweepDark: '#161718',
 	sweepAngle: 0,
 	sweepMid: 0.49,
 	sweepSpread: 1,
 	sweepCurve: 1.4,
 	sweepLift: 0,
 	sweepFalloff: 0.55,
-	// The key's direction in view terms (round the view, towards the camera):
-	// the rig's key, 80° round at camera-right and 30° up.
-	shadeAzimuth: 30,
-	shadeElevation: 9,
+	shadeAzimuth: 35,
+	shadeElevation: 39,
 	shadeCoverage: 0.54,
 	shadeSoftness: 0.72,
 	shadeDepth: 0.26,
@@ -87,10 +86,9 @@ export const LOOK: Partial<RenderParams> = {
 	bakedDirect: 0.15,
 	ao: 0.6,
 
-	// The renders' finish in post: machined edges catching the light and
-	// creases holding shadow (screen space, from the occlusion's normals),
-	// then their print grade (contrast, split tone, saturation).
-	edges: 1,
-	cavity: 0.5,
-	grade: 1
+	// The black renders' finish in post, off: machined edges catching the
+	// light, creases holding shadow, and their print grade.
+	edges: 0,
+	cavity: 0,
+	grade: 0
 };

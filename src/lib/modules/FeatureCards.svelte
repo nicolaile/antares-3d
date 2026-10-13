@@ -56,7 +56,7 @@
 <section class="cards-section" class:flip aria-labelledby="{id}-title">
 	<Row>
 		<Cell span={4} tablet={{ span: 6 }}>
-			<h2 id="{id}-title" class="title type-h3">{title}</h2>
+			<h2 id="{id}-title" class="title type-h5">{title}</h2>
 			<p class="intro type-body-default">{intro}</p>
 		</Cell>
 	</Row>
@@ -68,7 +68,7 @@
 
 		<article class="card note">
 			<h3 class="label type-caption">{note.label}</h3>
-			<p class="statement type-h4">
+			<p class="statement type-sub-headline">
 				{#each note.statement as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
 			</p>
 			<ol class="points type-body-default">
@@ -93,13 +93,19 @@
 
 	{#if join}
 		<div class="join">
-			<p class="join-text type-h4">{join.text}</p>
+			<p class="join-text type-sub-headline">{join.text}</p>
 			<Button {...join.link} />
 		</div>
 	{/if}
 </section>
 
 <style>
+	/* A little more room above than the page's gap between sections (40px
+	   at 1440), so the heading starts its own part of the page. */
+	.cards-section {
+		padding-top: var(--space-40);
+	}
+
 	.title,
 	.intro,
 	.label,
@@ -108,7 +114,7 @@
 	}
 	.intro {
 		margin-top: var(--space-16);
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	/* Columns 1–4 and 5–12 of the page's grid. Iterative spans both rows,
@@ -153,12 +159,12 @@
 		border-radius: var(--card-radius);
 	}
 	.dark {
-		background: var(--grey-850);
-		color: var(--grey-0);
+		background: var(--grey-950);
+		color: var(--white);
 	}
 	.note {
 		background: var(--slate-300);
-		color: var(--grey-950);
+		color: var(--black);
 	}
 
 	.statement {
@@ -184,14 +190,14 @@
 		width: var(--space-20);
 		height: var(--space-20);
 		border-radius: var(--stage-radius);
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 	}
 
 	/* The photo fills the card; the label and the inset sit over it. */
 	.photo {
 		padding: 0;
-		color: var(--grey-0);
+		color: var(--white);
 	}
 	.photo .label {
 		position: absolute;
@@ -217,8 +223,8 @@
 		margin-top: var(--grid-gutter);
 		padding: var(--space-24);
 		border-radius: var(--card-radius);
-		background: var(--grey-100);
-		color: var(--grey-950);
+		background: var(--grey-50);
+		color: var(--black);
 	}
 	.join-text {
 		margin: 0;

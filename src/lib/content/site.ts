@@ -13,11 +13,11 @@ export const footer = {
 	aside:
 		'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
 	/** The call to action under the aside. */
-	link: { label: 'Join our mission', href: '/careers' } satisfies Link,
+	link: { label: 'Join mission', href: '/careers' } satisfies Link,
 	nav: [
 		{ label: 'Missions', href: '/missions' },
 		{ label: 'Company', href: '/company' },
-		{ label: 'Progress', href: '#' },
+		{ label: 'Progress', href: '/progress' },
 		{ label: 'Updates', href: '/updates' },
 		{ label: 'Careers', href: '/careers' },
 		{ label: 'Contact', href: '#' }
@@ -56,7 +56,7 @@ export const menu = {
 		{ label: 'Home', href: '/' },
 		{ label: 'Missions', href: '/missions' },
 		{ label: 'Company', href: '/company' },
-		{ label: 'Progress', href: '#' },
+		{ label: 'Progress', href: '/progress' },
 		{ label: 'Updates', href: '/updates' }
 	] satisfies Link[],
 	/** Smaller links under the main ones. */

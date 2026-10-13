@@ -2,9 +2,9 @@
 	@component
 	R1 two ways, switched at the bottom left: the section (the energy
 	diagram) and an isometric line drawing of the assembled CAD
-	(IsoDrawing). A short paragraph sits at the bottom left, under the
-	drawing's corner (beside it, over the switch, when the switch is on);
-	the drawing takes the width from the second column.
+	(IsoDrawing). A title over a line sits centred above the drawing,
+	which is centred under it (beside it at the left, over the switch,
+	when the switch is on).
 
 	Switching turns one into the other: the 3D camera swings from the front
 	elevation the section is drawn in round to the isometric while the two
@@ -37,10 +37,12 @@
 
 	let {
 		label,
+		title,
 		text
 	}: {
 		/** Accessible description of the section diagram. */
 		label: string;
+		title: string;
 		text: string;
 	} = $props();
 
@@ -354,7 +356,10 @@
 	<Cell start={1} span={3} tablet={{ start: 1, span: 12 }}>
 		<div class="side">
 			<div class="intro">
-				<p class="text type-caption">{text}</p>
+				<h3 class="type-sub-headline">
+					<span class="heading">{title}</span>
+					<span class="text">{text}</span>
+				</h3>
 			</div>
 			{#if SWITCHABLE}
 				<div class="switch type-body-default" role="group" aria-label="Drawing">
@@ -420,8 +425,13 @@
 		/* 280px at 1440: the paragraph's short measure. */
 		max-width: calc(var(--size-font) * 17.5);
 	}
-	.intro p {
+	.intro h3 {
 		margin: 0;
+		font-weight: inherit;
+	}
+	.heading,
+	.text {
+		display: block;
 	}
 	.text {
 		color: var(--secondary);
@@ -507,23 +517,35 @@
 		.views > :global(.cell) {
 			grid-row: 1;
 		}
-		/* Section only: the paragraph under the drawing, at the bottom left. */
+		/* Section only: the title and its line centred over the drawing,
+		   which is centred under them on the page's whole width. */
+		.views:not(.full) {
+			/* The design's room between the line and the drawing. */
+			row-gap: var(--space-96);
+		}
 		.views:not(.full) > :global(.cell:first-child) {
+			grid-column: 1 / -1;
+		}
+		.views:not(.full) > :global(.cell:nth-child(2)) {
 			grid-row: 2;
+			grid-column: 1 / -1;
 		}
 		.views:not(.full) .side {
 			padding-bottom: 0;
+			align-items: center;
+			text-align: center;
 		}
-		/* With the text out from beside it, the drawing has the whole width,
-		   and sits a little right of centre in it (64px at 1440) rather than
-		   against the right edge. */
-		.views:not(.full) > :global(.cell:nth-child(2)) {
-			grid-column: 1 / -1;
+		/* 360px at 1440: the line under the title in two, after "reliability,". */
+		.views:not(.full) .intro {
+			max-width: calc(var(--size-font) * 22.5);
 		}
 		.views:not(.full) .turn :global(figure.diagram) {
 			/* 2% up on the frame's fit. */
 			--width: calc(min(100%, 92svh * 1930 / 1284) * 1.02);
-			margin-left: calc((100% - var(--width)) / 2 + var(--space-64));
+			/* Centred (the drawing is centred in its frame: x 251–1783 of
+			   52–1982), then 16px right at 1440: the heavy reactor on the
+			   left makes the true middle read left of centre. */
+			margin-left: calc((100% - var(--width)) / 2 + var(--space-16));
 		}
 		.turn {
 			display: grid;

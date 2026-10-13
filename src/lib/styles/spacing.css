@@ -22,6 +22,8 @@
 	--space-4: calc(var(--size-font) * 0.25);
 	/** Between a heading and the line under it; stacked cards. */
 	--space-8: calc(var(--size-font) * 0.5);
+	/** Between a badge and its label (feature tabs). */
+	--space-12: calc(var(--size-font) * 0.75);
 	/** Card and panel padding; caption under media. Matches the gutter. */
 	--space-16: calc(var(--size-font) * 1);
 	/** Off-scale: padding inside a content card, like the press kit. */

@@ -12,7 +12,7 @@
 
 <Row>
 	<Cell span={4} tablet={{ span: 6 }}>
-		<h1 class="intro type-h3">
+		<h1 class="intro type-h5">
 			{title}
 			<span>{intro}</span>
 		</h1>
@@ -25,6 +25,6 @@
 	}
 	.intro span {
 		display: block;
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 </style>

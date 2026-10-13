@@ -40,14 +40,14 @@
 		border-radius: var(--stage-radius);
 		background: var(--scrim);
 		backdrop-filter: blur(8px);
-		color: var(--grey-0);
+		color: var(--white);
 		cursor: pointer;
 	}
 	.duration {
-		color: var(--grey-300);
+		color: var(--button);
 	}
 	.play:focus-visible {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--white);
 		outline-offset: 2px;
 	}
 </style>

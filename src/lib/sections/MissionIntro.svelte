@@ -27,14 +27,14 @@
 	}: {
 		statement: string;
 		milestones: { value: string; label: string }[];
-		images: { primary?: Image; secondary: Image | Video };
+		images?: { primary?: Image; secondary?: Image | Video };
 	} = $props();
 </script>
 
 <section class="mission">
 	<Row gap={40}>
 		<Cell span={7} tablet={{ span: 12 }} mobile={{ span: 12 }}>
-			<p class="statement type-h2-small">{statement}</p>
+			<p class="statement type-h4">{statement}</p>
 		</Cell>
 
 		<!-- The figures sit at the top of this row, the images at its foot,
@@ -43,12 +43,14 @@
 			<Cell span={4} tablet={{ span: 6 }} mobile={{ span: 12 }} subgrid self="start">
 				<Milestones items={milestones} quiet />
 			</Cell>
+			{#if images?.primary || images?.secondary}
 			<Cell start={8} span={5} tablet={{ start: 1, span: 12 }} subgrid align="end">
 				{#if images.primary}
 					<div class="primary">
 						<Picture {...images.primary} surface ratio="11 / 9" sizes="(max-width: 991px) 60vw, 24vw" />
 					</div>
 				{/if}
+				{#if images.secondary}
 				{@const video = 'duration' in images.secondary ? images.secondary : null}
 				<div class="secondary" class:alone={!images.primary} class:video>
 					<Picture
@@ -62,18 +64,19 @@
 						<div class="play"><PlayButton duration={video.duration} /></div>
 					{/if}
 				</div>
+				{/if}
 			</Cell>
+			{/if}
 		</Cell>
 	</Row>
 </section>
 
 <style>
-	/* Sits closer to the dark band below than sections usually do: 80px
-	   rather than the page's 120px. */
+	/* Close under what's above, 32px at 1440, with plenty of room below:
+	   180px. */
 	.mission {
-		/* A little more room around it: 24px above and below at 1440. */
-		padding-block: var(--space-24);
-		margin-bottom: calc(var(--space-40) * -1);
+		padding-top: var(--space-32);
+		padding-bottom: var(--space-120);
 	}
 
 	.statement {

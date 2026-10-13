@@ -136,9 +136,9 @@
 
 	onMount(() => {
 		const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-		backgroundPick = token('--grey-100');
+		backgroundPick = token('--grey-50');
 		paintPick = token('--grey-400');
-		tokens = { ink: token('--grey-950'), paper: backgroundPick };
+		tokens = { ink: token('--black'), paper: backgroundPick };
 		let destroyed = false;
 		import('$lib/three/CadViewer').then(({ CadViewer }) => {
 			if (destroyed) return;
@@ -250,7 +250,7 @@
 	main {
 		position: fixed;
 		inset: 0;
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 
 	.stage {
@@ -273,14 +273,14 @@
 		gap: var(--space-16);
 		width: min(20rem, calc(100% - 2 * var(--space-24)));
 		padding: var(--space-16);
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 		border-radius: var(--space-8);
 	}
 
 	.heading {
 		margin: 0;
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	.models,
@@ -296,15 +296,15 @@
 		padding: var(--space-4) var(--space-8);
 		border: 1px solid var(--grey-200);
 		border-radius: var(--space-4);
-		background: var(--grey-0);
+		background: var(--white);
 		color: inherit;
 		cursor: pointer;
 	}
 
 	button.active {
-		background: var(--grey-950);
-		border-color: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		border-color: var(--black);
+		color: var(--white);
 	}
 
 	label {
@@ -316,7 +316,7 @@
 
 	input[type='range'] {
 		width: 100%;
-		accent-color: var(--accent-500);
+		accent-color: var(--orange);
 	}
 
 	.weight {
@@ -363,8 +363,8 @@
 		width: var(--space-8);
 		height: var(--space-8);
 		border-radius: 50%;
-		background: var(--accent-500);
-		box-shadow: 0 0 0 var(--space-4) var(--grey-0);
+		background: var(--orange);
+		box-shadow: 0 0 0 var(--space-4) var(--white);
 		transform: translate(-50%, -50%);
 	}
 
@@ -376,8 +376,8 @@
 		gap: var(--space-4);
 		padding: var(--space-4) var(--space-8);
 		border-radius: var(--space-4);
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		white-space: nowrap;
 		transform: translateY(-50%);
 	}
@@ -390,8 +390,8 @@
 		margin: 0;
 		padding: var(--space-8) var(--space-16);
 		border-radius: var(--space-8);
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		visibility: hidden;
 		opacity: 0;
 		pointer-events: none;
@@ -410,7 +410,7 @@
 	}
 
 	.stats dt {
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	.stats dd {

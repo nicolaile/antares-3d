@@ -30,7 +30,7 @@
 				<p class="updated type-caption">
 					Updated <time datetime={iso}>{updated}</time>
 				</p>
-				<h1 class="title type-h2">{title}</h1>
+				<h1 class="title type-h3">{title}</h1>
 			</header>
 
 			<div class="body">
@@ -52,7 +52,7 @@
 
 	.updated {
 		margin: 0;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.title {
 		margin: var(--space-24) 0 0;
@@ -63,7 +63,7 @@
 	}
 	.body p {
 		margin: 0;
-		color: var(--grey-800);
+		color: var(--grey-900);
 	}
 	.body p + p {
 		margin-top: var(--space-24);

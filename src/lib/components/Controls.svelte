@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ModelViewer, RenderParams } from '$lib/three/ModelViewer';
+	import type { ColourSlot, ModelViewer, RenderParams } from '$lib/three/ModelViewer';
 	import type { GradientStop } from '$lib/three/GradientMapPass';
 
 	let { viewer = null }: { viewer?: ModelViewer | null } = $props();
@@ -23,6 +23,7 @@
 				{ key: 'polymer', label: 'Non-metal', min: 0, max: 3, step: 0.05 },
 				{ key: 'detail', label: 'Detail', min: 0, max: 2, step: 0.05 },
 				{ key: 'detailTile', label: 'Detail tile', min: 0.05, max: 1.5, step: 0.05 },
+				{ key: 'surfaceGrain', label: 'Grain (mm)', min: 0, max: 0.2, step: 0.005 },
 				{ key: 'roughness', label: 'Roughness', min: 0, max: 1, step: 0.01 },
 				{ key: 'metalness', label: 'Metalness', min: 0, max: 1, step: 0.01 },
 				{ key: 'clearcoat', label: 'Clearcoat', min: 0, max: 1, step: 0.01 },
@@ -34,6 +35,7 @@
 			title: 'Light',
 			rows: [
 				{ key: 'key', label: 'Key', min: 0, max: 14, step: 0.1 },
+				{ key: 'wrap', label: 'Key wrap', min: 0, max: 1, step: 0.05 },
 				{ key: 'rim', label: 'Rim', min: 0, max: 5, step: 0.1 },
 				{ key: 'ambient', label: 'Ambient', min: 0, max: 2, step: 0.05 },
 				{ key: 'environment', label: 'Environment', min: 0, max: 2, step: 0.05 },
@@ -129,6 +131,30 @@
 		}
 	});
 
+	/**
+	 * The model's colour slots (ModelViewer's `colours`): each a colour and
+	 * how much of it. Read again for whichever viewer is on stage, and on
+	 * opening, as a model's slots only exist once it has loaded.
+	 */
+	let slots = $state<ColourSlot[]>([]);
+	let initialSlots = new Map<ModelViewer, ColourSlot[]>();
+	function readSlots() {
+		if (!viewer) return;
+		const now = viewer.colourSlots();
+		if (!initialSlots.get(viewer)?.length) initialSlots.set(viewer, now.map((s) => ({ ...s })));
+		slots = now;
+	}
+	$effect(() => {
+		if (viewer) readSlots();
+	});
+
+	/** Picking a colour for a slot that's off turns it on whole: the pick shows at once. */
+	function setSlot(slot: ColourSlot, colour?: string, amount?: number) {
+		if (!viewer) return;
+		viewer.setColour(slot.name, colour, amount ?? (colour && slot.amount === 0 ? 1 : undefined));
+		slots = viewer.colourSlots();
+	}
+
 	function set(key: keyof RenderParams, value: number | string) {
 		if (!viewer || !params) return;
 		viewer.setParam(key, value);
@@ -148,6 +174,8 @@
 			stops = initialStops.map((s) => ({ ...s }));
 			viewer.setGradientStops(stops);
 		}
+		for (const s of initialSlots.get(viewer) ?? []) viewer.setColour(s.name, s.colour, s.amount);
+		slots = viewer.colourSlots();
 	}
 
 	function pushStops() {
@@ -197,6 +225,31 @@
 		{#if isOpen}
 			<!-- data-lenis-prevent: the page's smooth scroll would otherwise take the wheel. -->
 			<div class="panel" data-lenis-prevent>
+				{#if slots.length}
+					<p class="group type-caption">Colours</p>
+					{#each slots as slot (slot.name)}
+						<p class="sub type-caption">{slot.label}</p>
+						<div class="row paint">
+							<input
+								class="swatch"
+								type="color"
+								value={slot.colour}
+								aria-label="{slot.label} colour"
+								oninput={(e) => setSlot(slot, e.currentTarget.value)}
+							/>
+							<input
+								type="range"
+								min="0"
+								max="1"
+								step="0.01"
+								value={slot.amount}
+								aria-label="{slot.label} amount"
+								oninput={(e) => setSlot(slot, undefined, +e.currentTarget.value)}
+							/>
+							<span class="val type-caption type-tabular">{slot.amount.toFixed(2)}</span>
+						</div>
+					{/each}
+				{/if}
 				{#each GROUPS as group (group.title)}
 					{@const rows = group.rows.filter((r) => available?.has(r.key) ?? true)}
 					<p class="group type-caption">{group.title}</p>
@@ -279,7 +332,10 @@
 			class="toggle"
 			aria-expanded={isOpen}
 			aria-label={isOpen ? 'Hide render controls' : 'Show render controls'}
-			onclick={() => (isOpen = !isOpen)}
+			onclick={() => {
+				isOpen = !isOpen;
+				if (isOpen) readSlots();
+			}}
 		>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				<path d="M4 8h10M18 8h2M4 16h4M12 16h8" />
@@ -310,8 +366,8 @@
 		padding: 0;
 		border: 0;
 		border-radius: var(--stage-radius);
-		background: var(--grey-100);
-		color: var(--grey-950);
+		background: var(--grey-50);
+		color: var(--black);
 		cursor: pointer;
 		transition: background 0.25s ease;
 	}
@@ -319,11 +375,11 @@
 		background: var(--grey-200);
 	}
 	.controls.open .toggle {
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 	}
 	.toggle:focus-visible {
-		outline: 2px solid var(--grey-950);
+		outline: 2px solid var(--black);
 		outline-offset: 2px;
 	}
 	.toggle svg {
@@ -342,12 +398,12 @@
 		overscroll-behavior: contain;
 		padding: calc(var(--size-font) * 0.9);
 		border-radius: var(--stage-radius);
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 
 	.group {
 		margin: calc(var(--size-font) * 1.1) 0 calc(var(--size-font) * 0.5);
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.group:first-child {
 		margin-top: 0;
@@ -363,6 +419,10 @@
 	}
 	.val {
 		text-align: right;
+	}
+	/* A colour slot: its swatch, how much of it, the figure. */
+	.paint {
+		grid-template-columns: calc(var(--size-font) * 2.4) 1fr calc(var(--size-font) * 2.2);
 	}
 
 	/* Hairline track with a small square handle, to match the UI's geometry. */
@@ -389,14 +449,14 @@
 		margin-top: calc(var(--size-font) * -0.37);
 		border: 0;
 		border-radius: 1px;
-		background: var(--grey-950);
+		background: var(--black);
 	}
 	.row input[type='range']::-moz-range-thumb {
 		width: calc(var(--size-font) * 0.45);
 		height: calc(var(--size-font) * 0.75);
 		border: 0;
 		border-radius: 1px;
-		background: var(--grey-950);
+		background: var(--black);
 	}
 
 	.sub {
@@ -424,7 +484,7 @@
 	}
 	.rm:hover:not(:disabled),
 	.add:hover:not(:disabled) {
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.rm:disabled,
 	.add:disabled {
@@ -444,7 +504,7 @@
 		height: calc(var(--size-font) * 0.75);
 		margin: 0;
 		justify-self: start;
-		accent-color: var(--grey-950);
+		accent-color: var(--black);
 		cursor: pointer;
 	}
 
@@ -470,8 +530,8 @@
 		padding: calc(var(--size-font) * 0.45) 0;
 		border: 0;
 		border-radius: 1px;
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		cursor: pointer;
 	}
 </style>

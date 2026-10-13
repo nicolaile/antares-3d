@@ -55,16 +55,16 @@
 		right: var(--space-8);
 	}
 	.accent {
-		background: var(--accent-500);
-		color: var(--grey-0);
+		background: var(--orange);
+		color: var(--white);
 	}
 	.dark {
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		box-shadow: inset 0 0 0 1px var(--grey-700);
 	}
 	.light {
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 	}
 </style>

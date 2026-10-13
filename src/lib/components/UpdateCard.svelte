@@ -5,6 +5,8 @@
 	is the link.
 
 	On hover the date brightens and a right arrow slides in beside it.
+	On a dark page (the updates list) by default; `tone="light"` for a
+	light one (an article's recent articles).
 -->
 <script lang="ts">
 	import type { Picture as Source } from 'vite-imagetools';
@@ -15,16 +17,19 @@
 		date,
 		label,
 		href,
-		image
+		image,
+		tone = 'dark'
 	}: {
 		date: string;
 		label: string;
 		href: string;
 		image?: { src: Source; alt: string };
+		/** The page it sits on. */
+		tone?: 'dark' | 'light';
 	} = $props();
 </script>
 
-<a class="card" {href}>
+<a class="card" class:light={tone === 'light'} {href}>
 	<div class="image">
 		<Picture
 			src={image?.src}
@@ -37,24 +42,34 @@
 		<p class="date type-caption">{date}</p>
 		<span class="arrow" aria-hidden="true">{@html arrow}</span>
 	</div>
-	<p class="title type-h4">{label}</p>
+	<p class="title type-sub-headline">{label}</p>
 </a>
 
 <style>
 	.card {
+		/* Dark page: a dark stand-in box, the date brightening to white. */
+		--card-box: var(--grey-900);
+		--card-date: var(--grey-400);
+		--card-strong: var(--white);
 		display: grid;
 		color: inherit;
 		text-decoration: none;
 	}
+	/* Light page: a light grey box, the date darkening to black. */
+	.card.light {
+		--card-box: var(--grey-50);
+		--card-date: var(--grey-700);
+		--card-strong: var(--black);
+	}
 	.card:focus-visible {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--card-strong);
 		outline-offset: 2px;
 	}
 
 	.image {
 		overflow: hidden;
 		border-radius: var(--card-radius);
-		background: var(--grey-800);
+		background: var(--card-box);
 	}
 
 	.date,
@@ -68,12 +83,12 @@
 		margin-top: var(--space-16);
 	}
 	.date {
-		color: var(--grey-400);
+		color: var(--card-date);
 		/* Fades with the arrow, on its curve. */
 		transition: color 0.5s cubic-bezier(0.625, 0.05, 0, 1);
 	}
 	.card:hover .date {
-		color: var(--grey-0);
+		color: var(--card-strong);
 	}
 
 	.title {
@@ -88,7 +103,7 @@
 		display: block;
 		width: var(--type-caption-size);
 		height: var(--type-caption-size);
-		color: var(--grey-0);
+		color: var(--card-strong);
 		opacity: 0;
 		transform: translateX(-50%);
 		transition:

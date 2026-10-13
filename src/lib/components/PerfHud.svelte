@@ -9,7 +9,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { ModelViewer, ViewProfile } from '$lib/three/ModelViewer';
-	import { run, visibility, type PerfTarget } from '$lib/three/perf';
+	import { run, shot, visibility, type PerfTarget } from '$lib/three/perf';
 
 	let {
 		viewers,
@@ -57,7 +57,10 @@
 		}, 1000);
 		(window as unknown as Record<string, unknown>).__perf = {
 			run: (l: string, o?: Parameters<typeof run>[2]) => run(target, l, o),
-			visibility: (o?: Parameters<typeof visibility>[1]) => visibility(target, o)
+			visibility: (o?: Parameters<typeof visibility>[1]) => visibility(target, o),
+			shot: (l: string, n: string, p?: Parameters<typeof shot>[3], f?: number) => shot(target, l, n, p, f),
+			// For poking at a feature's viewer from the console.
+			viewer: (f = 0) => target.viewerFor(f)
 		};
 		return () => {
 			clearInterval(id);
@@ -119,8 +122,8 @@
 		max-width: calc(100vw - 2 * var(--grid-margin));
 		padding: calc(var(--size-font) * 0.6) calc(var(--size-font) * 0.8);
 		border-radius: var(--stage-radius);
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
 		font-variant-numeric: tabular-nums;
 	}

@@ -432,7 +432,7 @@
 		if (!g) return;
 		g.clearRect(0, 0, W, H);
 		if (!trails) return;
-		g.strokeStyle = getComputedStyle(field).getPropertyValue('--grey-0');
+		g.strokeStyle = getComputedStyle(field).getPropertyValue('--white');
 		g.lineCap = 'butt';
 		for (let n = 0; n < trails; n++) {
 			const [r, , head, span, radius, brightness, , alpha] = arcs.subarray(n * 8, n * 8 + 8);
@@ -545,7 +545,7 @@
 		reduce = prefersReducedMotion();
 		sky = new StarSky(canvas);
 		gl = sky.ok;
-		sky.tint(getComputedStyle(field).getPropertyValue('--accent-500'));
+		sky.tint(getComputedStyle(field).getPropertyValue('--orange'));
 		stars = scatter();
 		vis = stars.map(() => ({ a: 1 }));
 		let observer: ResizeObserver | undefined;
@@ -696,7 +696,7 @@
 		height: calc(var(--size-font) * var(--d));
 		translate: -50% -50%;
 		border-radius: 50%;
-		background: var(--grey-0);
+		background: var(--white);
 	}
 
 	/* The stars and Antares's glow. Screen-blended: its black is see-through. */
@@ -724,7 +724,7 @@
 		position: absolute;
 		top: var(--ay);
 		left: var(--ax);
-		color: var(--grey-0);
+		color: var(--white);
 		text-decoration: none;
 		outline: none;
 	}
@@ -749,7 +749,7 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 50%;
-		background: radial-gradient(closest-side, var(--accent-500), transparent);
+		background: radial-gradient(closest-side, var(--orange), transparent);
 	}
 
 	/* A generous target round a small star. */
@@ -768,7 +768,7 @@
 		width: calc(var(--size-font) * 0.5);
 		height: calc(var(--size-font) * 0.5);
 		border-radius: 50%;
-		background: radial-gradient(closest-side, var(--grey-0) 50%, transparent);
+		background: radial-gradient(closest-side, var(--white) 50%, transparent);
 	}
 	.gl .core {
 		opacity: 0;

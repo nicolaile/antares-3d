@@ -92,7 +92,7 @@
 			onpointerleave={() => (side = null)}
 		></button>
 	{/each}
-	<h2 class="title type-h4">{title}{#if count}{' '}({slides.length}){/if}</h2>
+	<h2 class="title type-sub-headline">{title}{#if count}{' '}({slides.length}){/if}</h2>
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }} mobile={{ start: 1, span: 12 }}>
 			<div class="frame">
@@ -147,8 +147,8 @@
 		position: relative;
 		display: grid;
 		padding: var(--space-24) var(--grid-margin) var(--space-160);
-		background: var(--grey-850);
-		color: var(--grey-0);
+		background: var(--grey-950);
+		color: var(--white);
 	}
 
 	.title {
@@ -193,7 +193,7 @@
 		z-index: 1;
 	}
 	.half:focus-visible {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--white);
 		outline-offset: calc(var(--space-4) * -2);
 	}
 

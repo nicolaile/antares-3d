@@ -249,11 +249,11 @@
 	<div class="card" class:opening={shown < 0} bind:this={card} aria-live="polite">
 		{#if copy}
 			<p class="type-caption muted"><span class="type-tabular">{pad(shown + 1)} / {pad(points.length)}</span></p>
-			<h2 class="type-h3">{copy.title}</h2>
+			<h2 class="type-h5">{copy.title}</h2>
 			<p class="type-caption muted">{copy.text}</p>
 		{:else}
 			<p class="type-caption muted">{intro.label}</p>
-			<h1 class="type-h3">{intro.title}</h1>
+			<h1 class="type-h5">{intro.title}</h1>
 			<p class="type-caption muted">{intro.text}</p>
 		{/if}
 		<div class="controls">
@@ -284,8 +284,8 @@
 		position: relative;
 		height: 100svh;
 		overflow: hidden;
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 	}
 
 	.stage {
@@ -330,8 +330,8 @@
 		width: var(--space-8);
 		height: var(--space-8);
 		border-radius: 50%;
-		background: var(--accent-500);
-		box-shadow: 0 0 0 var(--space-4) var(--grey-950);
+		background: var(--orange);
+		box-shadow: 0 0 0 var(--space-4) var(--black);
 		transform: translate(-50%, -50%);
 	}
 
@@ -339,7 +339,7 @@
 		position: absolute;
 		left: var(--space-16);
 		top: 0;
-		color: var(--grey-0);
+		color: var(--white);
 		white-space: nowrap;
 		transform: translateY(-50%);
 	}
@@ -349,7 +349,7 @@
 		inset: 0;
 		display: grid;
 		place-items: center;
-		background: var(--grey-950);
+		background: var(--black);
 		color: var(--grey-400);
 		pointer-events: none;
 	}
@@ -392,14 +392,14 @@
 		padding: var(--space-8) var(--space-16);
 		border: 0;
 		border-radius: var(--space-24);
-		background: var(--grey-800);
-		color: var(--grey-0);
+		background: var(--grey-900);
+		color: var(--white);
 		cursor: pointer;
 	}
 
 	.controls .next {
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 	}
 
 	.rail {
@@ -427,12 +427,12 @@
 		padding: var(--space-4) 0;
 		border: 0;
 		background: none;
-		color: var(--grey-500);
+		color: var(--grey-700);
 		cursor: pointer;
 	}
 
 	.rail button.active {
-		color: var(--grey-0);
+		color: var(--white);
 	}
 
 	/* Names show for the active point, and on hover. */
@@ -455,7 +455,7 @@
 		gap: var(--space-4);
 		padding: var(--space-4);
 		border-radius: var(--space-8);
-		background: var(--grey-800);
+		background: var(--grey-900);
 	}
 
 	.look button {
@@ -468,8 +468,8 @@
 	}
 
 	.look button[aria-pressed='true'] {
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 	}
 
 	@media (max-width: 767px) {

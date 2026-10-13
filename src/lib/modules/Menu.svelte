@@ -59,14 +59,15 @@
 		const inn = slides.children[to] as HTMLElement;
 		const dir = to === (from + 1) % updates.length || to > from ? 1 : -1;
 		const travel = slides.offsetHeight * dir;
-		// The outgoing update stays drawn until it has turned away.
+		// The outgoing update stays drawn, at full strength, until it has
+		// turned out of the clipped frame; no fade.
 		gsap.set(out, { visibility: 'inherit' });
 		swap = gsap
 			.timeline({
 				defaults: { duration: 1.2, ease: 'menu', lazy: false },
 				onComplete: () => gsap.set([out, inn], { clearProps: 'all' })
 			})
-			.to(out, { y: -travel, scale: 0.85, rotationX: 50 * dir, autoAlpha: 0 }, 0)
+			.to(out, { y: -travel, scale: 0.85, rotationX: 50 * dir }, 0)
 			.fromTo(
 				inn,
 				{ y: travel, scale: 0.85, rotationX: -40 * dir, autoAlpha: 0 },
@@ -107,7 +108,7 @@
 			w: panel.offsetWidth,
 			h: panel.offsetHeight,
 			b: toggle.offsetWidth,
-			r: parseFloat(getComputedStyle(panel).getPropertyValue('--panel-radius')) || 4,
+			r: parseFloat(getComputedStyle(panel).getPropertyValue('--panel-radius')) || 8,
 			/** Menu links: each slides up out of its own masked line. */
 			links: panel.querySelectorAll('[data-nav-link]'),
 			/** Everything else (the divider and updates): a soft fade. */
@@ -234,7 +235,7 @@
 								<li class="line">
 									<a
 										data-nav-link
-										class="link type-h2"
+										class="link type-h3"
 										class:current={link.href === current}
 										aria-current={link.href === current ? 'page' : undefined}
 										href={link.href}
@@ -337,7 +338,7 @@
 	.overlay {
 		position: absolute;
 		inset: 0;
-		background: var(--grey-950);
+		background: var(--black);
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: auto;
@@ -356,7 +357,7 @@
 	/* 572px tall at 1440 (never taller than the screen leaves room for):
 	   links pinned top, the latest updates pinned bottom. */
 	.panel {
-		--panel-radius: 4px;
+		--panel-radius: 8px;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
@@ -368,7 +369,7 @@
 		box-sizing: border-box;
 		padding: var(--space-24);
 		border-radius: var(--panel-radius);
-		background: var(--grey-0);
+		background: var(--white);
 		visibility: hidden;
 		pointer-events: auto;
 	}
@@ -379,14 +380,14 @@
 		list-style: none;
 	}
 	.secondary {
-		margin-top: var(--space-64);
+		margin-top: var(--space-32);
 	}
 	/* Each link's mask. The bottom is padded out and pulled back so the clip
 	   clears the descenders (the y in Company, the g in Progress). The main
 	   links pull back a little further (--tighten), setting them solid
 	   rather than on H2's looser line height. */
 	.line {
-		--line-size: var(--type-h2-size);
+		--line-size: var(--type-h3-size);
 		--tighten: 0.15;
 		overflow: hidden;
 		padding-bottom: calc(var(--line-size) * 0.15);
@@ -398,16 +399,16 @@
 	}
 	.link {
 		display: inline-block;
-		color: var(--grey-950);
+		color: var(--black);
 		text-decoration: none;
 		transition: color 0.2s ease;
 	}
 	.link:hover {
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 	a:focus-visible,
 	button:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 
@@ -415,7 +416,18 @@
 	   the bottom-right corner. */
 	.updates {
 		position: relative;
-		padding-top: var(--space-24);
+		padding-top: var(--space-32);
+	}
+	/* A hairline over the updates, across the panel's full width, edge to
+	   edge through its padding. Fades in with them. */
+	.updates::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: calc(var(--space-24) * -1);
+		left: calc(var(--space-24) * -1);
+		height: 1px;
+		background: var(--grey-200);
 	}
 	/* One vanishing point for the whole stack, so the updates turn on a
 	   shared wheel; clipped, so a turn never passes over the links above. */
@@ -428,7 +440,7 @@
 		grid-area: 1 / 1;
 		display: flex;
 		gap: var(--space-24);
-		color: var(--grey-950);
+		color: var(--black);
 		text-decoration: none;
 		visibility: hidden;
 	}
@@ -454,7 +466,7 @@
 		padding-top: var(--space-8);
 	}
 	.date {
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	/* Above the shown update, whose link spans the full width under them. */
 	.dashes {
@@ -487,13 +499,17 @@
 		right: 0;
 		bottom: 0;
 		height: 1.5px;
-		background: var(--grey-300);
+		background: var(--button);
+	}
+	/* The track: Grey 200, solid, a shade darker than the button's 40% fill. */
+	.dash::before {
+		background: var(--grey-200);
 	}
 	/* The active dash fills over the time an update stays up, then hands on
 	   to the next. It holds while the menu is closed or the pointer is over
 	   the updates. */
 	.dash::after {
-		background: var(--grey-950);
+		background: var(--black);
 		transform: scaleX(0);
 		transform-origin: left;
 	}

@@ -30,8 +30,8 @@
 		scale?: string;
 		/** Accessible description of the energy diagram. */
 		diagram: { alt: string };
-		/** Beside the drawing, at the left: a title over a line. */
-		views: { text: string };
+		/** Over the drawing, centred: a title over a line. */
+		views: { title: string; text: string };
 	} = $props();
 
 	const REVEAL = '.header .title, .header .aside, .explorer > .tabs, .explorer > .viewport';
@@ -66,8 +66,8 @@
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
 			padding: var(--space-32) var(--grid-margin) var(--space-64);
-		background: var(--grey-850);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 	}
 
 	/* The section's drawing (SystemViews): on desktop a panel one screen tall. */

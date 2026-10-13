@@ -5,7 +5,7 @@
   --size-unit: 16; /* base unit in design (1em) - no px */
   --size-container-ideal: 1440; /* screen-size in design - no px */
   --size-container-min: 992px;
-  --size-container-max: 1600px; /* type and spacing stop growing here (16px base reaches 17.8px) */
+  --size-container-max: 1920px; /* type and spacing stop growing here (16px base reaches 21.3px) */
   --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
   --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 }
@@ -47,8 +47,8 @@
 	   --grid-margin is where the grid starts across: the same inset, plus
 	   half of any width past --content-max, so the content stays a centred
 	   1920 column on wider screens while full-bleed backgrounds still run
-	   edge to edge. Type and spacing stop scaling earlier, at 1600
-	   (--size-container-max above); between 1600 and 1920 only the columns
+	   edge to edge. Type and spacing stop scaling at the same width, 1920
+	   (--size-container-max above), so past it nothing grows; only the margins
 	   keep widening. */
 	--content-max: 1920px;
 	--page-margin: calc(var(--size-font) * 1.25);
@@ -85,13 +85,13 @@ html {
    canvas sits outside blending, and the hero wordmark's difference blend
    needs a real white layer under it to read black. */
 html {
-	background: var(--grey-0);
+	background: var(--white);
 }
 
 body {
 	margin: 0;
-	background: var(--grey-0);
-	color: var(--grey-950);
+	background: var(--white);
+	color: var(--black);
 }
 
 /* Tool buttons (pause, render and energy controls) are hidden until

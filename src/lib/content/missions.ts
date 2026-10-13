@@ -42,7 +42,6 @@ export const missions = {
 		text: 'In 2025, we set the pace for advanced reactor development, completing our Conceptual Design Review (CDR) on an accelerated timeline and becoming the first company in the country to receive an approved Nuclear Safety Design Agreement (NSDA) for a reactor. We opened Antares Prime, 322,000 sq-ft of vertically integrated R&D space, to accelerate in-house manufacturing and iteration, tested our first Electrically Heated Demonstration Unit (EDU), submitted our Preliminary Documented Safety Analysis (PDSA), prepared our reactor test site, and became the first U.S. microreactor to receive a HALEU allocation and begin fuel fabrication.'
 	},
 	applications: {
-		label: '#ModuleTitle',
 		items: [
 			{
 				title: 'Defense and remote sites',

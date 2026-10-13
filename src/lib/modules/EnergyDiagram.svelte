@@ -416,16 +416,16 @@
 
 <style>
 	.diagram {
-		--stage: var(--grey-100);
+		--stage: var(--grey-50);
 		/*
 		 * One ink for every line; each tier is a group opacity of it. The grey
 		 * scale jumps from 400 to 700, so tokens alone give two usable tones —
 		 * this gives five, evenly spaced, and they re-derive on the dark stage.
 		 * Opacity is per group, not per line, so joins never double up darker.
 		 */
-		--ink: var(--grey-950);
-		--label-ink: var(--grey-950);
-		--label-fill: var(--grey-0);
+		--ink: var(--black);
+		--label-ink: var(--black);
+		--label-fill: var(--white);
 		/* Low-density screens: hairlines this fine blur to grey, so thicken. */
 		--density: 1;
 		position: relative;
@@ -445,10 +445,10 @@
 	}
 	/* The dark sections' own grey, so the diagram sits in them seamlessly. */
 	.diagram.dark {
-		--stage: var(--grey-850);
-		--ink: var(--grey-0);
-		--label-ink: var(--grey-0);
-		--label-fill: var(--grey-950);
+		--stage: var(--black);
+		--ink: var(--white);
+		--label-ink: var(--white);
+		--label-fill: var(--black);
 	}
 
 	.art,
@@ -582,14 +582,14 @@
 		opacity: 0.72;
 	}
 	.mask-veil {
-		fill: var(--grey-0);
+		fill: var(--white);
 	}
 	.mask-hole {
-		fill: var(--grey-950);
+		fill: var(--black);
 	}
 	.art > svg .mask-pipe {
 		fill: none;
-		stroke: var(--grey-950);
+		stroke: var(--black);
 		stroke-width: 46;
 	}
 	/* Once drawn on, markers answer at once rather than on the reveal's delay. */

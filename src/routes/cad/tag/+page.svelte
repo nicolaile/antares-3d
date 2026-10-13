@@ -279,7 +279,7 @@
 	main {
 		position: fixed;
 		inset: 0;
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 
 	main {
@@ -300,7 +300,7 @@
 
 	.stage :global(.marquee) {
 		position: absolute;
-		border: 1px dashed var(--grey-950);
+		border: 1px dashed var(--black);
 		pointer-events: none;
 	}
 
@@ -315,8 +315,8 @@
 		width: var(--panel-width);
 		padding: var(--space-16);
 		overflow-y: auto;
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 		border-radius: var(--space-8);
 	}
 
@@ -331,11 +331,11 @@
 	}
 
 	.muted {
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	.alert {
-		color: var(--accent-500);
+		color: var(--orange);
 	}
 
 	.row {
@@ -378,7 +378,7 @@
 		padding: var(--space-4) var(--space-8);
 		border: 1px solid var(--grey-200);
 		border-radius: var(--space-4);
-		background: var(--grey-0);
+		background: var(--white);
 		color: inherit;
 		cursor: pointer;
 	}
@@ -389,9 +389,9 @@
 	}
 
 	button.active {
-		background: var(--grey-950);
-		border-color: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		border-color: var(--black);
+		color: var(--white);
 	}
 
 	.group {
@@ -417,16 +417,16 @@
 
 	kbd {
 		font: inherit;
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	button.active kbd {
-		color: var(--grey-300);
+		color: var(--button);
 	}
 
 	input[type='range'] {
 		width: 100%;
-		accent-color: var(--accent-500);
+		accent-color: var(--orange);
 	}
 
 	.stats {
@@ -442,7 +442,7 @@
 	}
 
 	.stats dt {
-		color: var(--grey-500);
+		color: var(--grey-700);
 	}
 
 	.stats dd {

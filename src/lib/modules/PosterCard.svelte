@@ -58,7 +58,7 @@
 <style>
 	.poster {
 		position: relative;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	/* Its own stacking context, so the type blends with the image only. */
 	.card {
@@ -66,7 +66,7 @@
 		isolation: isolate;
 		overflow: hidden;
 		border-radius: var(--card-radius);
-		background: var(--grey-300);
+		background: var(--button);
 	}
 
 	/* White, inverted against the image under it. Trimmed to the caps, so
@@ -75,7 +75,7 @@
 	.name {
 		position: absolute;
 		margin: 0;
-		color: var(--grey-0);
+		color: var(--white);
 		mix-blend-mode: exclusion;
 		text-box: trim-both cap alphabetic;
 		pointer-events: none;

@@ -239,19 +239,19 @@
 		border: 0;
 		border-radius: var(--stage-radius);
 		background: var(--grey-200);
-		color: var(--grey-950);
+		color: var(--black);
 		cursor: pointer;
 		transition: background 0.25s ease;
 	}
 	.toggle:hover {
-		background: var(--grey-300);
+		background: var(--button);
 	}
 	.controls.open .toggle {
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 	}
 	.toggle:focus-visible {
-		outline: 2px solid var(--grey-950);
+		outline: 2px solid var(--black);
 		outline-offset: 2px;
 	}
 	.toggle svg {
@@ -273,12 +273,12 @@
 		overscroll-behavior: contain;
 		padding: calc(var(--size-font) * 0.9);
 		border-radius: var(--stage-radius);
-		background: var(--grey-0);
+		background: var(--white);
 	}
 
 	.group {
 		margin: calc(var(--size-font) * 1.1) 0 calc(var(--size-font) * 0.5);
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.group:first-child {
 		margin-top: 0;
@@ -322,7 +322,7 @@
 		height: calc(var(--size-font) * 0.75);
 		margin: 0;
 		justify-self: start;
-		accent-color: var(--grey-950);
+		accent-color: var(--black);
 		cursor: pointer;
 	}
 
@@ -350,14 +350,14 @@
 		margin-top: calc(var(--size-font) * -0.37);
 		border: 0;
 		border-radius: 1px;
-		background: var(--grey-950);
+		background: var(--black);
 	}
 	.row input[type='range']::-moz-range-thumb {
 		width: calc(var(--size-font) * 0.45);
 		height: calc(var(--size-font) * 0.75);
 		border: 0;
 		border-radius: 1px;
-		background: var(--grey-950);
+		background: var(--black);
 	}
 
 	.actions {
@@ -371,10 +371,10 @@
 		border: 1px solid var(--grey-200);
 		border-radius: var(--stage-radius);
 		background: none;
-		color: var(--grey-950);
+		color: var(--black);
 		cursor: pointer;
 	}
 	.action:hover {
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 </style>

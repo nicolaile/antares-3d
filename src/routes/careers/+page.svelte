@@ -39,7 +39,7 @@
 			<Picture {...quote.image} ratio="2880 / 1494" sizes="100vw" />
 		</div>
 		<figcaption class="quote-body">
-			<blockquote class="quote-text type-h3">{quote.text}</blockquote>
+			<blockquote class="quote-text type-h5">{quote.text}</blockquote>
 			<p class="quote-name type-caption">
 				{quote.name}
 				<span>{quote.role}</span>

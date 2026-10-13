@@ -131,7 +131,15 @@ function glowFromWithin(
  * metal's does, brushed streaks on the polished parts and handling smudges on
  * the rest, `uDetail` of it. Projected from the three axes in each part's own
  * frame (`uLocalScale` to metres, a tile every `uDetailTile`), so it sticks to
- * a piece as it moves, and mipmapped, so it never sparkles from afar.
+ * a piece as it moves, and mipmapped, so it never sparkles from afar. The
+ * same texture is its relief too, as render.py's bump: a fine grain
+ * (`uSurfaceGrain`, in millimetres, more on the rougher finishes), bending
+ * the normal by its screen-space slope, so the shadow side keeps some
+ * texture where the reflections catch it.
+ *
+ * The key's light wraps a little past the terminator (`uWrap`, diffuse
+ * only), as a large soft box's does, rather than falling off at the
+ * cosine of a point.
  *
  * Its occlusion:
  * ray-traced per vertex, by everything in the group (y) and by the
@@ -157,6 +165,8 @@ function bakedSurface(
 		tDetail: { value: THREE.Texture };
 		uLocalScale: { value: number };
 		uEnvDiffuse: { value: number };
+		uWrap: { value: number };
+		uSurfaceGrain: { value: number };
 	}
 ) {
 	Object.assign(shader.uniforms, uniforms);
@@ -181,7 +191,44 @@ function bakedSurface(
 		)
 		.replace(
 			'#include <common>',
-			'#include <common>\nuniform float uEnvDiffuse;\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;'
+			'#include <common>\nuniform float uEnvDiffuse;\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nuniform float uWrap;\nuniform float uSurfaceGrain;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;\nfloat keyWrap = 0.0;\nfloat relief = 0.0;'
+		)
+		// The key wraps (the first directional light: three puts the
+		// shadow-casting ones first, and only the key casts).
+		.replace(
+			'#include <lights_fragment_begin>',
+			THREE.ShaderChunk.lights_fragment_begin.replace(
+				'getDirectionalLightInfo( directionalLight, directLight );',
+				'getDirectionalLightInfo( directionalLight, directLight );\n\t\tkeyWrap = UNROLLED_LOOP_INDEX == 0 ? uWrap : 0.0;'
+			)
+		)
+		.replace(
+			'#include <lights_physical_pars_fragment>',
+			THREE.ShaderChunk.lights_physical_pars_fragment
+				.replace(
+					'vec3 irradiance = dotNL * directLight.color;',
+					'vec3 irradiance = dotNL * directLight.color;\n\tvec3 wrapped = saturate( ( dot( geometryNormal, directLight.direction ) + keyWrap ) / ( 1.0 + keyWrap ) ) * directLight.color;'
+				)
+				.replace(
+					'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseContribution ) * ( 1.0 - F );',
+					'reflectedLight.directDiffuse += wrapped * BRDF_Lambert( material.diffuseContribution ) * ( 1.0 - F );'
+				)
+		)
+		// The relief, by its slope across the pixel (Mikkelsen's surface
+		// gradient, unnormalised: millimetres against the metres moved).
+		.replace(
+			'#include <normal_fragment_maps>',
+			/* glsl */ `#include <normal_fragment_maps>
+			// (Skipped whole at no grain: the same for every pixel, so free.)
+			if ( uSurfaceGrain > 0.0 ) {
+				vec3 sx = dFdx( - vViewPosition );
+				vec3 sy = dFdy( - vViewPosition );
+				vec3 r1 = cross( sy, normal );
+				vec3 r2 = cross( normal, sx );
+				float det = dot( sx, r1 ) * faceDirection;
+				vec3 grad = sign( det ) * ( dFdx( relief ) * r1 + dFdy( relief ) * r2 );
+				normal = normalize( abs( det ) * normal - grad );
+			}`
 		)
 		.replace(
 			'#include <metalnessmap_fragment>',
@@ -212,6 +259,17 @@ function bakedSurface(
 				float brushed = smoothstep( 0.34, 0.24, rough ) * ( 1.0 - dielectric );
 				// The streaks at half: whole, they read as ribs on a turned part.
 				roughnessFactor = clamp( roughnessFactor + uDetail * mix( detail.y, detail.x * 0.5, brushed ) * 0.3, 0.04, 1.0 );
+				// Relief, in metres: grain at an eighth of the tile, deeper on
+				// the rougher finishes (render.py's 0.02 brushed to 0.12 graphite).
+				if ( uSurfaceGrain > 0.0 ) {
+					vec3 fine = at * 8.0;
+					float grain =
+						texture2D( tDetail, fine.yz ).r * facing.x +
+						texture2D( tDetail, fine.xz ).r * facing.y +
+						texture2D( tDetail, fine.xy ).r * facing.z - 0.5;
+					float grainDepth = mix( 0.2, 1.0, smoothstep( 0.2, 0.6, rough ) );
+					relief = 0.001 * uSurfaceGrain * grainDepth * grain;
+				}
 			}`
 		)
 		// Tuning: the bake alone, as grey (`bakedView`).
@@ -234,6 +292,44 @@ function bakedSurface(
 			}`
 		);
 }
+
+/** Colour slots the palette holds (`colours`), slot 0 being none. */
+const PALETTE_SIZE = 16;
+
+/**
+ * Parts given a colour of their own (`colours`): each vertex's palette slot
+ * (`_slot`, 0 for none), its colour and how much of it (rgb, a) from a
+ * small palette shared by every group (`setColour`), over the part's own
+ * finish. In the palette, not the files: a colour changes or fades live,
+ * with no recompile and no draw calls added.
+ */
+function paletteColour(shader: THREE.WebGLProgramParametersWithUniforms, uniforms: { uPalette: { value: THREE.Vector4[] } }) {
+	Object.assign(shader.uniforms, uniforms);
+	shader.vertexShader = shader.vertexShader
+		.replace('#include <common>', '#include <common>\nattribute float _slot;\nvarying float vSlot;')
+		.replace('#include <begin_vertex>', '#include <begin_vertex>\nvSlot = _slot;');
+	shader.fragmentShader = shader.fragmentShader
+		.replace('#include <common>', `#include <common>\nuniform vec4 uPalette[ ${PALETTE_SIZE} ];\nvarying float vSlot;`)
+		.replace(
+			'#include <normal_fragment_begin>',
+			/* glsl */ `{
+				vec4 paint = uPalette[ int( vSlot + 0.5 ) ];
+				diffuseColor.rgb = mix( diffuseColor.rgb, paint.rgb, paint.a );
+			}
+			#include <normal_fragment_begin>`
+		);
+}
+
+/**
+ * Colour slots (`colours`), by name: the parts of `group` that take it, all
+ * of them or those `parts` names (the CAD's part ids, the files'
+ * `extras.parts`), and the colour they start in (`amount` of it, 1 whole;
+ * 0, the default, none yet). `label` names it in the controls panel.
+ */
+export type ColourSlots = Record<string, { group: string; parts?: string[]; label?: string; colour?: string; amount?: number }>;
+
+/** A colour slot as it stands (`colourSlots`): its colour as #rrggbb. */
+export type ColourSlot = { name: string; label: string; colour: string; amount: number };
 
 /** One view's frame, measured (`ModelViewer.profile`): GPU times in ms, memory in bytes. */
 export type ViewProfile = {
@@ -360,6 +456,11 @@ export interface ModelViewerOptions {
 	 */
 	carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
 	/**
+	 * Parts given a colour of their own, from a small palette (`ColourSlots`,
+	 * `setColour`): up to 15 slots. Needs the CAD's part index (`_part`).
+	 */
+	colours?: ColourSlots;
+	/**
 	 * Groups whose cut (`setGroup`'s `cut`) is a half-section rather than the
 	 * wedge: one plane through the axis at `at` running `along` (authored
 	 * frame), facing the camera, `radius` the part's own; 0 shut, 1 cut to
@@ -438,9 +539,13 @@ export interface RenderParams {
 	finishFloor: number;
 	/** Non-metals' albedo (graphite, moulded parts), as a share of what's measured. */
 	polymer: number;
+	/** How far the key's light wraps past the terminator, as a soft box's (0 none). */
+	wrap: number;
+	/** The surface's fine grain, mm deep (`bakedSurface`). */
+	surfaceGrain: number;
 	/** The tone curve: ACES filmic (the look's), Khronos PBR Neutral, or AgX. */
 	tone: Tone;
-	/** 0/1: lit by the studio renders' soft boxes (createSoftboxEnvironment) rather than the HDR. */
+	/** Lit by soft boxes (createSoftboxEnvironment) rather than the HDR: 1 the approved studio's, 2 the black renders'. */
 	softbox: number;
 	/** How sharply the frame is sharpened as it's scaled up to the screen, 0–1. */
 	sharpen: number;
@@ -685,6 +790,70 @@ export class ModelViewer {
 		return !g || g.node.visible;
 	}
 
+	/** The colour slots' palette (`paletteColour`): rgb and how much, linear; slot 0 none. */
+	private palette = { uPalette: { value: Array.from({ length: PALETTE_SIZE }, () => new THREE.Vector4()) } };
+	/** Each colour slot's place in the palette, by name. */
+	private slots = new Map<string, number>();
+	/** Each colour slot as last set, for the controls panel (`colourSlots`). */
+	private slotStates = new Map<string, ColourSlot>();
+
+	/**
+	 * Gives each vertex of the parts `colours` names its slot (`_slot`, a
+	 * byte), and the slots their starting colours. Only the groups with a
+	 * coloured part carry the attribute; the rest draw as they were.
+	 */
+	private paintSlots(model: THREE.Object3D) {
+		const specs = Object.entries(this.opts.colours ?? {}).slice(0, PALETTE_SIZE - 1);
+		specs.forEach(([name, spec], i) => {
+			this.slots.set(name, i + 1);
+			this.slotStates.set(name, { name, label: spec.label ?? name, colour: '#ffffff', amount: 0 });
+			if (spec.colour) this.setColour(name, spec.colour, spec.amount ?? 0);
+		});
+		for (const [name, spec] of specs) {
+			const node = model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(spec.group));
+			if (!node) continue;
+			const slot = this.slots.get(name)!;
+			node.traverse((o) => {
+				const mesh = o as THREE.Mesh;
+				const part = mesh.isMesh ? mesh.geometry.getAttribute('_part') : undefined;
+				if (!part) return;
+				// The part ids, on the file's node (glTF extras), above the mesh.
+				let ids: string[] | undefined;
+				for (let up: THREE.Object3D | null = mesh; up && !ids; up = up.parent) ids = up.userData.parts;
+				const wanted = spec.parts && ids ? new Set(spec.parts.map((id) => ids!.indexOf(id)).filter((p) => p >= 0)) : null;
+				let attr = mesh.geometry.getAttribute('_slot') as THREE.BufferAttribute | undefined;
+				if (!attr) mesh.geometry.setAttribute('_slot', (attr = new THREE.BufferAttribute(new Uint8Array(part.count), 1)));
+				const out = attr.array as Uint8Array;
+				for (let i = 0; i < part.count; i++) if (!wanted || wanted.has(Math.round(part.getX(i)))) out[i] = slot;
+			});
+		}
+	}
+
+	/**
+	 * A colour slot's colour (`colours`), `amount` of the way over the parts'
+	 * own (0 none, 1 whole); either left out keeps what it was. Cheap enough
+	 * to call every frame of a fade.
+	 */
+	setColour(slot: string, colour?: THREE.ColorRepresentation | null, amount?: number) {
+		const i = this.slots.get(slot);
+		const state = this.slotStates.get(slot);
+		if (!i || !state) return;
+		const v = this.palette.uPalette.value[i];
+		if (colour != null) {
+			const c = new THREE.Color(colour);
+			v.set(c.r, c.g, c.b, v.w);
+			state.colour = `#${c.getHexString()}`;
+		}
+		if (amount !== undefined) v.w = amount;
+		state.amount = v.w;
+		this.invalidate();
+	}
+
+	/** The colour slots as they stand, in palette order (the controls panel's). */
+	colourSlots(): ColourSlot[] {
+		return [...this.slotStates.values()].map((s) => ({ ...s }));
+	}
+
 	/**
 	 * Moves the parts of group `from` whose middles lie in a box into a new
 	 * group `name`: the source keeps the rest of its triangles, the new
@@ -796,12 +965,18 @@ export class ModelViewer {
 				if ((o as THREE.Mesh).isMesh) scale = o.matrixWorld.getMaxScaleOnAxis();
 			});
 			const surface = { uOpen: { value: 0 }, uLocalScale: { value: scale }, ...this.baked };
+			// Colour slots, where any part of it takes one.
+			let painted = false;
+			node.traverse((o) => {
+				if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.getAttribute('_slot')) painted = true;
+			});
 			material.onBeforeCompile = (shader, renderer) => {
 				base.call(material, shader, renderer);
 				glowFromWithin(shader, glow);
 				if (baked) bakedSurface(shader, surface);
+				if (painted) paletteColour(shader, this.palette);
 			};
-			material.customProgramCacheKey = () => baseKey.call(material) + '|glow' + (baked ? '|baked' : '');
+			material.customProgramCacheKey = () => baseKey.call(material) + '|glow' + (baked ? '|baked' : '') + (painted ? '|palette' : '');
 			const planes = [new THREE.Plane(), new THREE.Plane()];
 			material.clippingPlanes = planes;
 			material.clipIntersection = true;
@@ -1614,6 +1789,8 @@ export class ModelViewer {
 			mesh.castShadow = true;
 			mesh.receiveShadow = true;
 		});
+		// Colour slots before carving, which shares each mesh's attributes.
+		this.paintSlots(model);
 		// One step at a time, handing the main thread back between them, so
 		// the page keeps scrolling smoothly while the model is put together.
 		await yieldToMain();
@@ -1806,7 +1983,10 @@ export class ModelViewer {
 	 */
 	/** Lit by the soft boxes (`softbox`), their environment built the first time. */
 	private softbox = false;
-	private softboxRT: THREE.WebGLRenderTarget | null = null;
+	/** Each rig's environment map, made the first time it's lit by. */
+	private softboxRT: Partial<Record<'studio' | 'black', THREE.WebGLRenderTarget>> = {};
+	/** Which soft boxes (`softbox` 1 the approved studio's, 2 the black renders'). */
+	private rig: 'studio' | 'black' = 'studio';
 	/**
 	 * The soft boxes' diffuse light, as spherical harmonics (three's light
 	 * probe): what a matte surface facing each way receives from them, the
@@ -1823,7 +2003,7 @@ export class ModelViewer {
 		sh.zero();
 		const basis = this.shBasis;
 		const [c, right, up, d] = this.probeVecs;
-		const radianceOf = (b: (typeof SOFTBOXES)[number]) => (b.power * b.distance * b.distance) / (b.width * b.length);
+		const radianceOf = (b: Softbox) => (b.power * b.distance * b.distance) / (b.width * b.length);
 		const key = radianceOf(SOFTBOXES[0]);
 		const K = 6;
 		// The broad ones only: a strip's light is too small for nine numbers to
@@ -1871,7 +2051,7 @@ export class ModelViewer {
 			const light = this.strips[i];
 			const az = THREE.MathUtils.degToRad(box.azimuth);
 			const el = THREE.MathUtils.degToRad(box.elevation);
-			light.visible = this.softbox && key.visible;
+			light.visible = this.softbox && this.rig === 'black' && key.visible;
 			light.intensity = (key.intensity * box.power) / SOFTBOXES[0].power;
 			light.target.position.copy(this.target);
 			light.position
@@ -1884,17 +2064,22 @@ export class ModelViewer {
 	}
 	private probeVecs = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
 
-	private setSoftbox(on: boolean) {
+	private setSoftbox(which: number) {
+		const on = which > 0;
 		this.softbox = on;
-		this.baked.uEnvDiffuse.value = on ? 0 : 1;
-		this.light.intensity = on ? this.scene.environmentIntensity : 0;
-		if (on) this.probeYaw = NaN;
-		if (on && !this.softboxRT) {
-			const env = createSoftboxEnvironment();
-			this.softboxRT = this.pmrem.fromScene(env, 0, 0.1, 100);
+		this.rig = which >= 2 ? 'black' : 'studio';
+		// The black rig's diffuse light is the probe's and the strips'; the
+		// studio's, the environment map's own, as it was approved.
+		const black = on && this.rig === 'black';
+		this.baked.uEnvDiffuse.value = black ? 0 : 1;
+		this.light.intensity = black ? this.scene.environmentIntensity : 0;
+		if (black) this.probeYaw = NaN;
+		if (on && !this.softboxRT[this.rig]) {
+			const env = black ? createSoftboxEnvironment(SOFTBOXES) : createSoftboxEnvironment(STUDIO_SOFTBOXES, 0x030303);
+			this.softboxRT[this.rig] = this.pmrem.fromScene(env, 0, 0.1, 100);
 			disposeScene(env);
 		}
-		this.scene.environment = (on ? this.softboxRT?.texture : this.envRT?.texture) ?? null;
+		this.scene.environment = (on ? this.softboxRT[this.rig]?.texture : this.envRT?.texture) ?? null;
 		if (!on) this.scene.environmentRotation.set(0, 0, 0);
 		this.invalidate();
 	}
@@ -1968,7 +2153,7 @@ export class ModelViewer {
 			environment: this.scene.environmentIntensity,
 			exposure: this.renderer.toneMappingExposure,
 			tone: (Object.keys(TONES) as Tone[]).find((k) => TONES[k] === this.renderer.toneMapping) ?? 'aces',
-			softbox: this.softbox ? 1 : 0,
+			softbox: this.softbox ? (this.rig === 'black' ? 2 : 1) : 0,
 			sharpen: this.sweep?.sharpen ?? 0,
 			grade: this.gradeAmount,
 			edges: this.gtao?.ridge ?? 0,
@@ -2010,7 +2195,9 @@ export class ModelViewer {
 			finishFloor: this.baked.uFinishFloor.value,
 			polymer: this.baked.uPolymer.value,
 			detail: this.baked.uDetail.value,
-			detailTile: this.baked.uDetailTile.value
+			detailTile: this.baked.uDetailTile.value,
+			wrap: this.baked.uWrap.value,
+			surfaceGrain: this.baked.uSurfaceGrain.value
 		};
 	}
 
@@ -2065,7 +2252,7 @@ export class ModelViewer {
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
-		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked'))) keys.push('bakedAO', 'bakedDirect', 'bakedView', 'finish', 'finishFloor', 'polymer', 'detail', 'detailTile');
+		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked'))) keys.push('bakedAO', 'bakedDirect', 'bakedView', 'finish', 'finishFloor', 'polymer', 'detail', 'detailTile', 'wrap', 'surfaceGrain');
 		if (this.grain) keys.push('grain');
 		if (this.contact) keys.push('shadow');
 		if (this.gradient) {
@@ -2144,7 +2331,7 @@ export class ModelViewer {
 				break;
 			case 'environment':
 				this.scene.environmentIntensity = n;
-				if (this.softbox) this.light.intensity = n;
+				if (this.softbox && this.rig === 'black') this.light.intensity = n;
 				break;
 			case 'exposure':
 				this.renderer.toneMappingExposure = n;
@@ -2163,7 +2350,7 @@ export class ModelViewer {
 				this.gtao?.setGrade({ amount: n, ...PRINT });
 				break;
 			case 'softbox':
-				this.setSoftbox(n > 0);
+				this.setSoftbox(n);
 				break;
 			case 'tone':
 				// The passes that tone map read it each frame (OutputPass, the occlusion's composite).
@@ -2201,6 +2388,12 @@ export class ModelViewer {
 				break;
 			case 'detailTile':
 				this.baked.uDetailTile.value = n;
+				break;
+			case 'wrap':
+				this.baked.uWrap.value = n;
+				break;
+			case 'surfaceGrain':
+				this.baked.uSurfaceGrain.value = n;
 				break;
 			case 'grain':
 				if (this.grain) this.grain.uniforms.uAmount.value = n;
@@ -2521,6 +2714,8 @@ export class ModelViewer {
 		uDetail: { value: 1 },
 		uDetailTile: { value: 0.35 },
 		uEnvDiffuse: { value: 1 },
+		uWrap: { value: 0 },
+		uSurfaceGrain: { value: 0 },
 		// Mid-grey (no change) until the texture arrives (`loadDetail`).
 		tDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) as THREE.Texture }
 	};
@@ -2869,7 +3064,7 @@ export class ModelViewer {
 			const c = this.camera.position;
 			const yaw = Math.atan2(c.x - this.target.x, c.z - this.target.z);
 			this.scene.environmentRotation.set(0, yaw, 0);
-			this.syncProbe(yaw);
+			if (this.rig === 'black') this.syncProbe(yaw);
 		}
 		this.syncStrips(this.softbox ? Math.atan2(this.camera.position.x - this.target.x, this.camera.position.z - this.target.z) : 0);
 		this.root.rotation.set(
@@ -3186,7 +3381,7 @@ export class ModelViewer {
 		for (const pass of this.overlayPasses) this.composer.removePass(pass);
 		this.composer.dispose();
 		this.envRT?.dispose();
-		this.softboxRT?.dispose();
+		for (const rt of Object.values(this.softboxRT)) rt.dispose();
 		this.baked.tDetail.value.dispose();
 		this.pmrem.dispose();
 		this.renderer.dispose();
@@ -4073,6 +4268,23 @@ function createStudioEnvironment(): THREE.Scene {
 /** A strip, not a soft box: too narrow for the light probe (`syncProbe`), lit by a light of its own (`syncStrips`). */
 const isStrip = (b: { width: number }) => b.width < 0.2;
 
+/** A rig's soft boxes: round the camera (`azimuth` 0 its side), sizes and `distance` in subject radii. */
+type Softbox = { azimuth: number; elevation: number; distance: number; width: number; length: number; power: number };
+
+/**
+ * The approved studio light from before the black renders (render.py RIGS
+ * 'studio-classic'): a big soft box overhead and a little to one side for
+ * broad, even form, and a tall strip either side behind to cut the
+ * silhouette out. As it was approved: its azimuths read back mirrored
+ * (the cube PMREM's), and all its light, reflected and diffuse, from the
+ * environment map.
+ */
+const STUDIO_SOFTBOXES: Softbox[] = [
+	{ azimuth: -25, elevation: 55, distance: 3, width: 3, length: 3, power: 0.5 },
+	{ azimuth: -140, elevation: 25, distance: 3, width: 0.15, length: 3, power: 1.0 },
+	{ azimuth: 140, elevation: 25, distance: 3, width: 0.15, length: 3, power: 0.8 }
+];
+
 /**
  * The black studio renders' light (render.py RIGS 'studio-black', which
  * the reference frames, renders/mark-0-black, were lit with; the -v2 set's
@@ -4085,7 +4297,7 @@ const isStrip = (b: { width: number }) => b.width < 0.2;
  * the key: the directional key stands for it (`shadeAzimuth` 30,
  * `shadeElevation` 9 is the same direction in its terms).
  */
-const SOFTBOXES = [
+const SOFTBOXES: Softbox[] = [
 	{ azimuth: 80, elevation: 30, distance: 2.2, width: 0.5, length: 1.0, power: 1.0 },
 	{ azimuth: -150, elevation: 20, distance: 3, width: 0.1, length: 3, power: 1.6 },
 	{ azimuth: -165, elevation: 12, distance: 3, width: 0.05, length: 3, power: 0.9 },
@@ -4103,13 +4315,12 @@ const SOFTBOXES = [
  * Normalised so the key is 1; `environment` scales the lot.
  * Monochrome: the parts' colour is the finishes'.
  */
-function createSoftboxEnvironment(): THREE.Scene {
+function createSoftboxEnvironment(boxes: Softbox[], room = 0x000000): THREE.Scene {
 	const env = new THREE.Scene();
-	const room = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide }));
-	env.add(room);
-	const radianceOf = (b: (typeof SOFTBOXES)[number]) => (b.power * b.distance * b.distance) / (b.width * b.length);
-	const key = radianceOf(SOFTBOXES[0]);
-	for (const box of SOFTBOXES) {
+	env.add(new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: room, side: THREE.BackSide })));
+	const radianceOf = (b: Softbox) => (b.power * b.distance * b.distance) / (b.width * b.length);
+	const key = radianceOf(boxes[0]);
+	for (const box of boxes) {
 		const az = THREE.MathUtils.degToRad(box.azimuth);
 		const el = THREE.MathUtils.degToRad(box.elevation);
 		const panel = new THREE.Mesh(

@@ -18,6 +18,6 @@
 	}
 	.label {
 		margin-right: var(--space-24);
-		color: var(--grey-950);
+		color: var(--black);
 	}
 </style>

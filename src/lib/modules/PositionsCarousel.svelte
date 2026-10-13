@@ -74,7 +74,7 @@
 </script>
 
 <section class="positions" aria-labelledby="{id}-label">
-	<h2 id="{id}-label" class="label type-h3">{label}</h2>
+	<h2 id="{id}-label" class="label type-h5">{label}</h2>
 	<div class="window">
 		<ul class="track" bind:this={track}>
 			{#each items as position, i (i)}

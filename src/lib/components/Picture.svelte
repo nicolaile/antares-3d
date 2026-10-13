@@ -47,7 +47,7 @@
 		overflow: hidden;
 	}
 	.surface {
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 	.picture :global(picture),
 	.picture :global(img) {

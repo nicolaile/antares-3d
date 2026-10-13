@@ -74,7 +74,7 @@
 </script>
 
 <section class="card" data-tone="dark" aria-label={title}>
-	<h2 class="title type-h4">
+	<h2 class="title type-sub-headline">
 		{title}
 		{#if subtitle}<span class="subtitle">{subtitle}</span>{/if}
 	</h2>
@@ -110,8 +110,8 @@
 		aspect-ratio: 1400 / 800;
 		overflow: hidden;
 		border-radius: var(--card-radius);
-		background: var(--grey-850);
-		color: var(--grey-0);
+		background: var(--grey-950);
+		color: var(--white);
 	}
 	/* 15em wraps the line under it in two, as in the design. */
 	.title {

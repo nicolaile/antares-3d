@@ -9,8 +9,8 @@
 -->
 <script lang="ts">
 	import type { Picture as Source } from 'vite-imagetools';
-	import Picture from './Picture.svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import Picture from '$lib/components/Picture.svelte';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		name,

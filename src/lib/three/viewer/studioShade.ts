@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SWEEP_GLSL, type SweepUniforms } from './SweepPass';
+import { SWEEP_GLSL, type SweepUniforms } from '$lib/three/post/SweepPass';
 
 export interface StudioShadeOptions {
 	/** Screen angle the light comes from, degrees. 0 = right, 90 = top, 180 = left. */

@@ -17,8 +17,8 @@
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import Wordmark from '$lib/components/Wordmark.svelte';
-	import { initScroll, destroyScroll, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/scroll';
-	import { header, slideWithHeader } from '$lib/header.svelte';
+	import { initScroll, destroyScroll, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/motion/scroll';
+	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
 
 	let {
 		title,

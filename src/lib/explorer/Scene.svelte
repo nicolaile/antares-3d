@@ -21,12 +21,12 @@
 
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/scroll';
+	import { initScroll, destroyScroll, onTick, gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	// Types only: three.js itself loads on demand, as its own chunk (see start()).
-	import type { ColourSlots, ModelViewer, RenderParams } from '$lib/three/ModelViewer';
+	import type { ColourSlots, ModelViewer, RenderParams } from '$lib/three/viewer/ModelViewer';
 	import poster from '$lib/assets/images/model-poster.webp?w=2560;1600;900&enhanced';
-	import type { Shot } from '$lib/three/shot';
-	import { LOOK } from '$lib/three/look';
+	import type { Shot } from '$lib/three/viewer/shot';
+	import { LOOK } from '$lib/three/viewer/look';
 
 	let {
 		src,
@@ -173,7 +173,7 @@
 		/** Builds a viewer and wires it up; `stop` tears exactly this one down. */
 		async function start() {
 			const done = await inTurn(untrack(() => later));
-			const { ModelViewer } = await import('$lib/three/ModelViewer').catch((e) => {
+			const { ModelViewer } = await import('$lib/three/viewer/ModelViewer').catch((e) => {
 				done();
 				throw e;
 			});

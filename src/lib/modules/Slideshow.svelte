@@ -19,7 +19,7 @@
 	import CursorLabel from '$lib/components/CursorLabel.svelte';
 	import chevronLeft from '$lib/assets/icons/chevron-left.svg?raw';
 	import chevronRight from '$lib/assets/icons/chevron-right.svg?raw';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import type { Slide } from '$lib/content/company';
 
 	type Side = 'previous' | 'next';

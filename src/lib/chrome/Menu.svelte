@@ -18,8 +18,8 @@
 	import Cell from '$lib/layout/Cell.svelte';
 	import MenuButton from '$lib/components/MenuButton.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import { gsap, getLenis, prefersReducedMotion } from '$lib/scroll';
-	import { header } from '$lib/header.svelte';
+	import { gsap, getLenis, prefersReducedMotion } from '$lib/motion/scroll';
+	import { header } from '$lib/chrome/header.svelte';
 	import type { Link, Update } from '$lib/content/site';
 
 	let {

@@ -8,7 +8,7 @@
 	position is a fraction of the diagram so it tracks the drawing exactly.
 -->
 <script lang="ts">
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		label,

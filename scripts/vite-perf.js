@@ -1,6 +1,6 @@
 // @ts-nocheck — Node-side dev tooling; the project carries no Node types.
 /**
- * Dev-server endpoint for the R1 perf runs (src/lib/three/perf.ts): saves
+ * Dev-server endpoint for the R1 perf runs (src/lib/dev/perf.ts): saves
  * each run's frames and report under captures/perf/<label>/, where
  * scripts/perf-compare.mjs reads two runs side by side. `apply: 'serve'`
  * keeps it out of the production build entirely.

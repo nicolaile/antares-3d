@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
  * Osmo's number odometer: each digit rolls up through a strip of 0–9, like

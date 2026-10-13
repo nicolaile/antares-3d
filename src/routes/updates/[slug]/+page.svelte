@@ -6,11 +6,11 @@
 	(RecentArticles).
 -->
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import RecentArticles from '$lib/modules/RecentArticles.svelte';
 	import { formatDate, recentArticles } from '$lib/content/articles';
 	import { footer } from '$lib/content/site';

@@ -5,11 +5,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import StarField from '$lib/modules/StarField.svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { error } from '$lib/content/error';
 
 	const missing = $derived(page.status === 404);

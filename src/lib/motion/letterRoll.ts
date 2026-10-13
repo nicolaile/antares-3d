@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
  * Made With GSAP's effect 041, calmer: hovering a line of text rolls its

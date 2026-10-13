@@ -5,10 +5,10 @@
 	columns, then the footer. Content comes from `$lib/content/legal`.
 -->
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import { footer } from '$lib/content/site';
 
 	let { title, description, updated, body }: import('$lib/content/legal').LegalPage = $props();

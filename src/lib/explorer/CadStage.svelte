@@ -82,11 +82,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { Vector3 } from 'three';
-	import Scene from '$lib/components/Scene.svelte';
-	import type { ColourSlots, ModelViewer } from '$lib/three/ModelViewer';
+	import Scene from '$lib/explorer/Scene.svelte';
+	import type { ColourSlots, ModelViewer } from '$lib/three/viewer/ModelViewer';
 	import type { EnergyTrails, TrailSet } from '$lib/three/EnergyTrails';
-	import type { Shot } from '$lib/three/shot';
-	import { gsap } from '$lib/scroll';
+	import type { Shot } from '$lib/three/viewer/shot';
+	import { gsap } from '$lib/motion/scroll';
 	import { DEFAULT_TRAIL_LOOK } from '$lib/energy/energy';
 
 	let {

@@ -15,13 +15,13 @@ import controlSystems from '$lib/assets/images/landing/control-systems.jpg?w=202
 import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1862;928;464&enhanced';
 import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;1800;1200;800&enhanced';
 // A stand-in for the hero's film, for now.
-import heroVideo from '$lib/assets/images/landing/hero_example.mp4';
+import heroVideo from '$lib/assets/images/landing/hero-placeholder.mp4';
 // The mission video's still, three columns (338px at 1440): the source is 676px wide.
 import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;700&enhanced';
 // import videoStill from '$lib/assets/images/landing/video.jpg?w=676;338&enhanced';
 
-import type { Feature, CadModel, CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
-import type { Shot } from '$lib/three/shot';
+import type { Feature, CadModel, CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
+import type { Shot } from '$lib/three/viewer/shot';
 
 export const hero = {
 	// The line break is the design's; the hero keeps it.

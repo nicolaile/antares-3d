@@ -8,8 +8,8 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ModelViewer, ViewProfile } from '$lib/three/ModelViewer';
-	import { run, shot, visibility, type PerfTarget } from '$lib/three/perf';
+	import type { ModelViewer, ViewProfile } from '$lib/three/viewer/ModelViewer';
+	import { run, shot, visibility, type PerfTarget } from '$lib/dev/perf';
 
 	let {
 		viewers,

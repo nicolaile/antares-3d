@@ -14,7 +14,7 @@
  * or the Run button on the readout (PerfHud). Same window size each time:
  * the report records it and the compare flags a mismatch.
  */
-import type { ModelViewer, RenderParams, ViewProfile } from '$lib/three/ModelViewer';
+import type { ModelViewer, RenderParams, ViewProfile } from '$lib/three/viewer/ModelViewer';
 
 /** What a run needs of the explorer (ReactorExplorer, with ?perf). */
 export type PerfTarget = {

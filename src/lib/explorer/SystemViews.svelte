@@ -29,11 +29,11 @@
 	import { onMount } from 'svelte';
 	import type { Vector3 } from 'three';
 	import Cell from '$lib/layout/Cell.svelte';
-	import EnergyDiagram from '$lib/modules/EnergyDiagram.svelte';
+	import EnergyDiagram from '$lib/explorer/EnergyDiagram.svelte';
 	import { FRAME, MARKERS } from '$lib/energy/r1';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	// Types only: three.js and the CAD load on demand, as their own chunk.
-	import type { IsoDrawing } from '$lib/three/IsoDrawing';
+	import type { IsoDrawing } from '$lib/three/cad/IsoDrawing';
 
 	let {
 		label,
@@ -215,7 +215,7 @@
 
 	/** Loads the isometric once; null if it can't (no WebGL, say). */
 	function load() {
-		ready ??= import('$lib/three/IsoDrawing')
+		ready ??= import('$lib/three/cad/IsoDrawing')
 			.then(async ({ IsoDrawing }) => {
 				const viewer = new IsoDrawing(isoHost);
 				matchLines(viewer);

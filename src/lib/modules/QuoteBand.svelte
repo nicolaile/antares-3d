@@ -10,8 +10,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import { highlightText } from '$lib/highlightText';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { highlightText } from '$lib/motion/highlightText';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import type { Picture as Source } from 'vite-imagetools';
 
 	let {

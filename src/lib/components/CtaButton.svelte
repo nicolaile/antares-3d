@@ -11,7 +11,7 @@
 -->
 <script lang="ts">
 	import arrowIcon from '$lib/assets/icons/right-arrow.svg?raw';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		label,

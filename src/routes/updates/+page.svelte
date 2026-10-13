@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
-	import UpdateCard from '$lib/components/UpdateCard.svelte';
-	import DownloadCard from '$lib/components/DownloadCard.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import UpdateCard from '$lib/components/cards/UpdateCard.svelte';
+	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { updates } from '$lib/content/updates';
 	import { footer } from '$lib/content/site';
 

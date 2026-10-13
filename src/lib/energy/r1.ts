@@ -14,7 +14,7 @@
  * Centre lines and hidden lines are detail with their own dash patterns.
  */
 import type { Pipe } from './pipes';
-import { MACHINES, SILHOUETTES } from './r1-machines';
+import { MACHINES, SILHOUETTES } from './r1Machines';
 
 /**
  * The visible window onto those coordinates. Same size as the render; the

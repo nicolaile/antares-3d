@@ -15,7 +15,7 @@
 	import Picture from '$lib/components/Picture.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import type { Capability } from '$lib/content/home';
 
 	let {

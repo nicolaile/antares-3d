@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
 	import Picture from '$lib/components/Picture.svelte';
-	import { parallax } from '$lib/parallax';
+	import { parallax } from '$lib/motion/parallax';
 	import type { ClusterItem } from '$lib/content/progress';
 
 	let { items }: { items: ClusterItem[] } = $props();

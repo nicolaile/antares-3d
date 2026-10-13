@@ -17,8 +17,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import { gsap, ScrollTrigger, initScroll, destroyScroll, getLenis, prefersReducedMotion } from '$lib/scroll';
-	import { freezeHeader } from '$lib/header.svelte';
+	import { gsap, ScrollTrigger, initScroll, destroyScroll, getLenis, prefersReducedMotion } from '$lib/motion/scroll';
+	import { freezeHeader } from '$lib/chrome/header.svelte';
 	import type { Picture as Source } from 'vite-imagetools';
 
 	let { phrase, items }: { phrase: string; items: { word: string; image: { src: Source; alt: string } }[] } = $props();

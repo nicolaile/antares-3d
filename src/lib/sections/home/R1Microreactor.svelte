@@ -8,9 +8,9 @@
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import SectionHeader from '$lib/modules/SectionHeader.svelte';
-	import ReactorExplorer, { type Feature, type CadModel, type CadModelSetup } from '$lib/modules/ReactorExplorer.svelte';
-	import SystemViews from '$lib/modules/SystemViews.svelte';
-	import { reveal } from '$lib/reveal';
+	import ReactorExplorer, { type Feature, type CadModel, type CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
+	import SystemViews from '$lib/explorer/SystemViews.svelte';
+	import { reveal } from '$lib/motion/reveal';
 
 	let {
 		title,

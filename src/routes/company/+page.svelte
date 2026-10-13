@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
-	import PersonCard from '$lib/components/PersonCard.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
+	import PersonCard from '$lib/components/cards/PersonCard.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import FeatureCards from '$lib/modules/FeatureCards.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
 	import PersonPanel from '$lib/modules/PersonPanel.svelte';

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
-	import Hero from '$lib/sections/Hero.svelte';
-	import MissionIntro from '$lib/sections/MissionIntro.svelte';
-	import R1Microreactor from '$lib/sections/R1Microreactor.svelte';
-	import OperatingModel from '$lib/sections/OperatingModel.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
+	import Hero from '$lib/sections/home/Hero.svelte';
+	import MissionIntro from '$lib/sections/home/MissionIntro.svelte';
+	import R1Microreactor from '$lib/sections/home/R1Microreactor.svelte';
+	import OperatingModel from '$lib/modules/OperatingModel.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import Capabilities from '$lib/modules/Capabilities.svelte';
-	import PosterCard from '$lib/modules/PosterCard.svelte';
+	import PosterCard from '$lib/components/cards/PosterCard.svelte';
 	import FeatureCards from '$lib/modules/FeatureCards.svelte';
 	import { hero, mission, r1, operating, capabilities, graphite, progress } from '$lib/content/home';
 	import { footer } from '$lib/content/site';

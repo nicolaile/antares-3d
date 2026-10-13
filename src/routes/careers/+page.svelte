@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PositionsCarousel from '$lib/modules/PositionsCarousel.svelte';
-	import OperatingModel from '$lib/sections/OperatingModel.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import OperatingModel from '$lib/modules/OperatingModel.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
 	import Slideshow from '$lib/modules/Slideshow.svelte';
 	import { careers } from '$lib/content/careers';

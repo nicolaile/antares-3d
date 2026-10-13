@@ -12,8 +12,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
-	import { header, SHOW, HIDE } from '$lib/header.svelte';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
+	import { header, SHOW, HIDE } from '$lib/chrome/header.svelte';
 
 	let bar: HTMLElement;
 	let first = true;

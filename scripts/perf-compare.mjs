@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Two R1 perf runs side by side (src/lib/three/perf.ts): each feature's
+// Two R1 perf runs side by side (src/lib/dev/perf.ts): each feature's
 // GPU time, how it splits, draw calls and memory, and how far its frame
 // moved, pixel for pixel. Writes a diff image per feature (differences
 // amplified 8×) next to the second run's frames.

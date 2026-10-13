@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { SplitText } from 'gsap/SplitText';
-	import Grid from '$lib/components/Grid.svelte';
-	import TimelineEntry from '$lib/components/TimelineEntry.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
+	import TimelineEntry from '$lib/components/cards/TimelineEntry.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Blueprint from '$lib/modules/Blueprint.svelte';
 	import ExplodedView from '$lib/modules/ExplodedView.svelte';
 	import Figures from '$lib/modules/Figures.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import ImageCluster from '$lib/modules/ImageCluster.svelte';
 	import QuoteBand from '$lib/modules/QuoteBand.svelte';
-	import { gsap, initScroll, destroyScroll, prefersReducedMotion } from '$lib/scroll';
-	import { splitReveal } from '$lib/splitReveal';
+	import { gsap, initScroll, destroyScroll, prefersReducedMotion } from '$lib/motion/scroll';
+	import { splitReveal } from '$lib/motion/splitReveal';
 	import { progress } from '$lib/content/progress';
 	import { footer } from '$lib/content/site';
 

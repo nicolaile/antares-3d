@@ -7,11 +7,11 @@
 	import { page } from '$app/state';
 	import { onNavigate, afterNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getLenis } from '$lib/scroll';
-	import Menu from '$lib/modules/Menu.svelte';
-	import BrandMark from '$lib/modules/BrandMark.svelte';
-	import HeaderBar from '$lib/modules/HeaderBar.svelte';
-	import { trackHeader, updateHeader } from '$lib/header.svelte';
+	import { getLenis } from '$lib/motion/scroll';
+	import Menu from '$lib/chrome/Menu.svelte';
+	import BrandMark from '$lib/chrome/BrandMark.svelte';
+	import HeaderBar from '$lib/chrome/HeaderBar.svelte';
+	import { trackHeader, updateHeader } from '$lib/chrome/header.svelte';
 	import { menu } from '$lib/content/site';
 	let { children } = $props();
 

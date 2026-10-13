@@ -18,7 +18,7 @@
 	import { tick, type Snippet } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import { SplitText } from 'gsap/SplitText';
-	import { gsap, getLenis, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, getLenis, prefersReducedMotion } from '$lib/motion/scroll';
 	import type { Person } from '$lib/content/company';
 
 	let { children }: { children: Snippet } = $props();

@@ -13,11 +13,11 @@
 -->
 <script lang="ts" module>
 	import type { Picture as PictureSource } from 'vite-imagetools';
-	import type { Shot } from '$lib/three/shot';
-	import type { CadLabel } from '$lib/three/cadPoints';
+	import type { Shot } from '$lib/three/viewer/shot';
+	import type { CadLabel } from '$lib/three/cad/cadPoints';
 	import type { TrailSet } from '$lib/three/EnergyTrails';
-	import type { ColourSlots } from '$lib/three/ModelViewer';
-	import type { Look } from '$lib/components/CadStage.svelte';
+	import type { ColourSlots } from '$lib/three/viewer/ModelViewer';
+	import type { Look } from '$lib/explorer/CadStage.svelte';
 
 	/**
 	 * A feature's own stage, in place of the model: an image bleeding off
@@ -75,17 +75,17 @@
 	import IconButton from '$lib/components/IconButton.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import WipBadge from '$lib/components/WipBadge.svelte';
-	import CadStage from '$lib/components/CadStage.svelte';
+	import CadStage from '$lib/explorer/CadStage.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import Controls from '$lib/components/Controls.svelte';
-	import EnergyControls from '$lib/components/EnergyControls.svelte';
-	import PerfHud from '$lib/components/PerfHud.svelte';
-	import type { PerfTarget } from '$lib/three/perf';
+	import Controls from '$lib/explorer/Controls.svelte';
+	import EnergyControls from '$lib/explorer/EnergyControls.svelte';
+	import PerfHud from '$lib/dev/PerfHud.svelte';
+	import type { PerfTarget } from '$lib/dev/perf';
 	import type { EnergyParams, TrailLook } from '$lib/energy/energy';
 	import type { EnergyTrails } from '$lib/three/EnergyTrails';
-	import type { ModelViewer } from '$lib/three/ModelViewer';
-	import { CAD_POINTS } from '$lib/three/cadPoints';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import type { ModelViewer } from '$lib/three/viewer/ModelViewer';
+	import { CAD_POINTS } from '$lib/three/cad/cadPoints';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { InertiaPlugin } from 'gsap/InertiaPlugin';
 	import { SplitText } from 'gsap/SplitText';
 

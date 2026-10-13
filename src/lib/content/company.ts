@@ -16,8 +16,8 @@ import slide05 from '$lib/assets/images/company/slideshow-05.jpg?w=2040;1384;692
 import slide06 from '$lib/assets/images/company/slideshow-06.jpg?w=2040;1384;692&enhanced';
 // The Iterative card (928px at 1440) and the photo inset in it (400px);
 // the sources are twice and a little over twice that.
-import iterativeBackground from '$lib/assets/images/company/Iterative-01.jpg?w=1856;928;464&enhanced';
-import iterativeImage from '$lib/assets/images/company/Iterative-02.jpg?w=948;474;237&enhanced';
+import iterativeBackground from '$lib/assets/images/company/iterative-01.jpg?w=1856;928;464&enhanced';
+import iterativeImage from '$lib/assets/images/company/iterative-02.jpg?w=948;474;237&enhanced';
 // 338px cards at 1440; the sources are 1014px wide.
 // Every portrait is the same stand-in for now; 676px is as wide as it comes.
 import portrait from '$lib/assets/images/career/employee.jpg?w=676;338&enhanced';

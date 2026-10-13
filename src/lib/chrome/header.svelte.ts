@@ -19,7 +19,7 @@
  * included). A change of direction only counts once it has run a few
  * pixels, so a wobble at the end of a scroll doesn't flicker the header.
  */
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
  * How far a change of direction must run before it counts, in px: further

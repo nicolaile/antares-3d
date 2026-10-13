@@ -19,7 +19,7 @@ const RULES = [
 		source: 'src/lib/styles/typography.css',
 		extensions: /\.(svelte|css|html|ts|js)$/,
 		// Reads the system for the /design-system page; names properties, never sets them.
-		exempt: ['src/lib/typography.ts'],
+		exempt: ['src/lib/tokens/typography.ts'],
 		// `font: inherit` only resets a control to the system; any other `font:`
 		// shorthand sets a size.
 		banned:
@@ -35,7 +35,7 @@ const RULES = [
 		exempt: [
 			// Developer layout overlay, deliberately Figma's red so it can't be
 			// mistaken for part of the design.
-			'src/lib/components/Grid.svelte'
+			'src/lib/dev/Grid.svelte'
 		],
 		banned:
 			/(?<![\w{&])#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(|(?<![\w-])(color|background|background-color|border|border-color|outline|outline-color|fill|stroke|accent-color|caret-color|box-shadow)\s*[:=]\s*["']?[^;"'>]*(?<![\w-])(white|black|red|green|blue|gr[ae]y|silver)(?![\w-])/
@@ -48,8 +48,8 @@ const RULES = [
 		exempt: [
 			// Developer tool panels, hidden behind Shift+H: dense, not part of
 			// the design.
-			'src/lib/components/Controls.svelte',
-			'src/lib/components/EnergyControls.svelte'
+			'src/lib/explorer/Controls.svelte',
+			'src/lib/explorer/EnergyControls.svelte'
 		],
 		// A margin, padding or gap set in raw lengths or base units. Tokens,
 		// 0, auto, percentages and a component's own derived variables are fine.

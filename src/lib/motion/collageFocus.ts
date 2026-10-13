@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 import { CustomEase } from 'gsap/CustomEase';
 
 gsap.registerPlugin(CustomEase);

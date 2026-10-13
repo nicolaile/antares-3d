@@ -9,12 +9,12 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import PositionCard from '$lib/components/PositionCard.svelte';
+	import PositionCard from '$lib/components/cards/PositionCard.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import type { Position } from '$lib/content/careers';
 	import type { Link } from '$lib/content/site';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		label,

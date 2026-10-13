@@ -23,7 +23,7 @@
 -->
 <script lang="ts">
 	import { SplitText } from 'gsap/SplitText';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		text,

@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
  * Osmo's global parallax: the element (or a `[data-parallax="target"]`

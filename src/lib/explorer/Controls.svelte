@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ColourSlot, ModelViewer, RenderParams } from '$lib/three/ModelViewer';
-	import type { GradientStop } from '$lib/three/GradientMapPass';
+	import type { ColourSlot, ModelViewer, RenderParams } from '$lib/three/viewer/ModelViewer';
+	import type { GradientStop } from '$lib/three/post/GradientMapPass';
 
 	let { viewer = null }: { viewer?: ModelViewer | null } = $props();
 

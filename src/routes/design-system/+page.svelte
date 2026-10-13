@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Grid from '$lib/components/Grid.svelte';
+	import Grid from '$lib/dev/Grid.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import CtaButton from '$lib/components/CtaButton.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
@@ -8,9 +8,9 @@
 	import PlayButton from '$lib/components/PlayButton.svelte';
 	import MenuButton from '$lib/components/MenuButton.svelte';
 	import ToggleRing from '$lib/components/ToggleRing.svelte';
-	import { BREAKPOINTS, TYPEFACES, TYPE_MODIFIERS, TYPE_STYLES } from '$lib/typography';
-	import { SCALE } from '$lib/colors';
-	import { SPACING } from '$lib/spacing';
+	import { BREAKPOINTS, TYPEFACES, TYPE_MODIFIERS, TYPE_STYLES } from '$lib/tokens/typography';
+	import { SCALE } from '$lib/tokens/colors';
+	import { SPACING } from '$lib/tokens/spacing';
 
 	const WEIGHT_NAMES: Record<string, string> = { '400': 'Regular', '500': 'Medium' };
 

@@ -7,7 +7,7 @@
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
-	import UpdateCard from '$lib/components/UpdateCard.svelte';
+	import UpdateCard from '$lib/components/cards/UpdateCard.svelte';
 	import type { UpdateItem } from '$lib/content/updates';
 
 	let {

@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 /**
  * Fades an element in the first time it scrolls into view, once its top

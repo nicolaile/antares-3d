@@ -1,6 +1,6 @@
 import type { Attachment } from 'svelte/attachments';
 import { SplitText } from 'gsap/SplitText';
-import { gsap, prefersReducedMotion } from '$lib/scroll';
+import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 gsap.registerPlugin(SplitText);
 

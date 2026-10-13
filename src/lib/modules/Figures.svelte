@@ -7,8 +7,8 @@
 	motion they're the still figures.
 -->
 <script lang="ts">
-	import { odometer } from '$lib/odometer';
-	import { letterRoll } from '$lib/letterRoll';
+	import { odometer } from '$lib/motion/odometer';
+	import { letterRoll } from '$lib/motion/letterRoll';
 
 	type Figure = {
 		value: number;

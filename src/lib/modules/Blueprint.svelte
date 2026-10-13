@@ -8,7 +8,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	gsap.registerPlugin(DrawSVGPlugin);
 

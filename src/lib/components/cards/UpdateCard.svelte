@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
 	import type { Picture as Source } from 'vite-imagetools';
-	import Picture from './Picture.svelte';
+	import Picture from '$lib/components/Picture.svelte';
 	import arrow from '$lib/assets/icons/right-arrow.svg?raw';
 
 	let {

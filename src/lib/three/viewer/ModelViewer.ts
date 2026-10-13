@@ -16,16 +16,16 @@ import type { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBl
 import type { SSRPass } from 'three/examples/jsm/postprocessing/SSRPass.js';
 import type { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { ContactShadow } from './ContactShadow';
-import { createGrainPass } from './GrainPass';
+import { createGrainPass } from '$lib/three/post/GrainPass';
 import {
 	DEFAULT_STOPS,
 	GradientMapPass,
 	type GradientStop,
 	type MixSpace,
 	type RepeatMode
-} from './GradientMapPass';
+} from '$lib/three/post/GradientMapPass';
 import { applySurfaceVariation } from './surfaceVariation';
-import { SweepPass, type SweepOptions } from './SweepPass';
+import { SweepPass, type SweepOptions } from '$lib/three/post/SweepPass';
 import {
 	applyStudioShade,
 	shadeDirection,
@@ -583,7 +583,7 @@ const STUDIO_KEYS = Object.keys(STUDIO_PRESET) as (keyof RenderParams)[];
 /**
  * Framework-agnostic three.js scene. Deliberately does NOT own a rAF loop —
  * `render()` is called from the shared GSAP ticker so Lenis, ScrollTrigger and
- * the renderer all advance on one clock. See `$lib/scroll.ts`.
+ * the renderer all advance on one clock. See `$lib/motion/scroll.ts`.
  */
 /** The lens the establishing shot is composed for, in degrees. */
 const DEFAULT_FOV = 38;

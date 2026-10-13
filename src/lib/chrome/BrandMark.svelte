@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
 	import Wordmark from '$lib/components/Wordmark.svelte';
-	import { header, slideWithHeader } from '$lib/header.svelte';
+	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
 </script>
 
 <a class="mark" href="/" aria-label="Antares home" {@attach slideWithHeader(() => header.hidden, () => header.follow)}><Wordmark /></a>

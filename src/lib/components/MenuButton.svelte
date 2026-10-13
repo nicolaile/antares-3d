@@ -5,7 +5,7 @@
 	Osmo system; the dots are vector so they stay crisp at any size.
 -->
 <script lang="ts">
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		open = false,
@@ -113,7 +113,7 @@
 
 <style>
 	.menu-button {
-		/* Keep in step with CustomEase 'menu' in $lib/scroll. */
+		/* Keep in step with CustomEase 'menu' in $lib/motion/scroll. */
 		--ease: cubic-bezier(0.48, 0.02, 0.03, 0.98);
 		position: relative;
 		display: block;

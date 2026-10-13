@@ -19,8 +19,8 @@
 -->
 <script lang="ts">
 	import { onMount, untrack, type Snippet } from 'svelte';
-	import DiagramLabel from '$lib/components/DiagramLabel.svelte';
-	import EnergyControls from '$lib/components/EnergyControls.svelte';
+	import DiagramLabel from '$lib/explorer/DiagramLabel.svelte';
+	import EnergyControls from '$lib/explorer/EnergyControls.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
 	import {
 		DEFAULT_LINE_WEIGHT,
@@ -45,7 +45,7 @@
 		ROUTES,
 		STRUCTURE
 	} from '$lib/energy/r1';
-	import { prefersReducedMotion } from '$lib/scroll';
+	import { prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		label,

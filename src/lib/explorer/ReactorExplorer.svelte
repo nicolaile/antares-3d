@@ -8,8 +8,8 @@
 	stage cuts between them, one model at a time. Each feature has its
 	point on its model (cadPoints.ts, unmarked), and the model turns to
 	show the open one. Selecting a feature moves the camera
-	to its shot. Nothing changes on its own: the reader picks. The button
-	pauses the model's slow turn. Place in a full-width `subgrid` cell.
+	to its shot. Autoplay steps on to the next feature every 15s; the pause
+	button, always shown, holds it and the model's slow turn. Place in a full-width `subgrid` cell.
 -->
 <script lang="ts" module>
 	import type { Picture as PictureSource } from 'vite-imagetools';
@@ -73,7 +73,7 @@
 	import { dev } from '$app/environment';
 	import { onMount, untrack } from 'svelte';
 	import FeatureTab from '$lib/components/FeatureTab.svelte';
-	import IconButton from '$lib/components/IconButton.svelte';
+	import PauseButton from '$lib/components/PauseButton.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import WipBadge from '$lib/components/WipBadge.svelte';
 	import CadStage from '$lib/explorer/CadStage.svelte';
@@ -384,7 +384,12 @@
 		);
 	}
 
-	/** Arrow keys step along the strip, focus following the open tab. */
+	/** The tabs and the panel they control, tied together by id. */
+	const uid = $props.id();
+	const tabId = (i: number) => `${uid}-tab-${i}`;
+	const panelId = `${uid}-panel`;
+
+	/** Arrow keys, Home and End step along the strip, focus following the open tab. */
 	function onTabKey(e: KeyboardEvent) {
 		const to = { ArrowRight: active + 1, ArrowLeft: active - 1, Home: 0, End: features.length - 1 }[e.key];
 		if (to === undefined) return;
@@ -695,6 +700,8 @@
 <div class="explorer" bind:this={explorerEl}>
 	<ol
 		class="tabs"
+		role="tablist"
+		aria-label="Features"
 		bind:this={tabsEl}
 		onpointerover={onTabIntent}
 		onfocusin={onTabIntent}
@@ -702,7 +709,15 @@
 		onscroll={edges}
 	>
 		{#each features as feature, i (feature.title)}
-			<FeatureTab index={i} title={feature.title} open={i === active} progress={i === active ? progress : 0} onselect={() => !dragged && select(i)} />
+			<FeatureTab
+				index={i}
+				title={feature.title}
+				open={i === active}
+				progress={i === active ? progress : 0}
+				id={tabId(i)}
+				controls={panelId}
+				onselect={() => !dragged && select(i)}
+			/>
 		{/each}
 	</ol>
 
@@ -751,7 +766,7 @@
 			{/if}
 		{/each}
 
-		<div class="detail" bind:this={detailEl}>
+		<div class="detail" role="tabpanel" id={panelId} aria-labelledby={tabId(active)} bind:this={detailEl}>
 			<!-- The opening feature's words; each pick writes its own in (see `reveal`). -->
 			<h3 class="detail-title type-body-large">{firstWords.title}</h3>
 			<p class="detail-text type-caption">{firstWords.text}</p>
@@ -771,17 +786,8 @@
 			<ArrowButton direction="next" tone="dark" label="Next feature" onclick={() => step(1)} />
 		</div>
 
-		<div class="pause" data-tool>
-			<IconButton label={paused ? 'Resume rotation' : 'Pause rotation'} pressed={paused} onclick={() => (paused = !paused)}>
-				<svg viewBox="0 0 12 12" aria-hidden="true">
-					{#if paused}
-						<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
-					{:else}
-						<rect x="3" y="2" width="2" height="8" fill="currentColor" />
-						<rect x="7" y="2" width="2" height="8" fill="currentColor" />
-					{/if}
-				</svg>
-			</IconButton>
+		<div class="pause">
+			<PauseButton bind:paused label="Pause animation" />
 		</div>
 	</div>
 </div>

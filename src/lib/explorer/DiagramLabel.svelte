@@ -6,6 +6,7 @@
 	or to the left near the diagram's right edge so it never clips. The
 	square keeps one size on screen whatever size the diagram is; its
 	position is a fraction of the diagram so it tracks the drawing exactly.
+	Enter or Space toggles the card too, and Escape shuts it.
 -->
 <script lang="ts">
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
@@ -35,13 +36,16 @@
 
 	// Cards near the right edge open to the left, so they never clip.
 	const align = $derived(x > 0.7 ? 'end' : 'start');
+	const uid = $props.id();
 
 	let boxEl: HTMLSpanElement;
 	let cardEl: HTMLSpanElement;
 	let hovered = $state(false);
 	/** Keyboard focus — or any focus on touch, where a tap is the hover. */
 	let focused = $state(false);
-	const open = $derived(hovered || focused);
+	/** Set by the keyboard (or a screen reader's click), over hover and focus until they end. */
+	let toggled = $state<boolean | null>(null);
+	const open = $derived(toggled ?? (hovered || focused));
 
 	function onfocus(e: FocusEvent) {
 		const el = e.currentTarget as HTMLElement;
@@ -50,7 +54,16 @@
 	}
 	function onblur() {
 		focused = false;
+		toggled = null;
 		onactive?.(false);
+	}
+	// Only keyboard and assistive clicks (no pointer, so `detail` is 0):
+	// a pointer already opens the card on hover or tap.
+	function onclick(e: MouseEvent) {
+		if (e.detail === 0) toggled = !open;
+	}
+	function onkeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && open) toggled = false;
 	}
 
 	/**
@@ -85,16 +98,22 @@
 	class:lit
 	class:open
 	type="button"
+	aria-label={label}
+	aria-describedby={text ? `${uid}-text` : undefined}
+	aria-expanded={open}
 	onpointerenter={() => {
 		hovered = true;
 		onactive?.(true);
 	}}
 	onpointerleave={() => {
 		hovered = false;
+		toggled = null;
 		onactive?.(false);
 	}}
 	{onfocus}
 	{onblur}
+	{onclick}
+	{onkeydown}
 	style:left="{x * 100}%"
 	style:top="{y * 100}%"
 	style:--order={order}
@@ -104,7 +123,7 @@
 	</span>
 	<span class="card" bind:this={cardEl}>
 		<span class="name type-annotation">{label}</span>
-		{#if text}<span class="text type-annotation">{text}</span>{/if}
+		{#if text}<span class="text type-annotation" id="{uid}-text">{text}</span>{/if}
 	</span>
 </button>
 
@@ -121,6 +140,16 @@
 		border: 0;
 		background: none;
 		cursor: pointer;
+	}
+	/* A hit area of at least 24px round the square, however small it's drawn. */
+	.marker::before {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: max(100%, 24px);
+		height: max(100%, 24px);
+		translate: -50% -50%;
+		content: '';
 	}
 	/* The type unit grows on phones; the diagram doesn't, so hold the squares back. */
 	@media screen and (max-width: 767px) {

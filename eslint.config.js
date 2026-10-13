@@ -22,6 +22,12 @@ export default ts.config(
 			'svelte/no-navigation-without-resolve': 'off',
 			// {@html} only renders SVG icons and article markup from this repo. Revisit if content ever comes from a CMS.
 			'svelte/no-at-html-tags': 'off',
+			// SplitText and measuring probes work on elements whose children Svelte doesn't render.
+			'svelte/no-dom-manipulating': 'off',
+			// Misses props passed on through a spread ({...image}).
+			'svelte/no-unused-props': 'off',
+			// Plain Maps and Sets here are caches, never read reactively.
+			'svelte/prefer-svelte-reactivity': 'off',
 			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
 		}
 	},

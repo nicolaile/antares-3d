@@ -6,3 +6,9 @@ declare module '*&enhanced' {
 	const value: Picture;
 	export default value;
 }
+
+// `?…&format=jpg` imports (a single resized file, e.g. the share card) resolve to its URL.
+declare module '*&format=jpg' {
+	const src: string;
+	export default src;
+}

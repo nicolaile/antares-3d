@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { onMount } from 'svelte';
 	import { SplitText } from 'gsap/SplitText';
 	import TimelineEntry from '$lib/components/cards/TimelineEntry.svelte';
@@ -77,82 +78,81 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Progress — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Progress" description={intro} />
 
 
-<main class="progress">
-	<section class="hero" bind:this={hero}>
-		<Row>
-			<Cell span={6} tablet={{ span: 8 }}>
-				<h1 class="title type-h1" {@attach splitReveal()}>
-					{#each title as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
-				</h1>
-			</Cell>
-			<Cell start={9} span={4} tablet={{ start: 9, span: 4 }} mobile={{ start: 9, span: 4 }}>
-				<p class="name type-display" bind:this={name}>{model.name}</p>
-			</Cell>
-		</Row>
-
-		<div class="opening" bind:this={opening}>
-			<Row align="center" gap={64}>
-				<Cell subgrid span={6} tablet={{ span: 7 }}>
-					<TimelineEntry {...entries[0]} />
+<main id="content" class="progress-page" tabindex="-1">
+	<div class="progress">
+		<section class="hero" bind:this={hero}>
+			<Row>
+				<Cell span={6} tablet={{ span: 8 }}>
+					<h1 class="title type-h1" {@attach splitReveal()}>
+						{#each title as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
+					</h1>
 				</Cell>
-				<Cell start={8} span={3} tablet={{ start: 8, span: 3 }} mobile={{ start: 3, span: 6 }}>
-					<ExplodedView {...model} />
+				<Cell start={9} span={4} tablet={{ start: 9, span: 4 }} mobile={{ start: 9, span: 4 }}>
+					<p class="name type-display" bind:this={name}>{model.name}</p>
 				</Cell>
 			</Row>
-		</div>
-	</section>
 
-	<section class="built" aria-label="Building in 2025">
-		<ImageCluster items={built} />
-	</section>
+			<div class="opening" bind:this={opening}>
+				<Row align="center" gap={64}>
+					<Cell subgrid span={6} tablet={{ span: 7 }}>
+						<TimelineEntry {...entries[0]} />
+					</Cell>
+					<Cell start={8} span={3} tablet={{ start: 8, span: 3 }} mobile={{ start: 3, span: 6 }}>
+						<ExplodedView {...model} />
+					</Cell>
+				</Row>
+			</div>
+		</section>
 
-	<section class="drawing">
-		<Row align="center" gap={64}>
-			<Cell subgrid span={6} tablet={{ span: 7 }}>
-				<TimelineEntry {...entries[1]} />
-			</Cell>
-			<Cell start={7} span={6} tablet={{ start: 8, span: 5 }} mobile={{ start: 2, span: 11 }}>
-				<div class="bleed"><Blueprint {...drawing} /></div>
-			</Cell>
-		</Row>
-	</section>
+		<section class="built" aria-label="Building in 2025">
+			<ImageCluster items={built} />
+		</section>
 
-	<section class="figures" aria-label="In figures">
-		<Figures items={figures} />
-	</section>
+		<section class="drawing">
+			<Row align="center" gap={64}>
+				<Cell subgrid span={6} tablet={{ span: 7 }}>
+					<TimelineEntry {...entries[1]} />
+				</Cell>
+				<Cell start={7} span={6} tablet={{ start: 8, span: 5 }} mobile={{ start: 2, span: 11 }}>
+					<div class="bleed"><Blueprint {...drawing} /></div>
+				</Cell>
+			</Row>
+		</section>
 
-	<section class="ahead">
-		<Row>
-			<Cell subgrid span={6} tablet={{ span: 7 }}>
-				<TimelineEntry {...entries[2]} />
-			</Cell>
-		</Row>
-		<div class="cluster"><ImageCluster items={ahead} /></div>
-	</section>
+		<section class="figures" aria-label="In figures">
+			<Figures items={figures} />
+		</section>
+
+		<section class="ahead">
+			<Row>
+				<Cell subgrid span={6} tablet={{ span: 7 }}>
+					<TimelineEntry {...entries[2]} />
+				</Cell>
+			</Row>
+			<div class="cluster"><ImageCluster items={ahead} /></div>
+		</section>
+	</div>
+
+	<QuoteBand {...quote} />
 </main>
-
-<QuoteBand {...quote} />
 
 <Footer {...footer} tone="grey" rule={false} />
 
 <style>
 	/* The whole page on the mid grey, html included, so overscroll doesn't
 	   flash white; the header bar comes in on it too. */
-	:global(html:has(main.progress)),
-	:global(body:has(main.progress)) {
+	:global(html:has(main.progress-page)),
+	:global(body:has(main.progress-page)) {
 		background: var(--grey-400);
 	}
-	:global(html:has(main.progress)) {
+	:global(html:has(main.progress-page)) {
 		--header-light: var(--grey-400);
 	}
 	/* The corner wordmark in black: its difference blend reads mid grey here. */
-	:global(html:has(main.progress) a.mark) {
+	:global(html:has(main.progress-page) a.mark) {
 		color: var(--black);
 		mix-blend-mode: normal;
 	}

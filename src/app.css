@@ -94,6 +94,17 @@ body {
 	color: var(--black);
 }
 
+/* Read by screen readers, not shown. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* Dev tool panels (render and energy controls) stay hidden until Shift+H
    shows them (src/lib/dev/DevTools.svelte). */
 html:not([data-tools]) [data-tool] {

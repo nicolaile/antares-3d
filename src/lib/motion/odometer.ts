@@ -6,7 +6,9 @@ import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
  * a mechanical counter, right to left, landing on the element's own text
  * the first time it scrolls into view. Anything that isn't a digit (a
  * separator, a unit) stays put. Once landed, the strips are swapped back
- * for plain digits. With reduced motion it's simply the number.
+ * for plain digits. With reduced motion it's simply the number. While it
+ * rolls, the strips are hidden from screen readers and a visually hidden
+ * copy of the text reads instead.
  *
  * An attachment: `<span {@attach odometer()}>10.000.000</span>`.
  */
@@ -64,10 +66,16 @@ export function odometer({
 		// Build: a clipped cell per digit holding its strip, statics as they are.
 		el.textContent = '';
 		el.style.cssText += 'display:inline-flex;align-items:center;';
+		// The number as it reads, for screen readers: the strips would read as 0–9.
+		const label = document.createElement('span');
+		label.className = 'visually-hidden';
+		label.textContent = text;
+		el.appendChild(label);
 		const rollers: { roller: HTMLElement; target: number }[] = [];
 		[...text].forEach((char, i) => {
 			const cell = document.createElement('span');
 			cell.style.cssText = `${box}box-sizing:content-box;width:${widths[i]}em;height:${step}em;line-height:${step};text-align:center;`;
+			cell.setAttribute('aria-hidden', 'true');
 			if (!/\d/.test(char)) {
 				cell.dataset.odometerPart = 'static';
 				cell.textContent = char;

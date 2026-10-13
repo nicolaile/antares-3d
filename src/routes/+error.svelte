@@ -3,6 +3,7 @@
 	large, top left. Antares, in the field, is the way home.
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import Row from '$lib/layout/Row.svelte';
@@ -35,12 +36,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{title} — Antares</title>
-</svelte:head>
+<Seo {title} noindex />
 
 
-<main class="error" data-tone="dark">
+<main id="content" tabindex="-1" class="error" data-tone="dark">
 	<StarField {...error.star} href={error.home.href} home={error.home.label} {onwarp} />
 
 	<Row>

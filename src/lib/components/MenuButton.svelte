@@ -171,6 +171,13 @@
 		background: var(--white);
 		opacity: 1;
 	}
+	/* A larger hit area than the circle (23px at the 992px minimum), at least
+	   24px across; nothing drawn. */
+	.menu-button::before {
+		content: '';
+		position: absolute;
+		inset: -4px;
+	}
 	.menu-button:focus-visible {
 		outline: 1px solid var(--black);
 		outline-offset: 2px;

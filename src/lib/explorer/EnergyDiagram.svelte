@@ -22,7 +22,7 @@
 	import { onMount, untrack, type Snippet } from 'svelte';
 	import DiagramLabel from '$lib/explorer/DiagramLabel.svelte';
 	import EnergyControls from '$lib/explorer/EnergyControls.svelte';
-	import IconButton from '$lib/components/IconButton.svelte';
+	import PauseButton from '$lib/components/PauseButton.svelte';
 	import {
 		DEFAULT_LINE_WEIGHT,
 		DEFAULT_PARAMS,
@@ -392,25 +392,14 @@
 		{/each}
 	</div>
 
-	<div class="tools" data-tool style:opacity={drawing} inert={drawing < 0.5}>
+	<div class="tools" style:opacity={drawing} inert={drawing < 0.5}>
 		{#if showControls}
-			<EnergyControls bind:params bind:lineWeight bind:tones bind:dark {ink} />
+			<div class="tuning" data-tool>
+				<EnergyControls bind:params bind:lineWeight bind:tones bind:dark {ink} />
+			</div>
 		{/if}
 		{#if moving}
-			<IconButton
-				label={paused ? 'Resume energy flow' : 'Pause energy flow'}
-				pressed={paused}
-				onclick={() => (paused = !paused)}
-			>
-				<svg viewBox="0 0 12 12" aria-hidden="true">
-					{#if paused}
-						<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
-					{:else}
-						<rect x="3" y="2" width="2" height="8" fill="currentColor" />
-						<rect x="7" y="2" width="2" height="8" fill="currentColor" />
-					{/if}
-				</svg>
-			</IconButton>
+			<PauseButton bind:paused label="Pause energy flow" />
 		{/if}
 	</div>
 </figure>
@@ -608,6 +597,10 @@
 		display: flex;
 		align-items: flex-end;
 		gap: var(--space-8);
+	}
+	/* Dev tuning hides with the other tools (Shift+H); the pause stays. */
+	.tuning {
+		display: contents;
 	}
 	@media screen and (max-width: 767px) {
 		.tools {

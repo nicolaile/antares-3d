@@ -6,9 +6,11 @@
 	(RecentArticles).
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
+	import LoopVideo from '$lib/components/LoopVideo.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
 	import RecentArticles from '$lib/modules/RecentArticles.svelte';
 	import { formatDate, recentArticles } from '$lib/content/articles';
@@ -26,13 +28,10 @@
 	};
 </script>
 
-<svelte:head>
-	<title>{article.title} — Antares</title>
-	<meta name="description" content={article.title} />
-</svelte:head>
+<Seo title={article.title} description={article.excerpt} image={article.image.src.img.src} type="article" />
 
 
-<main class="article">
+<main class="article" id="content" tabindex="-1">
 	<Row as="header">
 		<Cell start={4} span={5} tablet={{ start: 2, span: 10 }}>
 			<time class="date type-caption" datetime={date.iso}>{date.text}</time>
@@ -106,12 +105,12 @@
 										<iframe
 											class="film"
 											src="https://www.youtube-nocookie.com/embed/{block.youtube}?rel=0&modestbranding=1&playsinline=1"
-											title={article.title}
+											title="Video: {article.title}"
 											loading="lazy"
 											allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
 										></iframe>
 									{:else}
-										<video src={block.src} autoplay muted loop playsinline></video>
+										<LoopVideo src={block.src} />
 									{/if}
 								</div>
 							</figure>
@@ -248,18 +247,17 @@
 		color: var(--grey-700);
 	}
 
+	/* Positioned for a film's pause button (LoopVideo). */
 	.media {
+		position: relative;
 		overflow: hidden;
 		border-radius: var(--card-radius);
 	}
-	.film,
-	video {
+	.film {
 		display: block;
 		width: 100%;
-		border: 0;
-	}
-	.film {
 		aspect-ratio: 16 / 9;
+		border: 0;
 	}
 	/* Four of the body's six columns, so it wraps shorter than the copy;
 	   upright pictures run the same width. */

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import PersonCard from '$lib/components/cards/PersonCard.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
 	import FeatureCards from '$lib/modules/FeatureCards.svelte';
@@ -14,32 +15,31 @@
 	let panel: PersonPanel;
 </script>
 
-<svelte:head>
-	<title>Company — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Company" description={intro} />
 
 
 <PersonPanel bind:this={panel}>
-	<main class="company">
-		<PageIntro {title} {intro} />
+	<main id="content" tabindex="-1">
+		<div class="company">
+			<PageIntro {title} {intro} />
 
-		<section class="leadership" aria-labelledby="leadership-label">
-			<h2 id="leadership-label" class="label type-body-default">{leadership.label}</h2>
-			<ul class="people">
-				{#each leadership.people as person, i (i)}
-					<li><PersonCard {...person} onclick={() => panel.show(person)} /></li>
-				{/each}
-			</ul>
-		</section>
+			<section class="leadership" aria-labelledby="leadership-label">
+				<h2 id="leadership-label" class="label type-body-default">{leadership.label}</h2>
+				<ul class="people">
+					{#each leadership.people as person, i (i)}
+						<li><PersonCard {...person} onclick={() => panel.show(person)} /></li>
+					{/each}
+				</ul>
+			</section>
+		</div>
+
+		<Slideshow {...slideshow} />
+
+		<div class="culture">
+			<Summary {...summary} />
+			<div class="operations"><FeatureCards {...culture} /></div>
+		</div>
 	</main>
-
-	<Slideshow {...slideshow} />
-
-	<div class="culture">
-		<Summary {...summary} />
-		<div class="operations"><FeatureCards {...culture} /></div>
-	</div>
 
 	<Footer {...footer} />
 </PersonPanel>

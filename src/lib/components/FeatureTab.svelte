@@ -5,6 +5,8 @@
 	orange, and a lighter fill runs across the card as autoplay counts
 	down to the next (`progress`). The strip decides which tab is open, and
 	the open feature's description reads in the stage below, not here.
+	A tab in the ARIA sense: the strip is the tablist, and the open tab is
+	the one in the page's tab order (roving tabindex).
 -->
 <script lang="ts">
 	let {
@@ -12,6 +14,8 @@
 		title,
 		open = false,
 		progress = 0,
+		id,
+		controls,
 		onselect
 	}: {
 		/** Zero-based; shown as 1, 2, … */
@@ -20,12 +24,24 @@
 		open?: boolean;
 		/** 0–1: how far autoplay is towards the next feature, while open. */
 		progress?: number;
+		id: string;
+		/** The id of the panel the open tab's feature reads in. */
+		controls: string;
 		onselect: () => void;
 	} = $props();
 </script>
 
-<li class="tab" class:open>
-	<button type="button" class="face" aria-pressed={open} onclick={onselect}>
+<li class="tab" class:open role="presentation">
+	<button
+		type="button"
+		class="face"
+		role="tab"
+		{id}
+		aria-selected={open}
+		aria-controls={controls}
+		tabindex={open ? 0 : -1}
+		onclick={onselect}
+	>
 		<span class="fill" aria-hidden="true" style:transform="scaleX({open ? progress : 0})"></span>
 		<span class="number type-annotation type-tabular">{index + 1}</span>
 		<span class="title type-body-default">{title}</span>

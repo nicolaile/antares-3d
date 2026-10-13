@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PositionsCarousel from '$lib/modules/PositionsCarousel.svelte';
 	import OperatingModel from '$lib/modules/OperatingModel.svelte';
@@ -13,44 +14,43 @@
 	const shown = positions.items.slice(0, positions.featured);
 </script>
 
-<svelte:head>
-	<title>Careers — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Careers" description={intro} />
 
 
-<main class="careers">
-	<div class="head">
-		<PageIntro {title} {intro} />
+<main id="content" tabindex="-1">
+	<div class="careers">
+		<div class="head">
+			<PageIntro {title} {intro} />
 
-		<div class="hero">
-			<Picture {...image} ratio="20 / 9" sizes="100vw" loading="eager" />
+			<div class="hero">
+				<Picture {...image} ratio="20 / 9" sizes="100vw" loading="eager" />
+			</div>
+		</div>
+
+		<div class="positions">
+			<PositionsCarousel label={positions.label} items={shown} total={positions.items.length} all={positions.all} />
+		</div>
+
+		<figure class="quote">
+			<div class="quote-image">
+				<Picture {...quote.image} ratio="2880 / 1494" sizes="100vw" />
+			</div>
+			<figcaption class="quote-body">
+				<blockquote class="quote-text type-h5">{quote.text}</blockquote>
+				<p class="quote-name type-caption">
+					{quote.name}
+					<span>{quote.role}</span>
+				</p>
+			</figcaption>
+		</figure>
+
+		<div class="why">
+			<OperatingModel {...why} />
 		</div>
 	</div>
 
-	<div class="positions">
-		<PositionsCarousel label={positions.label} items={shown} total={positions.items.length} all={positions.all} />
-	</div>
-
-	<figure class="quote">
-		<div class="quote-image">
-			<Picture {...quote.image} ratio="2880 / 1494" sizes="100vw" />
-		</div>
-		<figcaption class="quote-body">
-			<blockquote class="quote-text type-h5">{quote.text}</blockquote>
-			<p class="quote-name type-caption">
-				{quote.name}
-				<span>{quote.role}</span>
-			</p>
-		</figcaption>
-	</figure>
-
-	<div class="why">
-		<OperatingModel {...why} />
-	</div>
+	<Slideshow {...life} />
 </main>
-
-<Slideshow {...life} />
 
 <Footer {...footer} />
 

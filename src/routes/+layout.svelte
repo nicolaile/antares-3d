@@ -37,8 +37,12 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={favicon} type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 </svelte:head>
+
+<!-- First in the tab order: past the header and menu, to the page's <main id="content">. -->
+<a class="skip-link type-button" href="#content">Skip to content</a>
 
 <HeaderBar />
 <Menu {...menu} current={page.url.pathname} />
@@ -49,3 +53,31 @@
 {@render children?.()}
 
 {#if dev}<DevTools />{/if}
+
+<style>
+	/* Out of sight until the keyboard reaches it, then over the header, top left. */
+	.skip-link {
+		position: fixed;
+		top: var(--space-16);
+		left: var(--space-16);
+		z-index: 60;
+		padding: var(--space-8) var(--space-12);
+		border-radius: var(--space-4);
+		background: var(--white);
+		color: var(--black);
+		text-decoration: none;
+	}
+	.skip-link:not(:focus-visible) {
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	/* <main> takes focus from the skip link only to move the reading point; no ring round the page. */
+	:global(main[tabindex='-1']:focus) {
+		outline: none;
+	}
+</style>

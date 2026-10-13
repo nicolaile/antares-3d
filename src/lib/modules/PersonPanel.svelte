@@ -9,8 +9,9 @@
 	The panel covers columns 7–12 and the margin (728px at 1440), with the
 	page dimmed beside it; full width on phones. Name and role (H4)
 	at the top; portrait, a rule and their bio pinned to the foot. While
-	it's open the page is inert and doesn't scroll, and the wrapper rises
-	above the menu button. Escape, the dimmed page and (on phones, where
+	it's open the page, and everything outside it (the menu button, the
+	wordmark), is inert and doesn't scroll, and the wrapper rises above the
+	menu button. Escape, the dimmed page and (on phones, where
 	there's no dimmed page) the close button close it, handing focus back
 	to the card that opened it.
 -->
@@ -18,7 +19,8 @@
 	import { tick, type Snippet } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import { SplitText } from 'gsap/SplitText';
-	import { gsap, getLenis, prefersReducedMotion } from '$lib/motion/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
+	import { holdPage } from '$lib/chrome/modal';
 	import type { Person } from '$lib/content/company';
 
 	let { children }: { children: Snippet } = $props();
@@ -27,10 +29,17 @@
 	let open = $state(false);
 	/** Where the panel sits: the scroll position when it opened. */
 	let top = $state(0);
+	let stage: HTMLElement;
 	let panel: HTMLElement;
 	let dim: HTMLElement;
 	let opener: HTMLElement | null = null;
 	let tl: gsap.core.Timeline | null = null;
+	/** Undoes what opening did to the page: its scroll lock and inert. */
+	let release: (() => void) | null = null;
+	const releaseAll = () => {
+		release?.();
+		release = null;
+	};
 
 	/** How far the page dims behind the panel. */
 	const DIM = 0.7;
@@ -130,8 +139,7 @@
 		opener = document.activeElement as HTMLElement | null;
 		top = window.scrollY;
 		open = true;
-		getLenis()?.stop();
-		document.documentElement.classList.add('scroll-locked');
+		release = holdPage(stage);
 		await tick();
 		panel.scrollTop = 0;
 		panel.focus({ preventScroll: true });
@@ -165,8 +173,7 @@
 		const done = async () => {
 			gsap.set(panel, { clearProps: 'transform' });
 			open = false;
-			getLenis()?.start();
-			document.documentElement.classList.remove('scroll-locked');
+			releaseAll();
 			// The page is inert until this update lands; focus it after.
 			await tick();
 			opener?.focus({ preventScroll: true });
@@ -186,15 +193,13 @@
 	// Leaving the page with the panel open: let the next page scroll again.
 	$effect(() => () => {
 		tl?.kill();
-		if (!open) return;
-		getLenis()?.start();
-		document.documentElement.classList.remove('scroll-locked');
+		releaseAll();
 	});
 </script>
 
 <svelte:window {onkeydown} {onpointermove} {onmouseout} />
 
-<div class="stage" class:open>
+<div class="stage" class:open bind:this={stage}>
 	<div class="page" inert={open}>
 		{@render children()}
 	</div>

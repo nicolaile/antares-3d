@@ -1,4 +1,3 @@
-// @ts-nocheck — Node-side dev tooling; the project carries no Node types.
 /**
  * Dev-server endpoint for the R1 perf runs (src/lib/dev/perf.ts): saves
  * each run's frames and report under captures/perf/<label>/, where
@@ -13,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const DIR = fileURLToPath(new URL('../captures/perf/', import.meta.url));
 
+/** @returns {import('vite').Plugin} */
 export function perfCaptures() {
 	return {
 		name: 'perf-captures',

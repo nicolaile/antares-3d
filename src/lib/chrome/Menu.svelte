@@ -18,8 +18,9 @@
 	import Cell from '$lib/layout/Cell.svelte';
 	import MenuButton from '$lib/components/MenuButton.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import { gsap, getLenis, prefersReducedMotion } from '$lib/motion/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { header } from '$lib/chrome/header.svelte';
+	import { holdPage } from '$lib/chrome/modal';
 	import type { Link, Update } from '$lib/content/site';
 
 	let {
@@ -82,6 +83,7 @@
 		if (i !== last) transition(last, i);
 		last = i;
 	});
+	let nav: HTMLElement;
 	let panel: HTMLElement;
 	let overlay: HTMLElement;
 	let toggle: HTMLElement;
@@ -175,13 +177,21 @@
 			focusVisible: viaKeyboard
 		} as FocusOptions);
 
+	/** Undoes what opening did to the page: its scroll lock and inert. */
+	let release: (() => void) | null = null;
+	const releaseAll = () => {
+		release?.();
+		release = null;
+	};
+
 	async function setOpen(next: boolean) {
 		if (next === open) return;
 		open = next;
 		tl?.kill();
 		tl = null;
 		if (next) {
-			getLenis()?.stop();
+			// Only the menu and its toggle stay reachable; the dimmed page holds still.
+			release = holdPage(nav);
 			await tick();
 			if (prefersReducedMotion()) {
 				gsap.set(panel, { autoAlpha: 1, clipPath: 'none' });
@@ -191,7 +201,7 @@
 				tl = openTimeline();
 			}
 		} else {
-			getLenis()?.start();
+			releaseAll();
 			if (prefersReducedMotion()) {
 				gsap.set(panel, { autoAlpha: 0 });
 				gsap.set(overlay, { autoAlpha: 0 });
@@ -210,19 +220,19 @@
 		return () => {
 			window.removeEventListener('keydown', onKey);
 			tl?.kill();
-			if (open) getLenis()?.start();
+			releaseAll();
 		};
 	});
 </script>
 
 <nav
+	bind:this={nav}
 	class="menu"
 	data-twostep-nav
 	data-nav-status={open ? 'active' : 'not-active'}
 	aria-label="Main"
 >
 	<!-- Pointer-only close target; Escape covers the keyboard. -->
-	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div class="overlay" data-nav-toggle="close" bind:this={overlay} onclick={() => setOpen(false)} aria-hidden="true"></div>
 
 	<div class="bar">
@@ -300,7 +310,7 @@
 											aria-current={i === shown ? 'true' : undefined}
 											onclick={() => (shown = i)}
 											onanimationend={next}
-										></button>
+										><span class="hit"></span></button>
 									{/each}
 								</div>
 							{/if}
@@ -487,6 +497,13 @@
 		border: 0;
 		background: none;
 		cursor: pointer;
+	}
+	/* Bigger again, undrawn: at least 24px tall, and across half the gap
+	   each side, so neighbours meet without overlapping. The button keeps
+	   its size, so the focus ring does too. */
+	.hit {
+		position: absolute;
+		inset: min(0px, (var(--size-font) * 1.25 - 24px) / 2) calc(var(--space-4) / -2);
 	}
 	.dash:not(.shown):hover::before {
 		background: var(--grey-400);

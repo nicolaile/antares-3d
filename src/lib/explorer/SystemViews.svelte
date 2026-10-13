@@ -374,7 +374,8 @@
 		</div>
 	</Cell>
 	<Cell start={2} span={11} tablet={{ start: 1, span: 12 }}>
-		<!-- svelte-ignore a11y_no_static_element_interactions: dragging to turn is a pointer extra; the switch and markers stay the keyboard's way in. -->
+		<!-- Dragging to turn is a pointer extra; the switch and markers stay the keyboard's way in. -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="turn"
 			class:turnable={view === 'isometric'}

@@ -92,7 +92,7 @@
 			onpointerleave={() => (side = null)}
 		></button>
 	{/each}
-	<h2 class="title type-sub-headline">{title}{#if count}{' '}({slides.length}){/if}</h2>
+	<h2 class="title type-sub-headline">{title}{#if count}{` (${slides.length})`}{/if}</h2>
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }} mobile={{ start: 1, span: 12 }}>
 			<div class="frame">
@@ -111,15 +111,19 @@
 					</div>
 				{/each}
 			</div>
-			{#if slides.some((slide) => slide.caption)}
-				<div class="captions" aria-live="polite">
-					{#each slides as slide, i (i)}
-						<p class="caption type-body-default" class:current={i === current} bind:this={captions[i]}>
-							{slide.caption ?? ''}
-						</p>
-					{/each}
-				</div>
-			{/if}
+			<!-- Announces each change whole: where it is in the run, then the caption. -->
+			<div aria-live="polite" aria-atomic="true">
+				<span class="visually-hidden">Image {current + 1} of {slides.length}.</span>
+				{#if slides.some((slide) => slide.caption)}
+					<div class="captions">
+						{#each slides as slide, i (i)}
+							<p class="caption type-body-default" class:current={i === current} bind:this={captions[i]}>
+								{slide.caption ?? ''}
+							</p>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		</Cell>
 	</Row>
 </section>

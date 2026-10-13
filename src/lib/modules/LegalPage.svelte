@@ -5,6 +5,7 @@
 	columns, then the footer. Content comes from `$lib/content/legal`.
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -15,13 +16,10 @@
 	const iso = $derived(updated.split('.').reverse().join('-'));
 </script>
 
-<svelte:head>
-	<title>{title} — Antares</title>
-	<meta name="description" content={description} />
-</svelte:head>
+<Seo {title} {description} />
 
 
-<main class="legal">
+<main id="content" tabindex="-1" class="legal">
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }}>
 			<header>

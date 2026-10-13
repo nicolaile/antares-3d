@@ -11,7 +11,9 @@ import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
  * anything else that rewrites the text first (the odometer): while that's
  * still running, a hover does nothing. Each letter is set to its own
  * advance in the text, kerning and all, so nothing shifts as it's built.
- * Real pointers only; with reduced motion it's the still text.
+ * Real pointers only; with reduced motion it's the still text. While it
+ * rolls, the letters are hidden from screen readers and a visually hidden
+ * copy of the text reads instead.
  *
  * An attachment: `<span {@attach letterRoll()}>935MW</span>`.
  */
@@ -39,24 +41,31 @@ export function letterRoll({
 			});
 
 			el.textContent = '';
+			// The text as it reads, for screen readers: the letters would read one by one.
+			const label = document.createElement('span');
+			label.className = 'visually-hidden';
+			label.textContent = text;
+			el.appendChild(label);
 			const visible: HTMLElement[] = [];
 			const hidden: HTMLElement[] = [];
+			const cells: HTMLElement[] = [];
 			[...text].forEach((char, i) => {
 				// A clipped cell per letter: the letter, and its copy just above.
 				const cell = document.createElement('span');
 				cell.style.cssText = `position:relative;display:inline-block;overflow:clip;overflow-clip-margin:0.1em 0;width:${widths[i]}em;`;
+				cell.setAttribute('aria-hidden', 'true');
 				const a = document.createElement('span');
 				const b = document.createElement('span');
 				a.style.cssText = 'display:block;will-change:transform;';
 				b.style.cssText = 'position:absolute;left:0;bottom:100%;display:block;will-change:transform;';
 				a.textContent = b.textContent = char;
-				b.setAttribute('aria-hidden', 'true');
 				cell.append(a, b);
 				el.appendChild(cell);
+				cells.push(cell);
 				visible.push(a);
 				hidden.push(b);
 			});
-			return { text, visible, hidden, cells: [...el.children] };
+			return { text, visible, hidden, cells };
 		}
 
 		const onOver = (e: MouseEvent) => {

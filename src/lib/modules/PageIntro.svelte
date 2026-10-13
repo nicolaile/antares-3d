@@ -12,19 +12,20 @@
 
 <Row>
 	<Cell span={4} tablet={{ span: 6 }}>
-		<h1 class="intro type-h5">
-			{title}
-			<span>{intro}</span>
-		</h1>
+		<div class="intro type-h5">
+			<h1>{title}</h1>
+			<p>{intro}</p>
+		</div>
 	</Cell>
 </Row>
 
 <style>
-	.intro {
+	/* Only the name is the heading; the line under it is set the same. */
+	.intro h1,
+	.intro p {
 		margin: 0;
 	}
-	.intro span {
-		display: block;
+	.intro p {
 		color: var(--grey-700);
 	}
 </style>

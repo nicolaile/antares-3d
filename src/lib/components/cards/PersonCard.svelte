@@ -51,8 +51,11 @@
 	>
 		<span class="mask">
 			<span class="photo" bind:this={photo}>
+				<!-- No alt: the button is named by the caption, so it isn't
+				     read as "Portrait of …" before the name. -->
 				<Picture
 					{...image}
+					alt=""
 					ratio="996 / 648"
 					surface
 					sizes="(max-width: 767px) 50vw, (max-width: 991px) 33vw, 25vw"

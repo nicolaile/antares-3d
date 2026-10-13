@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { tick } from 'svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
@@ -25,19 +26,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Updates — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Updates" description={intro} />
 
 
-<main class="updates" data-tone="dark">
+<main id="content" tabindex="-1" class="updates" data-tone="dark">
 	<Row>
 		<Cell span={4} tablet={{ span: 6 }}>
-			<h1 class="intro type-h5">
-				{title}
-				<span class="secondary">{intro}</span>
-			</h1>
+			<div class="intro type-h5">
+				<h1>{title}</h1>
+				<p class="secondary">{intro}</p>
+			</div>
 		</Cell>
 	</Row>
 
@@ -76,11 +74,12 @@
 		color: var(--white);
 	}
 
-	.intro {
+	/* Only the name is the heading; the line under it is set the same. */
+	.intro h1,
+	.intro p {
 		margin: 0;
 	}
 	.secondary {
-		display: block;
 		color: var(--grey-400);
 	}
 

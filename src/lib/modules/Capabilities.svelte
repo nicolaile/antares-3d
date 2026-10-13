@@ -91,7 +91,14 @@
 						<span class="toggle"><ToggleRing open={open[i]} active={hovered === i} /></span>
 					</button>
 				</h3>
-				<div class="panel" id="{id}-{i}" bind:this={panels[i]} style:height={i === 0 ? 'auto' : '0px'}>
+				<!-- Inert while closed, so a collapsed row is neither read nor tabbed into. -->
+				<div
+					class="panel"
+					id="{id}-{i}"
+					bind:this={panels[i]}
+					style:height={i === 0 ? 'auto' : '0px'}
+					inert={!open[i]}
+				>
 					<div class="body">
 						<p class="text type-body-default">{item.text}</p>
 						<div class="image">

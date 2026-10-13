@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import Hero from '$lib/sections/home/Hero.svelte';
 	import MissionIntro from '$lib/sections/home/MissionIntro.svelte';
 	import R1Microreactor from '$lib/sections/home/R1Microreactor.svelte';
@@ -11,24 +12,20 @@
 	import { footer } from '$lib/content/site';
 </script>
 
-<svelte:head>
-	<title>Antares — R1 Microreactor</title>
-	<meta
-		name="description"
-		content="Antares builds compact nuclear microreactors for reliable, mobile energy in remote military bases, industrial sites, and future space and underwater missions."
-	/>
-</svelte:head>
+<Seo />
 
 
-<Hero {...hero} />
+<main id="content" tabindex="-1">
+	<Hero {...hero} />
 
-<main class="page">
-	<MissionIntro {...mission} />
-	<R1Microreactor {...r1} />
-	<Capabilities {...capabilities} />
-	<FeatureCards {...graphite} />
-	<div class="operating"><OperatingModel {...operating} /></div>
-	<PosterCard {...progress} />
+	<div class="page">
+		<MissionIntro {...mission} />
+		<R1Microreactor {...r1} />
+		<Capabilities {...capabilities} />
+		<FeatureCards {...graphite} />
+		<div class="operating"><OperatingModel {...operating} /></div>
+		<PosterCard {...progress} />
+	</div>
 </main>
 
 <Footer {...footer} />

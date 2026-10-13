@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { onMount } from 'svelte';
 	import Button from '$lib/components/Button.svelte';
 	import CtaButton from '$lib/components/CtaButton.svelte';
@@ -57,10 +58,7 @@
 	const sizes = [...new Set(TYPE_STYLES.map((s) => s.size.desktop))].sort(bySize);
 </script>
 
-<svelte:head>
-	<title>Design System — Antares</title>
-	<meta name="robots" content="noindex" />
-</svelte:head>
+<Seo title="Design System" noindex />
 
 
 <div class="page">

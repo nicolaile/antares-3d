@@ -6,6 +6,8 @@
 
 	Without a `src` it renders the empty surface — a placeholder that already
 	holds the layout.
+
+	A block-level span, not a div, so it can sit inside a button or link.
 -->
 <script lang="ts">
 	import type { Picture } from 'vite-imagetools';
@@ -35,14 +37,15 @@
 	} = $props();
 </script>
 
-<div class="picture" class:surface class:contain={fit === 'contain'} style:aspect-ratio={ratio}>
+<span class="picture" class:surface class:contain={fit === 'contain'} style:aspect-ratio={ratio}>
 	{#if src}
 		<enhanced:img {src} {alt} {sizes} {loading} fetchpriority={priority ? 'high' : undefined} />
 	{/if}
-</div>
+</span>
 
 <style>
 	.picture {
+		display: block;
 		position: relative;
 		overflow: hidden;
 	}

@@ -3,7 +3,18 @@
  * Links marked `'#'` are placeholders until the pages and profiles exist.
  */
 import type { Picture } from 'vite-imagetools';
+import shareImage from '$lib/assets/images/company/hero-image.jpg?w=1200&h=630&fit=cover&format=jpg';
 import { updates as stories } from './updates';
+
+/** Names the site in titles and share cards; `url` is production, for canonical links and the sitemap. */
+export const site = {
+	name: 'Antares',
+	url: 'https://antaresindustries.com',
+	description:
+		'Antares builds compact nuclear microreactors for reliable, mobile energy in remote military bases, industrial sites, and future space and underwater missions.',
+	/** 1200×630, the share card's size. */
+	image: shareImage
+};
 
 export type Link = { label: string; href: string };
 

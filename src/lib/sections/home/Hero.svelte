@@ -16,6 +16,8 @@
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
+	import LoopVideo from '$lib/components/LoopVideo.svelte';
+	import PauseButton from '$lib/components/PauseButton.svelte';
 	import Wordmark from '$lib/components/Wordmark.svelte';
 	import { initScroll, destroyScroll, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/motion/scroll';
 	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
@@ -31,28 +33,14 @@
 		image: { src: PictureSource; alt: string };
 		/**
 		 * Plays in the image's place, muted and on a loop, the image its
-		 * poster until it's ready; paused while the hero is off screen, so it
-		 * isn't decoding frames nobody sees. Held on its first frame with
-		 * reduced motion.
+		 * poster until it's ready (LoopVideo). Decorative: the intro says
+		 * what the page is.
 		 */
 		video?: string;
 	} = $props();
 
-	let clip = $state<HTMLVideoElement>();
-	$effect(() => {
-		const v = clip;
-		if (!v) return;
-		if (prefersReducedMotion()) {
-			v.pause();
-			return;
-		}
-		const seen = new IntersectionObserver(([entry]) => {
-			if (entry.isIntersecting) v.play().catch(() => {});
-			else v.pause();
-		});
-		seen.observe(v);
-		return () => seen.disconnect();
-	});
+	/** The film's pause, held by the button over the image. */
+	let paused = $state(false);
 
 	let brand: HTMLElement;
 	let mark: HTMLElement;
@@ -126,6 +114,8 @@
 </script>
 
 <section class="hero">
+	<!-- The wordmark is the page's name on screen; this names it for headings. -->
+	<h1 class="visually-hidden">Antares</h1>
 	<div class="intro">
 		<Row align="end" gap={40}>
 			<Cell span={6} mobile={{ span: 12 }}>
@@ -151,22 +141,17 @@
 	<div class="mask" data-tone="dark" data-header="light" bind:this={mask}>
 		<div class="photo" bind:this={photo}>
 			{#if video}
-				<video
-					class="clip"
-					src={video}
-					poster={image.src.img.src}
-					aria-label={image.alt}
-					autoplay
-					muted
-					loop
-					playsinline
-					preload="auto"
-					bind:this={clip}
-				></video>
+				<!-- Its button sits on the mask, not the drifting photo. -->
+				<LoopVideo src={video} poster={image.src.img.src} button={false} bind:paused />
 			{:else}
 				<Picture {...image} ratio="auto" sizes="100vw" loading="eager" priority />
 			{/if}
 		</div>
+		{#if video}
+			<div class="pause">
+				<PauseButton bind:paused label="Pause video" />
+			</div>
+		{/if}
 	</div>
 </section>
 
@@ -258,11 +243,14 @@
 	.photo :global(.picture) {
 		height: 100%;
 	}
-	.clip {
-		display: block;
-		width: 100%;
+	.photo :global(.loop-video) {
 		height: 100%;
 		object-fit: cover;
+	}
+	.pause {
+		position: absolute;
+		right: var(--space-16);
+		bottom: var(--space-16);
 	}
 
 	@media screen and (max-width: 767px) {

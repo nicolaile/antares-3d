@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
 	import Capabilities from '$lib/modules/Capabilities.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -12,13 +13,10 @@
 	const { title, intro, cycle, summary, applications, product, specs } = missions;
 </script>
 
-<svelte:head>
-	<title>Missions — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Missions" description={intro} />
 
 
-<main class="missions">
+<main id="content" tabindex="-1" class="missions">
 	<div class="intro"><PageIntro {title} {intro} /></div>
 
 	<WordCycle {...cycle} />

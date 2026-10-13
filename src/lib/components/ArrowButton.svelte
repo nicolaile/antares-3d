@@ -3,6 +3,8 @@
 	A square, outlined arrow button (4px corners) for stepping through a carousel: the
 	ring of Capabilities' toggle (36px at 1440) around a 16px arrow. The
 	ring darkens on hover; at the end of the run it's disabled and fades.
+	Disabled stays focusable (`aria-disabled`, clicks ignored), so focus
+	isn't dropped when the arrow it's on reaches the end.
 
 	`tone="dark"`, for controls over a dark stage (the reactor explorer's
 	feature steppers): the same outlined square in Grey 750 with a white
@@ -26,6 +28,7 @@
 		tone?: 'light' | 'dark';
 		/** Accessible name, e.g. "Previous openings". */
 		label: string;
+		/** Announced and faded, but still focusable; clicks do nothing. */
 		disabled?: boolean;
 		onclick: () => void;
 	} = $props();
@@ -35,7 +38,14 @@
 	);
 </script>
 
-<button class="arrow" class:dark={tone === 'dark'} type="button" aria-label={label} {disabled} {onclick}>
+<button
+	class="arrow"
+	class:dark={tone === 'dark'}
+	type="button"
+	aria-label={label}
+	aria-disabled={disabled}
+	onclick={() => disabled || onclick()}
+>
 	<span class="icon" aria-hidden="true">{@html icon}</span>
 </button>
 
@@ -54,10 +64,10 @@
 		cursor: pointer;
 		transition: border-color 0.25s ease, opacity 0.25s ease;
 	}
-	.arrow:hover:not(:disabled) {
+	.arrow:hover:not([aria-disabled='true']) {
 		border-color: var(--black);
 	}
-	.arrow:disabled {
+	.arrow[aria-disabled='true'] {
 		opacity: 0.4;
 		cursor: default;
 	}
@@ -72,7 +82,7 @@
 		border-color: var(--grey-750);
 		color: var(--white);
 	}
-	.dark:hover:not(:disabled) {
+	.dark:hover:not([aria-disabled='true']) {
 		border-color: var(--white);
 	}
 	.dark:focus-visible {

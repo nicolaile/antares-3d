@@ -38,7 +38,7 @@
 
 	/** A colour token, resolved, so GSAP can tween between two. */
 	const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-	const colour = () => (header.barDark ? token('--grey-950') : token('--header-light') || token('--white'));
+	const colour = () => (header.barDark ? token('--black') : token('--header-light') || token('--white'));
 
 	// Crossfades while shown; while hidden it just takes the colour it will return in.
 	$effect(() => {

@@ -1,19 +1,20 @@
 <!--
 	@component
 	The fixed top-left wordmark linking home, at the size and spot where
-	home's hero wordmark comes to rest. A white difference blend keeps it
-	legible on any background. Hides on scroll down with the header. Used on
+	home's hero wordmark comes to rest. White over dark sections, black over
+	light (`markTone`). Hides on scroll down with the header. Used on
 	every page but home, whose hero brings its own.
 -->
 <script lang="ts">
 	import Wordmark from '$lib/components/Wordmark.svelte';
-	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
+	import { header, markTone, slideWithHeader } from '$lib/chrome/header.svelte';
 </script>
 
 <a
 	class="mark"
 	href="/"
 	aria-label="Antares home"
+	{@attach markTone}
 	{@attach slideWithHeader(
 		() => header.hidden,
 		() => header.follow
@@ -30,8 +31,7 @@
 		z-index: 40;
 		display: block;
 		height: var(--height);
-		color: var(--white);
-		mix-blend-mode: difference;
+		color: var(--black);
 	}
 	.mark:focus-visible {
 		outline: 1px solid currentColor;

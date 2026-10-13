@@ -14,7 +14,7 @@
 	import PauseButton from '$lib/components/PauseButton.svelte';
 	import Wordmark from '$lib/components/Wordmark.svelte';
 	import { initScroll, destroyScroll, gsap, ScrollTrigger, prefersReducedMotion } from '$lib/motion/scroll';
-	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
+	import { header, markTone, slideWithHeader } from '$lib/chrome/header.svelte';
 
 	let {
 		title,
@@ -103,7 +103,7 @@
 	<div class="intro">
 		<Row align="end" gap={40}>
 			<Cell span={6} mobile={{ span: 12 }}>
-				<div class="brand" bind:this={brand}>
+				<div class="brand" bind:this={brand} {@attach markTone}>
 					<!-- Slides with the header; the link inside scales on its own. -->
 					<div {@attach slideWithHeader(() => rested && header.hidden)}>
 						<a class="home" href="/" aria-label="Antares home" bind:this={mark}>
@@ -152,18 +152,11 @@
 		padding: 0 var(--grid-margin) var(--space-24);
 	}
 
-	/* Above the page once pinned, below the menu (z-index 50). A white
-	   difference blend keeps it legible on any background. */
+	/* Above the page once pinned, below the menu (z-index 50). */
 	.brand {
 		position: relative;
 		z-index: 40;
-		mix-blend-mode: difference;
-		color: var(--white);
-	}
-	/* ScrollTrigger wraps the pinned wordmark in a spacer that copies its
-	   z-index, which isolates the blend inside it; the spacer blends too. */
-	:global(.pin-spacer:has(> .brand)) {
-		mix-blend-mode: difference;
+		color: var(--black);
 	}
 	.home {
 		display: block;

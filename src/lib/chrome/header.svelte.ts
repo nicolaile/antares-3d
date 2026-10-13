@@ -25,6 +25,8 @@ class Header {
 	dark = $state(false);
 	/** Over `data-tone="dark"`, unless also `data-header="light"` (Missions' slideshow). */
 	barDark = $state(false);
+	/** The wordmark's tone: the bar's while the bar is behind it, else what's under the wordmark itself. */
+	markDark = $state(false);
 	/** Near the top the wordmark scrolls with the page by this many px; null once it has left. */
 	follow = $state<number | null>(0);
 }
@@ -43,15 +45,26 @@ export function headerHeight() {
 	return unit * BAR;
 }
 
-/** Whether the point under the menu button's centre is inside an element matching `selector`. */
-function under(selector: string) {
+/** Whether the point on the header's centre line, at `x`, is inside an element matching `selector`. */
+function under(selector: string, x = menuX()) {
 	const unit = parseFloat(getComputedStyle(document.body).fontSize);
-	const x = window.innerWidth - unit * (MARGIN + BUTTON / 2);
 	const y = unit * (BAR / 2);
 	return [...document.querySelectorAll(selector)].some((el) => {
 		const r = el.getBoundingClientRect();
 		return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 	});
+}
+
+/** The menu button's centre. */
+function menuX() {
+	const unit = parseFloat(getComputedStyle(document.body).fontSize);
+	return window.innerWidth - unit * (MARGIN + BUTTON / 2);
+}
+
+/** Just inside the wordmark's left edge. */
+function markX() {
+	const unit = parseFloat(getComputedStyle(document.body).fontSize);
+	return unit * (MARGIN + 0.5);
 }
 
 let lastY = 0;
@@ -127,6 +140,7 @@ function step(reset: boolean) {
 function tone() {
 	header.barDark = under('[data-tone="dark"]') && !under('[data-header="light"]');
 	header.dark = header.barDark;
+	header.markDark = header.backed ? header.barDark : under('[data-tone="dark"]', markX());
 }
 
 /** Starts following the scroll. Returns the cleanup. */
@@ -140,6 +154,22 @@ export function trackHeader() {
 		window.removeEventListener('scroll', onScroll);
 		window.removeEventListener('resize', onResize);
 	};
+}
+
+/** The wordmarks already toned once, which set their colour rather than fade to it. */
+const toned = new WeakSet<Element>();
+
+/**
+ * Attachment: the wordmark white over dark sections and black over light,
+ * crossfading as the menu button does. `{@attach markTone}`
+ */
+export function markTone(el: HTMLElement) {
+	const color = getComputedStyle(el)
+		.getPropertyValue(header.markDark ? '--white' : '--black')
+		.trim();
+	if (!toned.has(el) || prefersReducedMotion()) gsap.set(el, { color });
+	else gsap.to(el, { color, duration: 0.15, ease: 'power1.out', overwrite: 'auto' });
+	toned.add(el);
 }
 
 /**

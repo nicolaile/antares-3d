@@ -30,7 +30,7 @@ export type Shot = {
 	/**
 	 * The explorer's entrance (ReactorExplorer): on the first feature, where the
 	 * camera starts (and looks), in the shot's units, sweeping in to `pos` and
-	 * `target` as the model turns in.
+	 * `target` as the model turns in (ReactorExplorer's ENTRANCE).
 	 */
 	enterFrom?: { pos: [number, number, number]; target?: [number, number, number] };
 	/** Seconds before the camera starts its move: waiting for the stage to be seen. */

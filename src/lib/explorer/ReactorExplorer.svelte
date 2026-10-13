@@ -566,41 +566,50 @@
 	});
 
 	/**
-	 * The entrance: when the section's reveal fades the viewport in, the
-	 * model on stage turns a quarter turn into place, and the camera sweeps
-	 * in from the shot's `enterFrom` if it has one. If it isn't loaded yet, it
-	 * turns in once it is. Grabbing it ends the turn there.
+	 * The entrance, once the panel is well into view and its model is in:
+	 * the model turns a quarter turn into place while the camera sweeps in
+	 * from the shot's `enterFrom`, if it has one. Both start and settle
+	 * together on one ease, and the slow turn carries on under them, so the
+	 * entrance hands over to it without a jolt. Grabbing the model ends it.
 	 */
-	const TURN_IN = { from: -Math.PI / 2, duration: 2.4, ease: 'power3.out' };
+	const ENTRANCE = { duration: 4, ease: 'power2.inOut' };
+	const TURN_FROM = -Math.PI / 2;
+	/** Share of the panel on screen before the entrance plays. */
+	const ENTER_AT = 0.35;
 	let viewportEl: HTMLDivElement;
-	let revealed = false;
+	let inSight = false;
 	let turnedIn = false;
 	let turnIn: gsap.core.Tween | null = null;
 	$effect(() => {
 		// `viewer` read first, so this re-runs as the model loads.
 		const v = viewer;
-		if (v && revealed && !turnedIn) spinIn(v);
+		if (v && inSight && !turnedIn) enter(v);
 	});
-	function spinIn(v: ModelViewer) {
+	function enter(v: ModelViewer) {
 		turnedIn = true;
-		turnIn = gsap.fromTo(v.userRotation, { y: TURN_IN.from }, { y: 0, duration: TURN_IN.duration, ease: TURN_IN.ease });
+		if (prefersReducedMotion()) return;
 		const shot = features[active]?.shot;
 		const from = shot?.enterFrom;
-		if (!shot || !from || prefersReducedMotion()) return;
-		// Next frame: a model that has just loaded is framed once more as it
-		// comes on stage, and that would cut this sweep short.
-		requestAnimationFrame(() => {
+		// Set at once, so the first frame drawn is already the entrance's.
+		v.userRotation.y = TURN_FROM;
+		if (shot && from) {
 			const r = v.radius;
 			const [x, y, z] = from.pos;
 			const [tx, ty, tz] = from.target ?? shot.target;
-			const sweep = { duration: TURN_IN.duration, ease: TURN_IN.ease };
-			gsap.from(v.camera.position, { x: x * r, y: y * r, z: z * r, ...sweep });
-			gsap.from(v.target, { x: tx * r, y: ty * r, z: tz * r, ...sweep });
+			v.camera.position.set(x * r, y * r, z * r);
+			v.target.set(tx * r, ty * r, tz * r);
+		}
+		// Next frame: a model that has just loaded is framed once more as it
+		// comes on stage, which would cut the sweep short.
+		requestAnimationFrame(() => {
+			turnIn = gsap.to(v.userRotation, { y: 0, ...ENTRANCE });
+			if (!shot || !from) return;
+			const r = v.radius;
+			const [x, y, z] = shot.pos;
+			const [tx, ty, tz] = shot.target;
+			gsap.to(v.camera.position, { x: x * r, y: y * r, z: z * r, ...ENTRANCE, overwrite: true });
+			gsap.to(v.target, { x: tx * r, y: ty * r, z: tz * r, ...ENTRANCE, overwrite: true });
 		});
-	}
-	function onRevealed() {
-		revealed = true;
-		if (viewer && !turnedIn) spinIn(viewer);
 	}
 
 	onMount(() => {
@@ -608,7 +617,16 @@
 		edges();
 		const resized = new ResizeObserver(edges);
 		resized.observe(tabsEl);
-		viewportEl.addEventListener('reveal', onRevealed, { once: true });
+		const sighted = new IntersectionObserver(
+			([e]) => {
+				if (e.intersectionRatio < ENTER_AT) return;
+				inSight = true;
+				sighted.disconnect();
+				if (viewer && !turnedIn) enter(viewer);
+			},
+			{ threshold: ENTER_AT }
+		);
+		sighted.observe(viewportEl);
 		const grab = () => {
 			turnIn?.kill();
 			holding = true;
@@ -634,7 +652,7 @@
 			showPerf = flags.has('perf');
 		}
 		return () => {
-			viewportEl.removeEventListener('reveal', onRevealed);
+			sighted.disconnect();
 			viewportEl.removeEventListener('pointerdown', grab);
 			window.removeEventListener('pointerup', letGo);
 			window.removeEventListener('pointercancel', letGo);

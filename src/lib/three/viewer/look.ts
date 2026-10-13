@@ -26,11 +26,11 @@ export const LOOK: Partial<RenderParams> = {
 	materialEnv: 0,
 
 	// Light
-	key: 11.1,
+	key: 14,
 	rim: 2.1,
 	ambient: 0,
 	environment: 1.1,
-	exposure: 0.77,
+	exposure: 0.75,
 
 	// Gradient map: off, kept tuned for when it's switched on.
 	gradient: 0,

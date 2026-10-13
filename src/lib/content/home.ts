@@ -65,14 +65,14 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': {
 		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
 		// Colour slots, a group each (ModelViewer's `colours`, live via `setColour`
-		// and the controls panel); off unless `amount` is set: the core and the
-		// context are tinted grey, the rest keep the material's colour.
+		// and the controls panel); off unless `amount` is set: the heat pipes and
+		// the context are tinted grey, the rest keep the material's colour.
 		colours: {
 			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#333333' },
 			drives: { group: 'f2_drives', label: 'Drive mechanisms', colour: '#ff751f' },
 			reactivity: { group: 'f2_reactivity', label: 'Control drums', colour: '#6b6b6b' },
-			core: { group: 'f3_core', label: 'Core', colour: '#8a8a8a', amount: 1 },
-			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#8a8a8a' },
+			core: { group: 'f3_core', label: 'Core', colour: '#8a8a8a' },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#6e6e6e', amount: 1 },
 			context: { group: 'context', label: 'Context', colour: '#6b6b6b', amount: 1 }
 		}
 	},

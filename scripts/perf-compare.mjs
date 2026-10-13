@@ -56,7 +56,9 @@ async function diff(fa, fb, out) {
 		if (worst > 2) off++;
 		img[p * 3] = img[p * 3 + 1] = img[p * 3 + 2] = Math.min(255, worst * 8);
 	}
-	await sharp(img, { raw: { width: x.info.width, height: x.info.height, channels: 3 } }).png().toFile(out);
+	await sharp(img, { raw: { width: x.info.width, height: x.info.height, channels: 3 } })
+		.png()
+		.toFile(out);
 	return { mean: total / (n * 4), max, off: off / n };
 }
 

@@ -80,7 +80,6 @@
 
 <Seo title="Progress" description={intro} />
 
-
 <main id="content" class="progress-page" tabindex="-1">
 	<div class="progress">
 		<section class="hero" bind:this={hero}>

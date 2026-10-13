@@ -165,10 +165,7 @@
 		};
 		tl?.kill();
 		if (prefersReducedMotion()) return done();
-		tl = gsap
-			.timeline({ defaults: CLOSE, onComplete: done })
-			.to(panel, { x: 0 }, 0)
-			.to(dim, { opacity: 0 }, 0);
+		tl = gsap.timeline({ defaults: CLOSE, onComplete: done }).to(panel, { x: 0 }, 0).to(dim, { opacity: 0 }, 0);
 	}
 
 	function onkeydown(e: KeyboardEvent) {

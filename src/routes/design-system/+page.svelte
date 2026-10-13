@@ -60,15 +60,14 @@
 
 <Seo title="Design System" noindex />
 
-
 <div class="page">
 	<header class="intro">
 		<p class="type-caption eyebrow">Antares — Design System</p>
 		<h1 class="type-display">Design System</h1>
 		<p class="type-body-large lede">
-			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions.
-			Everything on the site is built from what's below. This page reads the system's own stylesheets, so it's
-			always current.
+			{SCALE.length} colours, {TYPE_STYLES.length} type styles, {SPACING.length} spacing steps, {TYPEFACES.length} weights
+			of {new Set(TYPEFACES.map((f) => f.name)).size} typeface, no exceptions. Everything on the site is built from what's
+			below. This page reads the system's own stylesheets, so it's always current.
 		</p>
 		<p class="type-caption now">
 			<span>Viewport</span>
@@ -94,8 +93,8 @@
 	<section>
 		<h2 class="type-caption section-title">Spacing</h2>
 		<p class="type-body-large usage">
-			Horizontal placement is whole grid columns. These cover the rest: gaps between stacked blocks,
-			padding, and space between sections. Named by px at 1440.
+			Horizontal placement is whole grid columns. These cover the rest: gaps between stacked blocks, padding, and space
+			between sections. Named by px at 1440.
 		</p>
 		<ul class="spacing">
 			{#each SPACING as s (s.token)}
@@ -198,8 +197,8 @@
 	<section>
 		<h2 class="type-caption section-title">Buttons</h2>
 		<p class="type-body-large usage">
-			Every button on the site is one of these, from <code>src/lib/components</code>. Pages place them; they
-			never style their own. Each specimen below is the real component, so hover and press them.
+			Every button on the site is one of these, from <code>src/lib/components</code>. Pages place them; they never style
+			their own. Each specimen below is the real component, so hover and press them.
 		</p>
 		<ul class="buttons">
 			<li class="button-spec">
@@ -220,8 +219,8 @@
 					<h3 class="type-body-large">CtaButton</h3>
 					<code class="type-body-large class">&lt;CtaButton label href? onclick? /&gt;</code>
 					<p class="type-body-large usage">
-						The filled call to action, from the mobile CTA: the label on a grey pill and a black square with
-						an arrow, one control. For a lead action that needs more weight than Button.
+						The filled call to action, from the mobile CTA: the label on a grey pill and a black square with an arrow,
+						one control. For a lead action that needs more weight than Button.
 					</p>
 				</div>
 			</li>
@@ -239,9 +238,9 @@
 					<h3 class="type-body-large">ArrowButton</h3>
 					<code class="type-body-large class">&lt;ArrowButton direction label tone? disabled? onclick /&gt;</code>
 					<p class="type-body-large usage">
-						Previous and next for carousels: a hairline square with an arrow, shown at rest and disabled at
-						the end of a run. <code>tone="dark"</code> is the same square outlined in Grey 750 with a chevron, for dark
-						stages like the reactor explorer.
+						Previous and next for carousels: a hairline square with an arrow, shown at rest and disabled at the end of a
+						run. <code>tone="dark"</code> is the same square outlined in Grey 750 with a chevron, for dark stages like the
+						reactor explorer.
 					</p>
 				</div>
 			</li>
@@ -264,19 +263,15 @@
 					<h3 class="type-body-large">ToggleRing</h3>
 					<code class="type-body-large class">&lt;ToggleRing open? active? /&gt;</code>
 					<p class="type-body-large usage">
-						The plus/minus ring for anything that opens and closes, like the accordion rows. Open, the + turns
-						to a − and the ring darkens; <code>active</code> darkens it on hover. A decoration: it sits inside
-						the button that does the opening. Shown closed (press it) and open.
+						The plus/minus ring for anything that opens and closes, like the accordion rows. Open, the + turns to a −
+						and the ring darkens; <code>active</code> darkens it on hover. A decoration: it sits inside the button that does
+						the opening. Shown closed (press it) and open.
 					</p>
 				</div>
 			</li>
 			<li class="button-spec">
 				<div class="stage wide">
-					<IconButton
-						label={paused ? 'Resume' : 'Pause'}
-						pressed={paused}
-						onclick={() => (paused = !paused)}
-					>
+					<IconButton label={paused ? 'Resume' : 'Pause'} pressed={paused} onclick={() => (paused = !paused)}>
 						<svg viewBox="0 0 12 12" aria-hidden="true">
 							{#if paused}
 								<path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
@@ -291,8 +286,7 @@
 					<h3 class="type-body-large">IconButton</h3>
 					<code class="type-body-large class">&lt;IconButton label pressed? onclick&gt;icon&lt;/IconButton&gt;</code>
 					<p class="type-body-large usage">
-						A square control holding one icon, for toggles on media: pause and resume. The label is read out,
-						not shown.
+						A square control holding one icon, for toggles on media: pause and resume. The label is read out, not shown.
 					</p>
 				</div>
 			</li>
@@ -322,8 +316,8 @@
 					<h3 class="type-body-large">MenuButton</h3>
 					<code class="type-body-large class">&lt;MenuButton open tone? controls onclick /&gt;</code>
 					<p class="type-body-large usage">
-						The site menu's toggle, one per page: four dots that spread on hover and merge when open. Light and
-						dark tones follow the page under it. Press to see it open.
+						The site menu's toggle, one per page: four dots that spread on hover and merge when open. Light and dark
+						tones follow the page under it. Press to see it open.
 					</p>
 				</div>
 			</li>
@@ -334,14 +328,18 @@
 		<h2 class="type-caption section-title">Rules</h2>
 		<ol class="rules type-body-large">
 			<li><span>Text gets its type from exactly one style class. Modifiers can be added on top.</span></li>
-			<li><span>
-				Components never set <code>font-size</code>, <code>line-height</code>, <code>letter-spacing</code>,
-				<code>font-family</code>, <code>font-weight</code> or <code>text-transform</code>.
-			</span></li>
-			<li><span>
-				Need something the scale doesn't have? Change <code>src/lib/styles/typography.css</code>, for the
-				whole site, and it shows up here.
-			</span></li>
+			<li>
+				<span>
+					Components never set <code>font-size</code>, <code>line-height</code>, <code>letter-spacing</code>,
+					<code>font-family</code>, <code>font-weight</code> or <code>text-transform</code>.
+				</span>
+			</li>
+			<li>
+				<span>
+					Need something the scale doesn't have? Change <code>src/lib/styles/typography.css</code>, for the whole site,
+					and it shows up here.
+				</span>
+			</li>
 			<li><span><code>npm run check</code> fails on any type declared outside the system.</span></li>
 		</ol>
 		<p class="type-caption ratio type-tabular">Sizes · {sizes.join(' · ')}</p>
@@ -683,12 +681,12 @@
 		.stage.wide,
 		/* Stands in for the row header the ring normally sits in. */
 	.ring-demo {
-		padding: 0;
-		border: 0;
-		background: none;
-		cursor: pointer;
-	}
-	.button-meta {
+			padding: 0;
+			border: 0;
+			background: none;
+			cursor: pointer;
+		}
+		.button-meta {
 			grid-column: 1 / -1;
 			grid-row: auto;
 		}

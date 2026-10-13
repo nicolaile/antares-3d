@@ -38,12 +38,7 @@
 </script>
 
 <button class="person" type="button" aria-haspopup="dialog" {onclick}>
-	<span
-		class="image"
-		role="presentation"
-		onpointerenter={() => over(true)}
-		onpointerleave={() => over(false)}
-	>
+	<span class="image" role="presentation" onpointerenter={() => over(true)} onpointerleave={() => over(false)}>
 		<span class="mask">
 			<span class="photo" bind:this={photo}>
 				<!-- No alt: the button is named by the caption, so it isn't

@@ -216,7 +216,15 @@ const features: Feature[] = [
 		// Head-on from nearly level, turned a quarter (skid left, exchanger right), held
 		// still; from Mark-0 it turns the last 50° in as the camera sweeps down to level.
 		// A little left of centre, so the model sits right of the panel's text.
-		shot: { pos: [-0.06, 0.035, 1.1], target: [-0.06, -0.04, 0], spin: 0, turn: Math.PI / 2, swing: (50 * Math.PI) / 180, swingFrom: { pos: [-0.06, 0.68, 1.2] }, fov: 29 },
+		shot: {
+			pos: [-0.06, 0.035, 1.1],
+			target: [-0.06, -0.04, 0],
+			spin: 0,
+			turn: Math.PI / 2,
+			swing: (50 * Math.PI) / 180,
+			swingFrom: { pos: [-0.06, 0.68, 1.2] },
+			fov: 29
+		},
 		// Step by step: the skid fades to a ghost, the exchanger's shell cuts open on
 		// the bundle, the heat pipes rise into it ring by ring (as into the core in 04),
 		// heat climbs them from 1.7 m to 3.9 m, then energy runs along both pipes to the skid.
@@ -264,7 +272,8 @@ const features: Feature[] = [
 export const r1 = {
 	title: 'R1 Microreactor',
 	// TODO(launch): finish the R1 aside (it ends in placeholder text).
-	aside: 'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
+	aside:
+		'Purpose-designed modular power for defense-critical assets. Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore',
 	features,
 	models,
 	scale: '2.5M/8.2ft',
@@ -272,7 +281,7 @@ export const r1 = {
 	views: {
 		title: 'Engineering',
 		text: 'Simple design optimized for reliability, uptime, and manufacturability'
-	},
+	}
 };
 
 // TODO(launch): write the operating model's three points (title and text are placeholders).
@@ -308,7 +317,8 @@ const capabilityPlaceholder =
 // TODO(launch): write the intro and the rows' copy (the first ends in placeholder, the rest are placeholder).
 export const capabilities = {
 	label: 'Capabilities',
-	intro: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+	intro:
+		'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 	items: [
 		{
 			title: 'Special Purpose Reactors',

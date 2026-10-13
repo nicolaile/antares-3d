@@ -58,7 +58,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Antares is developing compact microreactors for critical missions on Earth and in space. The company was recently selected for the U.S. Army\'s Janus Program at Fort Bragg, North Carolina; the Air Force\'s Advanced Nuclear Power for Installations program at Joint Base San Antonio, Texas; and a Space Force Strategic Breakthrough award to demonstrate a space reactor.'
+			html: "Antares is developing compact microreactors for critical missions on Earth and in space. The company was recently selected for the U.S. Army's Janus Program at Fort Bragg, North Carolina; the Air Force's Advanced Nuclear Power for Installations program at Joint Base San Antonio, Texas; and a Space Force Strategic Breakthrough award to demonstrate a space reactor."
 		},
 		{
 			type: 'paragraph',
@@ -66,7 +66,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'The agreement reflects the unique role that both companies can play in meeting U.S. national security requirements. Because Centrus\'s enrichment technology and manufacturing supply chain are U.S.-origin, the arrangement can provide Antares with fuel that could be used for a variety of national security applications. Centrus’ AC100 centrifuge design is the only deployment-ready enrichment technology capable of “unobligated” enrichment, meaning that it can be used for U.S. national security missions.'
+			html: "The agreement reflects the unique role that both companies can play in meeting U.S. national security requirements. Because Centrus's enrichment technology and manufacturing supply chain are U.S.-origin, the arrangement can provide Antares with fuel that could be used for a variety of national security applications. Centrus’ AC100 centrifuge design is the only deployment-ready enrichment technology capable of “unobligated” enrichment, meaning that it can be used for U.S. national security missions."
 		}
 	],
 	'antares-selected-for-161m-strategic-breakthrough-award-to-demonstrate-space-reactor': [
@@ -91,7 +91,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'On June 4, 2026, Antares\' Mark-0 microreactor achieved initial criticality at Idaho National Laboratory under Department of Energy authorization, making Antares the first private company to bring an advanced reactor to criticality under the DOE Reactor Pilot Program. The company\'s Mark-1 reactor is scheduled to operate for more than six months in 2027, integrated with its nitrogen closed Brayton cycle power conversion system.'
+			html: "On June 4, 2026, Antares' Mark-0 microreactor achieved initial criticality at Idaho National Laboratory under Department of Energy authorization, making Antares the first private company to bring an advanced reactor to criticality under the DOE Reactor Pilot Program. The company's Mark-1 reactor is scheduled to operate for more than six months in 2027, integrated with its nitrogen closed Brayton cycle power conversion system."
 		},
 		{
 			type: 'paragraph',
@@ -203,7 +203,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Launch Pad provides streamlined pathways for developers to demonstrate advanced nuclear technology and accelerate commercial deployment. The initiative leverages DOE\'s authority and expertise to offer flexible technical and regulatory frameworks that fast-track the path from concept to deployment.'
+			html: "Launch Pad provides streamlined pathways for developers to demonstrate advanced nuclear technology and accelerate commercial deployment. The initiative leverages DOE's authority and expertise to offer flexible technical and regulatory frameworks that fast-track the path from concept to deployment."
 		},
 		{
 			type: 'paragraph',
@@ -211,7 +211,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'For Antares, Launch Pad helps bridge from demonstration to deployment. The company builds compact fission reactors for critical missions on Earth and in space, designed for factory production and rapid deployment. In June 2026, the company\'s Mark-0 became the first advanced reactor to reach criticality in the United States in more than forty years, and the first under DOE\'s Reactor Pilot Program, a milestone Launch Pad now carries forward toward deployment.'
+			html: "For Antares, Launch Pad helps bridge from demonstration to deployment. The company builds compact fission reactors for critical missions on Earth and in space, designed for factory production and rapid deployment. In June 2026, the company's Mark-0 became the first advanced reactor to reach criticality in the United States in more than forty years, and the first under DOE's Reactor Pilot Program, a milestone Launch Pad now carries forward toward deployment."
 		}
 	],
 	'antares-announces-multi-year-triso-fuel-supply-agreement-with-standard-nuclear': [
@@ -243,11 +243,11 @@ export const bodies: Record<string, Block[]> = {
 	'antares-awarded-army-janus-agreement-at-fort-bragg': [
 		{
 			type: 'paragraph',
-			html: '<strong>WASHINGTON, D.C. — August 26, 2026</strong> — <strong>Antares announced today that it has been awarded an Other Transactions Authority agreement under the U.S. Army\'s Janus Program.</strong> The U.S. Army and Defense Innovation Unit selected Antares to own, construct, and operate nuclear microreactor power at Fort Bragg, North Carolina, in support of the Army\'s energy resilience mission.'
+			html: "<strong>WASHINGTON, D.C. — August 26, 2026</strong> — <strong>Antares announced today that it has been awarded an Other Transactions Authority agreement under the U.S. Army's Janus Program.</strong> The U.S. Army and Defense Innovation Unit selected Antares to own, construct, and operate nuclear microreactor power at Fort Bragg, North Carolina, in support of the Army's energy resilience mission."
 		},
 		{
 			type: 'paragraph',
-			html: 'The Army, the Defense Innovation Unit, and a panel of nuclear experts drawn from the Department of Energy, the national laboratories, and across the Services selected Antares after rigorous technical due diligence. Evaluated against the field of competing designs, Antares\' TRISO-fueled, factory-produced microreactor emerged as one of the most mature and deployment-ready solutions.'
+			html: "The Army, the Defense Innovation Unit, and a panel of nuclear experts drawn from the Department of Energy, the national laboratories, and across the Services selected Antares after rigorous technical due diligence. Evaluated against the field of competing designs, Antares' TRISO-fueled, factory-produced microreactor emerged as one of the most mature and deployment-ready solutions."
 		},
 		{
 			type: 'paragraph',
@@ -263,11 +263,12 @@ export const bodies: Record<string, Block[]> = {
 			type: 'figure',
 			image: images.janusWelding,
 			ratio: '2048 / 1365',
-			caption: 'Nate Jandra, lead technician, welds a component for Antares\' power conversion system in Torrance, California, August 25, 2026.'
+			caption:
+				"Nate Jandra, lead technician, welds a component for Antares' power conversion system in Torrance, California, August 25, 2026."
 		},
 		{
 			type: 'paragraph',
-			html: 'Janus uses a milestone-based payment structure under which vendors are funded only after meeting defined technical goals, an approach that rewards execution and accelerates the delivery of resilient power to the field. Antares\' selection reflects the maturity of its TRISO-fueled, factory-produced microreactor and the operational heritage already being established through its test campaigns at Idaho National Laboratory.'
+			html: "Janus uses a milestone-based payment structure under which vendors are funded only after meeting defined technical goals, an approach that rewards execution and accelerates the delivery of resilient power to the field. Antares' selection reflects the maturity of its TRISO-fueled, factory-produced microreactor and the operational heritage already being established through its test campaigns at Idaho National Laboratory."
 		},
 		{
 			type: 'quote',
@@ -288,7 +289,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Most recently, Bahran served as Deputy Assistant Secretary for Nuclear Reactors at the U.S. Department of Energy, where he oversaw the Department\'s portfolio for the research, development, demonstration, and deployment of advanced reactors, as well as technologies supporting the existing commercial fleet.'
+			html: "Most recently, Bahran served as Deputy Assistant Secretary for Nuclear Reactors at the U.S. Department of Energy, where he oversaw the Department's portfolio for the research, development, demonstration, and deployment of advanced reactors, as well as technologies supporting the existing commercial fleet."
 		},
 		{
 			type: 'paragraph',
@@ -300,7 +301,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'At Antares, Bahran will lead nuclear operations, licensing, government affairs, and policy, and drive the company\'s expansion into new markets.'
+			html: "At Antares, Bahran will lead nuclear operations, licensing, government affairs, and policy, and drive the company's expansion into new markets."
 		},
 		{
 			type: 'quote',
@@ -310,7 +311,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Antares\' microreactors are designed to operate safely and autonomously for years without refueling, delivering uninterrupted power to defense installations and other customers operating beyond reliable grid access.'
+			html: "Antares' microreactors are designed to operate safely and autonomously for years without refueling, delivering uninterrupted power to defense installations and other customers operating beyond reliable grid access."
 		},
 		{
 			type: 'quote',
@@ -326,7 +327,7 @@ export const bodies: Record<string, Block[]> = {
 	'antares-raises-470m-series-c-to-deploy-nuclear-microreactors-for-critical-missions': [
 		{
 			type: 'paragraph',
-			html: 'Antares has raised $470 million in Series C funding, co-led by Paradigm and Caffeinated Capital, with participation from Point72 Ventures, Shine Capital, Industrious Ventures, and others. The round accelerates Antares\' path from a demonstrated reactor to fielded power systems for defense and space, with initial deployments to U.S. military installations beginning by 2028.'
+			html: "Antares has raised $470 million in Series C funding, co-led by Paradigm and Caffeinated Capital, with participation from Point72 Ventures, Shine Capital, Industrious Ventures, and others. The round accelerates Antares' path from a demonstrated reactor to fielded power systems for defense and space, with initial deployments to U.S. military installations beginning by 2028."
 		},
 		{
 			type: 'quote',
@@ -346,7 +347,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'The company\'s microreactors are designed to run safely and autonomously for years without refueling, delivering uninterrupted power to the customers who depend on it most. That focus — engineering for sustained operation, not a one-time demonstration — shapes every decision the company makes.'
+			html: "The company's microreactors are designed to run safely and autonomously for years without refueling, delivering uninterrupted power to the customers who depend on it most. That focus — engineering for sustained operation, not a one-time demonstration — shapes every decision the company makes."
 		},
 		{
 			type: 'quote',
@@ -395,7 +396,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'We look forward to powering our nation\'s critical missions.'
+			html: "We look forward to powering our nation's critical missions."
 		}
 	],
 	'antares-signs-long-term-haleu-supply-agreement-with-general-matter': [
@@ -438,7 +439,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'This reactor validates key reactor physics parameters for Antares\' reactors and contributes verification and validation data back to the Department of War\'s Project Pele. The Mark-0 was authorized by DOE under the Reactor Pilot Program, with the U.S. Army integrated throughout as a future end user. This model of interagency coordination directly supports the Army\'s microreactor deployment timeline.'
+			html: "This reactor validates key reactor physics parameters for Antares' reactors and contributes verification and validation data back to the Department of War's Project Pele. The Mark-0 was authorized by DOE under the Reactor Pilot Program, with the U.S. Army integrated throughout as a future end user. This model of interagency coordination directly supports the Army's microreactor deployment timeline."
 		},
 		{
 			type: 'paragraph',
@@ -462,7 +463,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Beyond meeting the objectives of Executive Order 14301, the demonstration produced the testing data, model validation, and control system performance that will advance Antares\' commercial reactor toward full-power electricity production. Engineers gained direct insight into the physics of the Mark-0 core, the behavior of its control drums, and the maturity of its supply chain. These lessons will have compounding benefits across every reactor Antares builds.'
+			html: "Beyond meeting the objectives of Executive Order 14301, the demonstration produced the testing data, model validation, and control system performance that will advance Antares' commercial reactor toward full-power electricity production. Engineers gained direct insight into the physics of the Mark-0 core, the behavior of its control drums, and the maturity of its supply chain. These lessons will have compounding benefits across every reactor Antares builds."
 		},
 		{
 			type: 'paragraph',
@@ -470,7 +471,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Antares\' criticality opens the next chapter of American nuclear power and was delivered in time for America\'s 250th birthday.'
+			html: "Antares' criticality opens the next chapter of American nuclear power and was delivered in time for America's 250th birthday."
 		},
 		{ type: 'heading', text: 'About Antares' },
 		{
@@ -494,7 +495,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'Under the agreement, Urenco will provide enrichment services for HALEU to support Antares\' planned microreactor deployments in North America and allied markets. The fuel will be produced at Urenco\'s HALEU enrichment facility in the United Kingdom, which is on schedule to be one of the first Western licensed facilities.'
+			html: "Under the agreement, Urenco will provide enrichment services for HALEU to support Antares' planned microreactor deployments in North America and allied markets. The fuel will be produced at Urenco's HALEU enrichment facility in the United Kingdom, which is on schedule to be one of the first Western licensed facilities."
 		},
 		{
 			type: 'paragraph',
@@ -510,49 +511,50 @@ export const bodies: Record<string, Block[]> = {
 			html: 'Antares is a nuclear fission energy company developing compact microreactors for energy applications on Earth and in space, delivering safe, reliable power where traditional energy sources cannot. Founded in 2023 and backed by over $140 million in funding, Antares is on track to conduct a reactor demonstration in 2026, to test its first electricity-producing reactor in 2027, with initial production deployments beginning in 2028. Antares operates facilities in Torrance, California; Idaho Falls, Idaho; and Aiken, South Carolina.'
 		}
 	],
-	'antares-selected-for-proposed-deployment-of-nuclear-microreactor-at-joint-base-san-antonio-under-department-of-the-air-force-anpi-initiative': [
-		{
-			type: 'paragraph',
-			html: '<strong>SAN ANTONIO, Texas</strong> — The Department of the Air Force, in conjunction with the Defense Innovation Unit, <a href="https://www.af.mil/News/Article-Display/Article/4465439/daf-announces-next-steps-in-advanced-nuclear-power-for-installations-initiative/" target="_blank" rel="noopener">has selected Antares</a> for the proposed deployment of a prototype nuclear microreactor at Joint Base San Antonio under the Advanced Nuclear Power for Installations (ANPI) initiative.'
-		},
-		{
-			type: 'quote',
-			html: [
-				'"We\'re grateful and proud to partner with Joint Base San Antonio, the Department of the Air Force, and the Defense Innovation Unit," said Jordan Bramble, CEO and founder of Antares. "We built this company to deliver resilient power for missions like this."'
-			]
-		},
-		{
-			type: 'paragraph',
-			html: 'The utility infrastructure, land availability, and critical mission requirements at Joint Base San Antonio led to its selection as a potential location to site Antares reactors. Under the initiative, Antares anticipates siting, licensing, constructing, operating, and decommissioning its R1 microreactors, with systems targeted for deployment by 2028 or earlier.'
-		},
-		{
-			type: 'paragraph',
-			html: 'The R1 is a sodium heat pipe-cooled microreactor using robust tri-structural isotropic (TRISO) fuel. Antares plants serve installations by providing electricity, years of safe operation between refueling, and require no connection to the commercial power grid or specialized infrastructure to deploy.'
-		},
-		{
-			type: 'paragraph',
-			html: 'This effort ensures the execution of critical missions without interruption, thereby strengthening national security.'
-		},
-		{
-			type: 'quote',
-			html: [
-				'“Energy resilience is imperative to sustaining operations. If selected as a site under this initiative, Joint Base San Antonio’s resilience would take a tangible step forward to ensure reliable support for its many important missions,” said Brig. Gen. Randy Oakland, JBSA and 502d Air Base Wing commander.'
-			]
-		},
-		{
-			type: 'paragraph',
-			html: 'Antares is currently in the final phase of the Department of Energy\'s Reactor Pilot Program to build a reactor that achieves criticality – a stable, self-sustaining nuclear fission reaction – before July 4, 2026. Fuel fabrication for Antares\' initial reactors has been underway at BWX Technologies since October 2025.'
-		},
-		{
-			type: 'paragraph',
-			html: 'Following the Mark-0 demonstration, Antares will use the same test facility and fuel for its Mark-1 electricity-producing reactor in 2027, with initial production deployments for defense and space customers targeted for 2028.'
-		},
-		{ type: 'heading', text: 'About Antares' },
-		{
-			type: 'paragraph',
-			html: 'Antares is a nuclear fission energy company developing compact microreactors for defense and space applications, delivering safe, reliable power where traditional energy sources cannot. Founded in 2023 and backed by over $140 million in funding, Antares is on track to conduct a reactor demonstration in 2026, to test its first electricity-producing reactor in 2027, with initial production deployments beginning in 2028. Antares operates facilities in Torrance, California; Idaho Falls, Idaho; and Aiken, South Carolina.'
-		}
-	],
+	'antares-selected-for-proposed-deployment-of-nuclear-microreactor-at-joint-base-san-antonio-under-department-of-the-air-force-anpi-initiative':
+		[
+			{
+				type: 'paragraph',
+				html: '<strong>SAN ANTONIO, Texas</strong> — The Department of the Air Force, in conjunction with the Defense Innovation Unit, <a href="https://www.af.mil/News/Article-Display/Article/4465439/daf-announces-next-steps-in-advanced-nuclear-power-for-installations-initiative/" target="_blank" rel="noopener">has selected Antares</a> for the proposed deployment of a prototype nuclear microreactor at Joint Base San Antonio under the Advanced Nuclear Power for Installations (ANPI) initiative.'
+			},
+			{
+				type: 'quote',
+				html: [
+					'"We\'re grateful and proud to partner with Joint Base San Antonio, the Department of the Air Force, and the Defense Innovation Unit," said Jordan Bramble, CEO and founder of Antares. "We built this company to deliver resilient power for missions like this."'
+				]
+			},
+			{
+				type: 'paragraph',
+				html: 'The utility infrastructure, land availability, and critical mission requirements at Joint Base San Antonio led to its selection as a potential location to site Antares reactors. Under the initiative, Antares anticipates siting, licensing, constructing, operating, and decommissioning its R1 microreactors, with systems targeted for deployment by 2028 or earlier.'
+			},
+			{
+				type: 'paragraph',
+				html: 'The R1 is a sodium heat pipe-cooled microreactor using robust tri-structural isotropic (TRISO) fuel. Antares plants serve installations by providing electricity, years of safe operation between refueling, and require no connection to the commercial power grid or specialized infrastructure to deploy.'
+			},
+			{
+				type: 'paragraph',
+				html: 'This effort ensures the execution of critical missions without interruption, thereby strengthening national security.'
+			},
+			{
+				type: 'quote',
+				html: [
+					'“Energy resilience is imperative to sustaining operations. If selected as a site under this initiative, Joint Base San Antonio’s resilience would take a tangible step forward to ensure reliable support for its many important missions,” said Brig. Gen. Randy Oakland, JBSA and 502d Air Base Wing commander.'
+				]
+			},
+			{
+				type: 'paragraph',
+				html: "Antares is currently in the final phase of the Department of Energy's Reactor Pilot Program to build a reactor that achieves criticality – a stable, self-sustaining nuclear fission reaction – before July 4, 2026. Fuel fabrication for Antares' initial reactors has been underway at BWX Technologies since October 2025."
+			},
+			{
+				type: 'paragraph',
+				html: 'Following the Mark-0 demonstration, Antares will use the same test facility and fuel for its Mark-1 electricity-producing reactor in 2027, with initial production deployments for defense and space customers targeted for 2028.'
+			},
+			{ type: 'heading', text: 'About Antares' },
+			{
+				type: 'paragraph',
+				html: 'Antares is a nuclear fission energy company developing compact microreactors for defense and space applications, delivering safe, reliable power where traditional energy sources cannot. Founded in 2023 and backed by over $140 million in funding, Antares is on track to conduct a reactor demonstration in 2026, to test its first electricity-producing reactor in 2027, with initial production deployments beginning in 2028. Antares operates facilities in Torrance, California; Idaho Falls, Idaho; and Aiken, South Carolina.'
+			}
+		],
 	'antares-receives-doe-documented-safety-analysis-approval-for-mark-0-demonstration-reactor': [
 		{
 			type: 'paragraph',
@@ -560,7 +562,7 @@ export const bodies: Record<string, Block[]> = {
 		},
 		{
 			type: 'paragraph',
-			html: 'This milestone reflects DOE\'s acceptance of the final design for the Mark-0 reactor and the safety case supporting it and follows Antares\' Preliminary Documented Safety Analysis approval in January 2026.'
+			html: "This milestone reflects DOE's acceptance of the final design for the Mark-0 reactor and the safety case supporting it and follows Antares' Preliminary Documented Safety Analysis approval in January 2026."
 		},
 		{
 			type: 'paragraph',
@@ -656,24 +658,25 @@ export const bodies: Record<string, Block[]> = {
 			html: '2026 has already seen unprecedented acceleration in the development of privately built reactor prototypes. We at Antares are moving at a pace once considered preposterous. In just 2 years, we’ve tested an EDU, established a reactor test site, begun fabricating HALEU TRISO fuel for two reactors in partnership with BWXT, and received the first-ever approved PDSA for a reactor. As we accelerate, we must also ensure the industry does not lose sight of its long-term objectives – safe, reliable, economical power. Unrealistic short-term expectations will lead to disappointment, and customers, government partners, congressional offices, and investors may turn bearish on the nuclear renaissance. My hope is that, by accurately framing a simple set of preliminary technology maturation milestones, we can align interests for enduring, scalable success. Onward to criticality!'
 		}
 	],
-	'antares-is-expanding-its-existing-headquarters-antares-prime-to-support-the-next-phase-of-reactor-development-and-manufacturing': [
-		{
-			type: 'paragraph',
-			html: 'We are expanding Antares Prime from 145,000 square feet to 322,000 square feet, adding 187,000 square feet of adjacent, operable manufacturing and integration space, without constructing a new facility. Because this expansion uses existing operable space, we can execute quickly without disrupting ongoing work or relying on a multi-year construction effort.'
-		},
-		{
-			type: 'paragraph',
-			html: 'Antares Prime is designed to tightly integrate design, manufacturing, and testing. By co-locating these functions, we enable faster iteration, higher confidence in system performance, and a clearer path from early demonstrations to repeatable production.'
-		},
-		{
-			type: 'paragraph',
-			html: 'At steady state, the expanded facility is designed to support manufacturing our first 50 reactors, with a clear path to scale beyond that as demand grows. In addition, this expansion will enable continued research &amp; development for new programs and applications. This capacity is critical for delivering nuclear power systems intended to be deployed in fleets, not as one-off demonstrations.'
-		},
-		{
-			type: 'paragraph',
-			html: 'Antares Prime will produce the R1 microreactor and serve as the manufacturing foundation for future reactor variants and integrated energy systems across defense, space, and industrial applications.'
-		}
-	],
+	'antares-is-expanding-its-existing-headquarters-antares-prime-to-support-the-next-phase-of-reactor-development-and-manufacturing':
+		[
+			{
+				type: 'paragraph',
+				html: 'We are expanding Antares Prime from 145,000 square feet to 322,000 square feet, adding 187,000 square feet of adjacent, operable manufacturing and integration space, without constructing a new facility. Because this expansion uses existing operable space, we can execute quickly without disrupting ongoing work or relying on a multi-year construction effort.'
+			},
+			{
+				type: 'paragraph',
+				html: 'Antares Prime is designed to tightly integrate design, manufacturing, and testing. By co-locating these functions, we enable faster iteration, higher confidence in system performance, and a clearer path from early demonstrations to repeatable production.'
+			},
+			{
+				type: 'paragraph',
+				html: 'At steady state, the expanded facility is designed to support manufacturing our first 50 reactors, with a clear path to scale beyond that as demand grows. In addition, this expansion will enable continued research &amp; development for new programs and applications. This capacity is critical for delivering nuclear power systems intended to be deployed in fleets, not as one-off demonstrations.'
+			},
+			{
+				type: 'paragraph',
+				html: 'Antares Prime will produce the R1 microreactor and serve as the manufacturing foundation for future reactor variants and integrated energy systems across defense, space, and industrial applications.'
+			}
+		],
 	'antares-receives-doe-approval-for-mark-0-reactor-preliminary-documented-safety-analysis-pdsa': [
 		{
 			type: 'paragraph',
@@ -772,7 +775,7 @@ export const bodies: Record<string, Block[]> = {
 		{ type: 'heading', text: 'Our Long-Term Vision' },
 		{
 			type: 'paragraph',
-			html: 'Over the long term, our goal is simple: abundant energy throughout the Solar System. We’re building the engineering prime of strategic energy, a firm capable of delivering complete fission-powered solutions to the military, NASA, and other federal, commercial, and allied partners. We\'re focused on enabling high-value mission capabilities, not just a “box of power” that replaces a diesel generator.'
+			html: "Over the long term, our goal is simple: abundant energy throughout the Solar System. We’re building the engineering prime of strategic energy, a firm capable of delivering complete fission-powered solutions to the military, NASA, and other federal, commercial, and allied partners. We're focused on enabling high-value mission capabilities, not just a “box of power” that replaces a diesel generator."
 		},
 		{
 			type: 'paragraph',

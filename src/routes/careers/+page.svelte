@@ -16,7 +16,6 @@
 
 <Seo title="Careers" description={intro} />
 
-
 <main id="content" tabindex="-1">
 	<div class="careers">
 		<div class="head">

@@ -82,17 +82,15 @@
 						<span class="toggle"><ToggleRing open={open[i]} active={hovered === i} /></span>
 					</button>
 				</h3>
-							<div
-					class="panel"
-					id="{id}-{i}"
-					bind:this={panels[i]}
-					style:height={i === 0 ? 'auto' : '0px'}
-					inert={!open[i]}
-				>
+				<div class="panel" id="{id}-{i}" bind:this={panels[i]} style:height={i === 0 ? 'auto' : '0px'} inert={!open[i]}>
 					<div class="body">
 						<p class="text type-body-default">{item.text}</p>
 						<div class="image">
-							<Picture {...item.image} ratio="{item.image.src.img.w} / {item.image.src.img.h}" sizes="(max-width: 767px) 100vw, 25vw" />
+							<Picture
+								{...item.image}
+								ratio="{item.image.src.img.w} / {item.image.src.img.h}"
+								sizes="(max-width: 767px) 100vw, 25vw"
+							/>
 						</div>
 					</div>
 				</div>

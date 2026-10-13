@@ -7,7 +7,11 @@
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import SectionHeader from '$lib/modules/SectionHeader.svelte';
-	import ReactorExplorer, { type Feature, type CadModel, type CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
+	import ReactorExplorer, {
+		type Feature,
+		type CadModel,
+		type CadModelSetup
+	} from '$lib/explorer/ReactorExplorer.svelte';
 	import SystemViews from '$lib/explorer/SystemViews.svelte';
 	import { reveal } from '$lib/motion/reveal';
 
@@ -62,7 +66,7 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-			padding: var(--space-32) var(--grid-margin) var(--space-64);
+		padding: var(--space-32) var(--grid-margin) var(--space-64);
 		background: var(--black);
 		color: var(--white);
 	}
@@ -72,5 +76,4 @@
 		display: grid;
 		grid-template-columns: subgrid;
 	}
-
 </style>

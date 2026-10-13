@@ -123,31 +123,35 @@
 			gsap.set(g.links, { yPercent: 110 });
 			gsap.set(g.items, { autoAlpha: 0, y: g.b * 0.6 });
 		}
-		return gsap
-			.timeline({ defaults: { ease: 'menu' }, onUpdate: paint })
-			.to(panel, { autoAlpha: 1, duration: 0.2, ease: 'power1.out' }, 0)
-			.to(overlay, { autoAlpha: DIM, duration: 0.4, ease: 'power2.out' }, 0)
-			.to(mask, { left: 0, radius: g.r, duration: 0.38 }, 0)
-			.to(mask, { bottom: 0, duration: 0.45 }, 0.22)
-			.to(g.links, { yPercent: 0, duration: 0.55, stagger: 0.04, ease: 'power3.out' }, 0.3)
-			.to(g.items, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power3.out' }, 0.45)
-			// Hidden elements can't take focus, so move it in once the links show.
-			.call(focusFirst, undefined, 0.4);
+		return (
+			gsap
+				.timeline({ defaults: { ease: 'menu' }, onUpdate: paint })
+				.to(panel, { autoAlpha: 1, duration: 0.2, ease: 'power1.out' }, 0)
+				.to(overlay, { autoAlpha: DIM, duration: 0.4, ease: 'power2.out' }, 0)
+				.to(mask, { left: 0, radius: g.r, duration: 0.38 }, 0)
+				.to(mask, { bottom: 0, duration: 0.45 }, 0.22)
+				.to(g.links, { yPercent: 0, duration: 0.55, stagger: 0.04, ease: 'power3.out' }, 0.3)
+				.to(g.items, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power3.out' }, 0.45)
+				// Hidden elements can't take focus, so move it in once the links show.
+				.call(focusFirst, undefined, 0.4)
+		);
 	}
 
 	/** The mask folds straight into the corner under the button, down to 0px. */
 	function closeTimeline() {
 		const g = geometry();
-		return gsap
-			.timeline({
-				defaults: { ease: 'menu' },
-				onUpdate: paint,
-				onComplete: () => gsap.set(panel, { visibility: 'hidden' })
-			})
-			// Links stay put and solid; the folding mask covers them.
-			.to(g.items, { autoAlpha: 0, duration: 0.2, ease: 'power1.out' }, 0)
-			.to(mask, { left: g.w, bottom: g.h, radius: 0, duration: 0.5 }, 0)
-			.to(overlay, { autoAlpha: 0, duration: 0.45, ease: 'power2.inOut' }, 0);
+		return (
+			gsap
+				.timeline({
+					defaults: { ease: 'menu' },
+					onUpdate: paint,
+					onComplete: () => gsap.set(panel, { visibility: 'hidden' })
+				})
+				// Links stay put and solid; the folding mask covers them.
+				.to(g.items, { autoAlpha: 0, duration: 0.2, ease: 'power1.out' }, 0)
+				.to(mask, { left: g.w, bottom: g.h, radius: 0, duration: 0.5 }, 0)
+				.to(overlay, { autoAlpha: 0, duration: 0.45, ease: 'power2.inOut' }, 0)
+		);
 	}
 
 	/** Opened from the keyboard: focus shows a ring. */
@@ -206,15 +210,15 @@
 	});
 </script>
 
-<nav
-	bind:this={nav}
-	class="menu"
-	data-twostep-nav
-	data-nav-status={open ? 'active' : 'not-active'}
-	aria-label="Main"
->
+<nav bind:this={nav} class="menu" data-twostep-nav data-nav-status={open ? 'active' : 'not-active'} aria-label="Main">
 	<!-- Pointer-only close target; Escape covers the keyboard. -->
-	<div class="overlay" data-nav-toggle="close" bind:this={overlay} onclick={() => setOpen(false)} aria-hidden="true"></div>
+	<div
+		class="overlay"
+		data-nav-toggle="close"
+		bind:this={overlay}
+		onclick={() => setOpen(false)}
+		aria-hidden="true"
+	></div>
 
 	<div class="bar">
 		<Row>
@@ -290,8 +294,8 @@
 											aria-label="Show update {i + 1} of {updates.length}"
 											aria-current={i === shown ? 'true' : undefined}
 											onclick={() => (shown = i)}
-											onanimationend={next}
-										><span class="hit"></span></button>
+											onanimationend={next}><span class="hit"></span></button
+										>
 									{/each}
 								</div>
 							{/if}

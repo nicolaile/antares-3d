@@ -228,8 +228,16 @@
 	let follow: { turn: (v: number) => void; tilt: (v: number) => void } | null = null;
 	function turnTo(turn: number, tilt: number, duration = 0.9) {
 		follow ??= {
-			turn: gsap.quickTo(turned, 'turn', { duration, ease: 'power3.out', onUpdate: () => iso?.rotate(turned.turn, turned.tilt) }),
-			tilt: gsap.quickTo(turned, 'tilt', { duration, ease: 'power3.out', onUpdate: () => iso?.rotate(turned.turn, turned.tilt) })
+			turn: gsap.quickTo(turned, 'turn', {
+				duration,
+				ease: 'power3.out',
+				onUpdate: () => iso?.rotate(turned.turn, turned.tilt)
+			}),
+			tilt: gsap.quickTo(turned, 'tilt', {
+				duration,
+				ease: 'power3.out',
+				onUpdate: () => iso?.rotate(turned.turn, turned.tilt)
+			})
 		};
 		follow.turn(turn);
 		follow.tilt(tilt);

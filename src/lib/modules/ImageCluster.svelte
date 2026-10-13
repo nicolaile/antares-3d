@@ -45,7 +45,9 @@
 					<Picture
 						{...item.image}
 						ratio="auto"
-						sizes="(max-width: 767px) {Math.round((item.span / columns) * 100)}vw, {Math.round((item.span / 12) * 100)}vw"
+						sizes="(max-width: 767px) {Math.round((item.span / columns) * 100)}vw, {Math.round(
+							(item.span / 12) * 100
+						)}vw"
 					/>
 				</div>
 			</div>

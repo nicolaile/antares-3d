@@ -230,7 +230,8 @@ export function sampleNetwork(routes: string[], pipes: string[], dots: DotPlacem
 		}
 	}
 	const onPipe = (x: number, y: number) => {
-		const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+		const cx = Math.floor(x / CELL),
+			cy = Math.floor(y / CELL);
 		for (let i = -1; i <= 1; i++)
 			for (let j = -1; j <= 1; j++) {
 				const pts = cells.get(`${cx + i},${cy + j}`);

@@ -31,11 +31,7 @@
 <section class="poster" aria-labelledby="{id}-title">
 	<div class="card">
 		<div class="backdrop">
-			<Picture
-				{...image}
-				ratio="{image.src.img.w} / {image.src.img.h}"
-				sizes="(max-width: 767px) 100vw, 97vw"
-			/>
+			<Picture {...image} ratio="{image.src.img.w} / {image.src.img.h}" sizes="(max-width: 767px) 100vw, 97vw" />
 		</div>
 		<h2 id="{id}-title" class="title type-h1">{title}</h2>
 		<p class="name type-h1" aria-hidden="true">{name}</p>

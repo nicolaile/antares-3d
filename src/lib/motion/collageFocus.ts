@@ -38,7 +38,8 @@ export function collageFocus({
 		const controller = new AbortController();
 		const { signal } = controller;
 		let activeItem: HTMLElement | null = null;
-		const getInner = (item: HTMLElement) => item.querySelector<HTMLElement>('[data-interactive-collage-item-inner]') ?? item;
+		const getInner = (item: HTMLElement) =>
+			item.querySelector<HTMLElement>('[data-interactive-collage-item-inner]') ?? item;
 
 		const getMoveStrength = (distance: number) => {
 			const strength = 1 / (1 + Math.pow(distance - 1, 1.2) * 0.45);
@@ -113,12 +114,19 @@ export function collageFocus({
 		const getHoveredItem = (event: PointerEvent) => {
 			if (activeItem) {
 				const rect = getInner(activeItem).getBoundingClientRect();
-				if (event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom) {
+				if (
+					event.clientX >= rect.left &&
+					event.clientX <= rect.right &&
+					event.clientY >= rect.top &&
+					event.clientY <= rect.bottom
+				) {
 					return activeItem;
 				}
 			}
 			return (
-				document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-interactive-collage-item]') ?? null
+				document
+					.elementFromPoint(event.clientX, event.clientY)
+					?.closest<HTMLElement>('[data-interactive-collage-item]') ?? null
 			);
 		};
 

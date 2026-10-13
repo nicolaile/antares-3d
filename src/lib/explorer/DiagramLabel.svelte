@@ -84,7 +84,11 @@
 			.fromTo(
 				cardEl,
 				{ clipPath: on ? shut : 'inset(0% 0% 0% 0%)' },
-				{ clipPath: on ? 'inset(0% 0% 0% 0%)' : shut, duration: (on ? 0.4 : 0.2) * quick, ease: on ? 'power3.out' : 'power2.in' },
+				{
+					clipPath: on ? 'inset(0% 0% 0% 0%)' : shut,
+					duration: (on ? 0.4 : 0.2) * quick,
+					ease: on ? 'power3.out' : 'power2.in'
+				},
 				0
 			);
 		return () => tl?.kill();

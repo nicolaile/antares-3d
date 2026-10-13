@@ -66,7 +66,6 @@ const RULES = [
 	}
 ];
 
-
 function walk(dir) {
 	return readdirSync(dir).flatMap((name) => {
 		const path = join(dir, name);

@@ -66,10 +66,7 @@ export function applyStudioShade(
 	const uniforms: StudioShadeUniforms = {
 		uShadeOn: { value: opts.on ? 1 : 0 },
 		uShadeDir: {
-			value: shadeDirection(
-				opts.azimuth ?? SHADE_DEFAULTS.azimuth,
-				opts.elevation ?? SHADE_DEFAULTS.elevation
-			)
+			value: shadeDirection(opts.azimuth ?? SHADE_DEFAULTS.azimuth, opts.elevation ?? SHADE_DEFAULTS.elevation)
 		},
 		uShadeCoverage: { value: opts.coverage ?? SHADE_DEFAULTS.coverage },
 		uShadeSoftness: { value: opts.softness ?? SHADE_DEFAULTS.softness },

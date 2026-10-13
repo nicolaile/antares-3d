@@ -49,7 +49,10 @@
 		/** Groups split into pieces that move apart (ModelViewer's `explode`). */
 		explode?: Record<string, { fold?: number; phase?: number; layers?: boolean; columns?: boolean }>;
 		/** Parts carved into groups of their own (ModelViewer's `carve`). */
-		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		carve?: Record<
+			string,
+			{ from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }
+		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -72,7 +75,6 @@
 		/** Fires once the model is in the scene, for the render controls. */
 		onready?: (viewer: ModelViewer) => void;
 	} = $props();
-
 
 	/*
 	 * The poster renders the opening shot, shown until the live model is ready

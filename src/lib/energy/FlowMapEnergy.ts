@@ -279,11 +279,15 @@ function compile(gl: WebGL2RenderingContext, vs: string, fs: string) {
 /** Six vertices per segment: a quad grown by REACH on every side, so rounded ends are covered. */
 function segments(route: Sampled, out: number[]) {
 	for (let i = 0; i < route.arcs.length - 1; i++) {
-		const x0 = route.points[i * 2], y0 = route.points[i * 2 + 1];
-		const x1 = route.points[i * 2 + 2], y1 = route.points[i * 2 + 3];
+		const x0 = route.points[i * 2],
+			y0 = route.points[i * 2 + 1];
+		const x1 = route.points[i * 2 + 2],
+			y1 = route.points[i * 2 + 3];
 		const len = Math.hypot(x1 - x0, y1 - y0) || 1;
-		const tx = ((x1 - x0) / len) * REACH, ty = ((y1 - y0) / len) * REACH;
-		const nx = -ty, ny = tx;
+		const tx = ((x1 - x0) / len) * REACH,
+			ty = ((y1 - y0) / len) * REACH;
+		const nx = -ty,
+			ny = tx;
 		const a = [x0 - tx + nx, y0 - ty + ny];
 		const b = [x0 - tx - nx, y0 - ty - ny];
 		const c = [x1 + tx + nx, y1 + ty + ny];
@@ -291,7 +295,8 @@ function segments(route: Sampled, out: number[]) {
 		// A segment is in a pipe only if both its ends are.
 		const pipe = route.inPipe[i] && route.inPipe[i + 1] ? 1 : 0;
 		const end = i === 0 ? -1 : i === route.arcs.length - 2 ? 1 : 0;
-		for (const v of [a, b, c, c, b, d]) out.push(v[0], v[1], x0, y0, x1, y1, route.arcs[i], route.arcs[i + 1], pipe, end);
+		for (const v of [a, b, c, c, b, d])
+			out.push(v[0], v[1], x0, y0, x1, y1, route.arcs[i], route.arcs[i + 1], pipe, end);
 	}
 }
 
@@ -360,9 +365,40 @@ export class FlowMapEnergy {
 		gl.bindVertexArray(null);
 
 		for (const name of [
-			'uNearest', 'uSecond', 'uRes', 'uView', 'uOrigin', 'uReach', 'uArcMax', 'uHead', 'uPeriod', 'uTail', 'uTime',
-			'uSpeed', 'uCore', 'uGlow', 'uGlowAmount', 'uAmbient', 'uFlicker', 'uPx', 'uFill', 'uWall', 'uSparks',
-			'uTempAmount', 'uAgitation', 'uContrast', 'uCoolLevel', 'uBore', 'uCut', 'uRamp', 'uRampX', 'uCool', 'uRoutes', 'uRouteCount', 'uDots', 'uDotRgb'
+			'uNearest',
+			'uSecond',
+			'uRes',
+			'uView',
+			'uOrigin',
+			'uReach',
+			'uArcMax',
+			'uHead',
+			'uPeriod',
+			'uTail',
+			'uTime',
+			'uSpeed',
+			'uCore',
+			'uGlow',
+			'uGlowAmount',
+			'uAmbient',
+			'uFlicker',
+			'uPx',
+			'uFill',
+			'uWall',
+			'uSparks',
+			'uTempAmount',
+			'uAgitation',
+			'uContrast',
+			'uCoolLevel',
+			'uBore',
+			'uCut',
+			'uRamp',
+			'uRampX',
+			'uCool',
+			'uRoutes',
+			'uRouteCount',
+			'uDots',
+			'uDotRgb'
 		]) {
 			this.u[name] = gl.getUniformLocation(this.shade, name);
 		}

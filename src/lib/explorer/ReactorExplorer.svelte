@@ -54,7 +54,10 @@
 		/** Its groups' files, under static/models/cad/web/. */
 		files: string[];
 		/** Parts carved into groups of their own (ModelViewer's `carve`). */
-		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		carve?: Record<
+			string,
+			{ from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }
+		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -392,7 +395,10 @@
 		gsap.registerPlugin(InertiaPlugin);
 		/** Where the nearest tab edge is to scroll position `x` (or the strip's end). */
 		const settle = (x: number) => {
-			const stops = [...features.keys()].map(scrollTo).filter((s) => s < maxScroll()).concat(maxScroll());
+			const stops = [...features.keys()]
+				.map(scrollTo)
+				.filter((s) => s < maxScroll())
+				.concat(maxScroll());
 			return stops.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
 		};
 		/**
@@ -469,7 +475,12 @@
 			const reduce = prefersReducedMotion();
 			if (at.x < 0 || at.x > max) {
 				// Stretched past an end: springs back to it.
-				spring = gsap.to(at, { x: gsap.utils.clamp(0, max, at.x), duration: reduce ? 0.2 : 0.7, ease: 'expo.out', onUpdate: apply });
+				spring = gsap.to(at, {
+					x: gsap.utils.clamp(0, max, at.x),
+					duration: reduce ? 0.2 : 0.7,
+					ease: 'expo.out',
+					onUpdate: apply
+				});
 			} else {
 				const first = trail[0];
 				const dt = (e.timeStamp - first.t) / 1000;
@@ -508,10 +519,9 @@
 	 * its tab is pointed at or focused. Most visitors never open the later
 	 * models, and they're megabytes each.
 	 */
-	const wanted = $state(untrack(() => Object.fromEntries(names.map((m) => [m, m === features[active].model])))) as Record<
-		CadModel,
-		boolean
-	>;
+	const wanted = $state(
+		untrack(() => Object.fromEntries(names.map((m) => [m, m === features[active].model])))
+	) as Record<CadModel, boolean>;
 	const want = (i: number) => {
 		const m = features[i]?.model;
 		if (m && !wanted[m]) wanted[m] = true;
@@ -624,7 +634,10 @@
 					.to(el, { clipPath: open, duration: reduce ? 0 : 1.1, ease: 'power3.inOut' }, 0)
 					.to(label, { autoAlpha: 1, y: 0, duration: reduce ? 0.2 : 0.6, ease: 'power3.out' }, reduce ? 0 : 0.45);
 			} else {
-				ruleTl = gsap.timeline().to(el, { autoAlpha: 0, duration: 0.25, ease: 'power1.in' }).set(el, { clipPath: shut });
+				ruleTl = gsap
+					.timeline()
+					.to(el, { autoAlpha: 0, duration: 0.25, ease: 'power1.in' })
+					.set(el, { clipPath: shut });
 			}
 		});
 	});
@@ -671,7 +684,6 @@
 			resized.disconnect();
 		};
 	});
-
 </script>
 
 <div class="explorer" bind:this={explorerEl}>
@@ -729,7 +741,13 @@
 				{@const p = feature.panel}
 				<div class="layer panel" aria-hidden={i !== active} bind:this={panelEls[i]}>
 					<div class="panel-image" style:aspect-ratio={p.image.ratio}>
-						<Picture src={p.image.src} alt={p.image.alt} ratio={p.image.ratio} fit="contain" sizes="(max-width: 767px) 100vw, 50vw" />
+						<Picture
+							src={p.image.src}
+							alt={p.image.alt}
+							ratio={p.image.ratio}
+							fit="contain"
+							sizes="(max-width: 767px) 100vw, 50vw"
+						/>
 					</div>
 					<div class="figure">
 						<p class="value type-body-large">
@@ -859,8 +877,8 @@
 			mask-image: linear-gradient(
 				to right,
 				transparent,
-				#000 var(--fade-left, 0px), /* check-system: allow — mask alpha, not a colour */
-				#000 calc(100% - var(--fade-right, 0px)), /* check-system: allow */
+				black var(--fade-left, 0px),
+				black calc(100% - var(--fade-right, 0px)),
 				transparent
 			);
 		}
@@ -904,7 +922,8 @@
 		left: 67%;
 		width: var(--tick);
 		border-left: 1px solid var(--grey-700);
-		background: repeating-linear-gradient(to bottom, var(--grey-700) 0 1px, transparent 1px 20%) left / var(--tick) calc(100% + 1px) no-repeat;
+		background: repeating-linear-gradient(to bottom, var(--grey-700) 0 1px, transparent 1px 20%) left / var(--tick)
+			calc(100% + 1px) no-repeat;
 		pointer-events: none;
 	}
 	.rule::before {

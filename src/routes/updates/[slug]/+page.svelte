@@ -30,7 +30,6 @@
 
 <Seo title={article.title} description={article.excerpt} image={article.image.src.img.src} type="article" />
 
-
 <main class="article" id="content" tabindex="-1">
 	<Row as="header">
 		<Cell start={4} span={5} tablet={{ start: 2, span: 10 }}>
@@ -43,12 +42,7 @@
 		<Row>
 			<Cell start={3} span={8} tablet={{ start: 1, span: 12 }}>
 				<div class="hero-image">
-					<Picture
-						{...article.image}
-						ratio="16 / 9"
-						sizes="(max-width: 991px) 100vw, 65vw"
-						loading="eager"
-					/>
+					<Picture {...article.image} ratio="16 / 9" sizes="(max-width: 991px) 100vw, 65vw" loading="eager" />
 				</div>
 			</Cell>
 		</Row>
@@ -85,11 +79,7 @@
 						{:else if block.type === 'figure'}
 							<figure class:portrait={portrait(block.ratio)}>
 								<div class="media">
-									<Picture
-										{...block.image}
-										ratio={block.ratio}
-										sizes="(max-width: 991px) 100vw, 48vw"
-									/>
+									<Picture {...block.image} ratio={block.ratio} sizes="(max-width: 991px) 100vw, 48vw" />
 								</div>
 								{#if block.caption}
 									<figcaption class="type-annotation">

@@ -37,8 +37,8 @@
 	/* `indent` columns plus the gutters after them, as a share of the row. */
 	.text {
 		text-indent: calc(
-			(100% - (var(--grid-columns) - 1) * var(--grid-gutter)) / var(--grid-columns) * var(--indent) +
-				var(--indent) * var(--grid-gutter)
+			(100% - (var(--grid-columns) - 1) * var(--grid-gutter)) / var(--grid-columns) * var(--indent) + var(--indent) *
+				var(--grid-gutter)
 		);
 	}
 

@@ -14,7 +14,6 @@
 
 <Seo />
 
-
 <main id="content" tabindex="-1">
 	<Hero {...hero} />
 

@@ -40,28 +40,28 @@
 				<Milestones items={milestones} quiet />
 			</Cell>
 			{#if images?.primary || images?.secondary}
-			<Cell start={8} span={5} tablet={{ start: 1, span: 12 }} subgrid align="end">
-				{#if images.primary}
-					<div class="primary">
-						<Picture {...images.primary} surface ratio="11 / 9" sizes="(max-width: 991px) 60vw, 24vw" />
-					</div>
-				{/if}
-				{#if images.secondary}
-				{@const video = 'duration' in images.secondary ? images.secondary : null}
-				<div class="secondary" class:alone={!images.primary} class:video>
-					<Picture
-						src={images.secondary.src}
-						alt={images.secondary.alt}
-						surface
-						ratio={video?.ratio ?? '12 / 7'}
-						sizes={video ? '(max-width: 991px) 60vw, 24vw' : '(max-width: 991px) 40vw, 16vw'}
-					/>
-					{#if video}
-						<div class="play"><PlayButton duration={video.duration} /></div>
+				<Cell start={8} span={5} tablet={{ start: 1, span: 12 }} subgrid align="end">
+					{#if images.primary}
+						<div class="primary">
+							<Picture {...images.primary} surface ratio="11 / 9" sizes="(max-width: 991px) 60vw, 24vw" />
+						</div>
 					{/if}
-				</div>
-				{/if}
-			</Cell>
+					{#if images.secondary}
+						{@const video = 'duration' in images.secondary ? images.secondary : null}
+						<div class="secondary" class:alone={!images.primary} class:video>
+							<Picture
+								src={images.secondary.src}
+								alt={images.secondary.alt}
+								surface
+								ratio={video?.ratio ?? '12 / 7'}
+								sizes={video ? '(max-width: 991px) 60vw, 24vw' : '(max-width: 991px) 40vw, 16vw'}
+							/>
+							{#if video}
+								<div class="play"><PlayButton duration={video.duration} /></div>
+							{/if}
+						</div>
+					{/if}
+				</Cell>
 			{/if}
 		</Cell>
 	</Row>

@@ -83,8 +83,14 @@ export class ContactShadow {
 				);
 		};
 
-		this.hBlur = new THREE.ShaderMaterial({ ...HorizontalBlurShader, uniforms: THREE.UniformsUtils.clone(HorizontalBlurShader.uniforms) });
-		this.vBlur = new THREE.ShaderMaterial({ ...VerticalBlurShader, uniforms: THREE.UniformsUtils.clone(VerticalBlurShader.uniforms) });
+		this.hBlur = new THREE.ShaderMaterial({
+			...HorizontalBlurShader,
+			uniforms: THREE.UniformsUtils.clone(HorizontalBlurShader.uniforms)
+		});
+		this.vBlur = new THREE.ShaderMaterial({
+			...VerticalBlurShader,
+			uniforms: THREE.UniformsUtils.clone(VerticalBlurShader.uniforms)
+		});
 		this.blurQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.hBlur);
 		this.blurQuad.frustumCulled = false;
 		this.blurScene.add(this.blurQuad);

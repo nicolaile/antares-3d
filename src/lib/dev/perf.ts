@@ -142,7 +142,11 @@ export async function run(
 		const memory = target
 			.viewers()
 			.map((each) => each.memory())
-			.reduce((sum, m) => sum + m.targets.reduce((a, t) => a + t.bytes, 0) + Object.values(m.geometry).reduce((a, b) => a + b, 0), 0);
+			.reduce(
+				(sum, m) =>
+					sum + m.targets.reduce((a, t) => a + t.bytes, 0) + Object.values(m.geometry).reduce((a, b) => a + b, 0),
+				0
+			);
 		report.shots.push({ feature: i + 1, profile, settled: Math.round(settled), pose, memory });
 		if (capture) {
 			const png = await v.snapshot();
@@ -166,7 +170,13 @@ export async function run(
  *
  *   await __perf.shot('looks', 'metal-half', { finishMetal: 0.5 })
  */
-export async function shot(target: PerfTarget, label: string, name: string, params: Partial<RenderParams> = {}, feature = 0) {
+export async function shot(
+	target: PerfTarget,
+	label: string,
+	name: string,
+	params: Partial<RenderParams> = {},
+	feature = 0
+) {
 	if (!/^[\w-]+$/.test(label) || !/^[\w-]+$/.test(name)) throw new Error('label, name: letters, digits, - and _ only');
 	const v = target.viewerFor(feature);
 	if (!v) throw new Error(`feature ${feature + 1}'s viewer hasn't loaded`);
@@ -215,7 +225,9 @@ export async function visibility(target: PerfTarget, { log = console.info } = {}
 		}
 		await settle(v, { min: 500 });
 		add(model, await v.visibleParts());
-		log(`[visibility] ${i + 1}: ${[...seen.get(model)!.values()].reduce((n, s) => n + s.size, 0)} parts seen on ${model} so far`);
+		log(
+			`[visibility] ${i + 1}: ${[...seen.get(model)!.values()].reduce((n, s) => n + s.size, 0)} parts seen on ${model} so far`
+		);
 	}
 	for (const [model, files] of seen) {
 		const json = Object.fromEntries([...files].map(([file, set]) => [file, [...set].sort((a, b) => a - b)]));

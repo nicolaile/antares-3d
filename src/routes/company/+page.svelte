@@ -17,7 +17,6 @@
 
 <Seo title="Company" description={intro} />
 
-
 <PersonPanel bind:this={panel}>
 	<main id="content" tabindex="-1">
 		<div class="company">

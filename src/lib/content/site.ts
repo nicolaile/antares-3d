@@ -78,12 +78,10 @@ export const menu = {
 		{ label: 'Contact', href: '#' }
 	] satisfies Link[],
 	/** The three latest stories, cycled at the foot of the open menu. */
-	updates: stories.items.slice(0, 3).map(
-		(story): Update => ({
-			date: shortDate(story.date),
-			title: story.label,
-			href: story.href,
-			image: { src: story.image!.src, alt: story.image!.alt }
-		})
-	)
+	updates: stories.items.slice(0, 3).map((story): Update => ({
+		date: shortDate(story.date),
+		title: story.label,
+		href: story.href,
+		image: { src: story.image!.src, alt: story.image!.alt }
+	}))
 };

@@ -84,22 +84,22 @@
 	}}
 >
 	<span class="face" bind:this={face}>
-	<!-- Centred on 0,0, so a dot's resting place is its offset. -->
-	<svg viewBox="-17 -17 34 34" aria-hidden="true">
-		{#each DOTS as dot, i (i)}
-			<rect
-				class="dot"
-				x="-1.5"
-				y="-1.5"
-				width="3"
-				height="3"
-				style:--x="{dot.x}px"
-				style:--y="{dot.y}px"
-				style:--hx="{dot.hx}px"
-				style:--hy="{dot.hy}px"
-			/>
-		{/each}
-	</svg>
+		<!-- Centred on 0,0, so a dot's resting place is its offset. -->
+		<svg viewBox="-17 -17 34 34" aria-hidden="true">
+			{#each DOTS as dot, i (i)}
+				<rect
+					class="dot"
+					x="-1.5"
+					y="-1.5"
+					width="3"
+					height="3"
+					style:--x="{dot.x}px"
+					style:--y="{dot.y}px"
+					style:--hx="{dot.hx}px"
+					style:--hy="{dot.hy}px"
+				/>
+			{/each}
+		</svg>
 	</span>
 </button>
 

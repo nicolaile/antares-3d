@@ -73,7 +73,13 @@
 	</h2>
 	{#if image}
 		<div class="still" style:aspect-ratio="{image.src.img.w} / {image.src.img.h}">
-			<Picture src={image.src} alt={image.alt} ratio="{image.src.img.w} / {image.src.img.h}" fit="contain" sizes="(max-width: 767px) 100vw, 50vw" />
+			<Picture
+				src={image.src}
+				alt={image.alt}
+				ratio="{image.src.img.w} / {image.src.img.h}"
+				fit="contain"
+				sizes="(max-width: 767px) 100vw, 50vw"
+			/>
 			{#if image.wip}<WipBadge label="3D model · WIP" />{/if}
 		</div>
 	{:else if video}

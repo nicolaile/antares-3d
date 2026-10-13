@@ -98,7 +98,8 @@
 	{/each}
 	{#if profile}
 		<p>
-			<b>GPU {profile.full.toFixed(2)} ms</b> · shadow {profile.shadow.toFixed(2)} · scene {profile.scene.toFixed(2)} · post {profile.post.toFixed(2)}<br />
+			<b>GPU {profile.full.toFixed(2)} ms</b> · shadow {profile.shadow.toFixed(2)} · scene {profile.scene.toFixed(2)} · post
+			{profile.post.toFixed(2)}<br />
 			targets {mb(sum(profile.targets.map((t) => t.bytes)))} · geometry {mb(sum(Object.values(profile.geometry)))}
 		</p>
 	{/if}
@@ -123,7 +124,11 @@
 		border-radius: var(--stage-radius);
 		background: var(--black);
 		color: var(--white);
-		font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+		font:
+			11px/1.45 ui-monospace,
+			SFMono-Regular,
+			Menlo,
+			monospace;
 		font-variant-numeric: tabular-nums;
 	}
 	p {

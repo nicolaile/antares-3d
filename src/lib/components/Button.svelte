@@ -31,12 +31,8 @@
 {/snippet}
 
 {#if href}
-	<a
-		class="button type-button"
-		{href}
-		{onclick}
-		onpointerenter={() => nudge(true)}
-		onpointerleave={() => nudge(false)}>{@render content()}</a
+	<a class="button type-button" {href} {onclick} onpointerenter={() => nudge(true)} onpointerleave={() => nudge(false)}
+		>{@render content()}</a
 	>
 {:else}
 	<button

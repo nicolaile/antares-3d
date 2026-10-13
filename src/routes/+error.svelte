@@ -38,7 +38,6 @@
 
 <Seo {title} noindex />
 
-
 <main id="content" tabindex="-1" class="error" data-tone="dark">
 	<StarField {...error.star} href={error.home.href} home={error.home.label} {onwarp} />
 
@@ -75,5 +74,4 @@
 	h1 {
 		margin: 0;
 	}
-
 </style>

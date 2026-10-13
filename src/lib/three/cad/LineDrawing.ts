@@ -248,7 +248,10 @@ void main() {
 function smoothMaterial(lines: THREE.Texture | null = null) {
 	const fragmentShader = FXAAShader.fragmentShader
 		.replace('#define EDGE_STEP_COUNT 6', '#define EDGE_STEP_COUNT 10')
-		.replace('#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 4.0', '#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 8.0, 8.0')
+		.replace(
+			'#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 4.0',
+			'#define EDGE_STEPS 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 8.0, 8.0'
+		)
 		.replace('#define EDGE_GUESS 8.0', '#define EDGE_GUESS 16.0')
 		// No blending of lone pixels: it would soften every one-pixel line, not just the steps.
 		.replace('float _SubpixelBlending = 1.0;', 'float _SubpixelBlending = 0.0;')
@@ -278,7 +281,11 @@ void main() {
 	gl_FragColor = vec4(color, amount * a);
 }`
 		);
-	if (!['uniform float amount', '_SubpixelBlending = 0.0', 'return Sample( tex2D, uv ).r;'].every((t) => fragmentShader.includes(t)))
+	if (
+		!['uniform float amount', '_SubpixelBlending = 0.0', 'return Sample( tex2D, uv ).r;'].every((t) =>
+			fragmentShader.includes(t)
+		)
+	)
 		throw new Error('FXAAShader has changed shape');
 	return new THREE.ShaderMaterial({
 		uniforms: {

@@ -28,7 +28,6 @@
 
 <Seo title="Updates" description={intro} />
 
-
 <main id="content" tabindex="-1" class="updates" data-tone="dark">
 	<Row>
 		<Cell span={4} tablet={{ span: 6 }}>

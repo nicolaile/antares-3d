@@ -315,11 +315,25 @@
 					<feGaussianBlur stdDeviation="9" />
 				</filter>
 				{#each MARKERS as m, i (m.label)}
-					<mask id="{uid}-focus-{i}" maskUnits="userSpaceOnUse" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height}>
+					<mask
+						id="{uid}-focus-{i}"
+						maskUnits="userSpaceOnUse"
+						x={FRAME.x}
+						y={FRAME.y}
+						width={FRAME.width}
+						height={FRAME.height}
+					>
 						<rect class="mask-veil" x={FRAME.x} y={FRAME.y} width={FRAME.width} height={FRAME.height} />
 						<g filter="url(#{uid}-soft)">
 							{#each m.focus.areas as [x0, y0, x1, y1], j (j)}
-								<rect class="mask-hole" x={x0 - PAD} y={y0 - PAD} width={x1 - x0 + PAD * 2} height={y1 - y0 + PAD * 2} rx={PAD} />
+								<rect
+									class="mask-hole"
+									x={x0 - PAD}
+									y={y0 - PAD}
+									width={x1 - x0 + PAD * 2}
+									height={y1 - y0 + PAD * 2}
+									rx={PAD}
+								/>
 							{/each}
 							{#each focusPipes[i] as d, j (j)}<path class="mask-pipe" {d} />{/each}
 						</g>

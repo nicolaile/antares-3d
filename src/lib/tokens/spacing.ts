@@ -3,6 +3,6 @@ import source from '$lib/styles/spacing.css?raw';
 
 export type SpaceToken = { token: string; px: number; usage: string };
 
-export const SPACING: SpaceToken[] = [
-	...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--space-(\d+)):/g)
-].map(([, usage, token, px]) => ({ token, px: Number(px), usage }));
+export const SPACING: SpaceToken[] = [...source.matchAll(/\/\*\*\s*(.+?)\s*\*\/\s*(--space-(\d+)):/g)].map(
+	([, usage, token, px]) => ({ token, px: Number(px), usage })
+);

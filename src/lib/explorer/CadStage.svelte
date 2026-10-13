@@ -103,7 +103,10 @@
 		points: { number: number; at: [number, number, number] }[];
 		look?: Look;
 		/** Parts carved into groups of their own (ModelViewer's `carve`). */
-		carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+		carve?: Record<
+			string,
+			{ from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }
+		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -188,7 +191,8 @@
 				gsap.to(s, {
 					cut: open,
 					duration: closing ? (vanishing ? 0 : AWAY) : 1.1,
-					delay: wait + (closing ? (vanishing ? (stages.fadeFor ?? AWAY) + (stages.fade ?? 0) : 0) : (stages.cut ?? 0.25)),
+					delay:
+						wait + (closing ? (vanishing ? (stages.fadeFor ?? AWAY) + (stages.fade ?? 0) : 0) : (stages.cut ?? 0.25)),
 					ease: closing ? AWAY_EASE : 'power2.inOut',
 					overwrite: 'auto',
 					onUpdate: update
@@ -283,7 +287,8 @@
 					overwrite: 'auto',
 					onUpdate: update
 				});
-				if (fadingOut) gsap.to(s, { level, duration: AWAY, delay, ease: AWAY_EASE, overwrite: 'auto', onUpdate: update });
+				if (fadingOut)
+					gsap.to(s, { level, duration: AWAY, delay, ease: AWAY_EASE, overwrite: 'auto', onUpdate: update });
 			}
 		});
 	});
@@ -435,7 +440,11 @@
 				const w = warmth[g];
 				const peak = warm?.groups[g] ?? 0;
 				const update = () =>
-					v.setGlow(g, w.v, e?.initialLook.body ?? DEFAULT_TRAIL_LOOK.body, { front: w.front, crest: w.crest, up: w.up });
+					v.setGlow(g, w.v, e?.initialLook.body ?? DEFAULT_TRAIL_LOOK.body, {
+						front: w.front,
+						crest: w.crest,
+						up: w.up
+					});
 				gsap.killTweensOf(w);
 				const sweep = warm?.sweep;
 				if (peak > 0 && sweep) {

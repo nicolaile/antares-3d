@@ -6,7 +6,16 @@ import ts from 'typescript-eslint';
 
 export default ts.config(
 	{
-		ignores: ['.svelte-kit/', 'build/', 'node_modules/', 'static/', 'ref/', 'src/lib/lab/', 'src/routes/(lab)/', 'scripts/lab/']
+		ignores: [
+			'.svelte-kit/',
+			'build/',
+			'node_modules/',
+			'static/',
+			'ref/',
+			'src/lib/lab/',
+			'src/routes/(lab)/',
+			'scripts/lab/'
+		]
 	},
 	js.configs.recommended,
 	...ts.configs.recommended,

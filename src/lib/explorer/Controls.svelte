@@ -109,8 +109,7 @@
 	const MAX_STOPS = 8;
 
 	const toRgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-	const toHex = (rgb: number[]) =>
-		'#' + rgb.map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
+	const toHex = (rgb: number[]) => '#' + rgb.map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
 	const mixHex = (a: string, b: string, t: number) => {
 		const A = toRgb(a);
 		const B = toRgb(b);
@@ -141,7 +140,11 @@
 	function readSlots() {
 		if (!viewer) return;
 		const now = viewer.colourSlots();
-		if (!initialSlots.get(viewer)?.length) initialSlots.set(viewer, now.map((s) => ({ ...s })));
+		if (!initialSlots.get(viewer)?.length)
+			initialSlots.set(
+				viewer,
+				now.map((s) => ({ ...s }))
+			);
 		slots = now;
 	}
 	$effect(() => {
@@ -216,8 +219,7 @@
 	}
 
 	/** Match the slider's own precision so the readout doesn't jitter. */
-	const fmt = (v: number, step: number) =>
-		v.toFixed(step >= 1 ? 0 : step < 0.01 ? 3 : step < 0.1 ? 2 : 1);
+	const fmt = (v: number, step: number) => v.toFixed(step >= 1 ? 0 : step < 0.01 ? 3 : step < 0.1 ? 2 : 1);
 </script>
 
 {#if params}

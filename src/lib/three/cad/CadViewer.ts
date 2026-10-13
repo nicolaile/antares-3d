@@ -123,7 +123,15 @@ export class CadViewer {
 	private distanceTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType });
 	private distanceMaterial = distanceMaterial();
 	/** The line drawing (`setLines`): how far in (0..1), and the drawing pass itself, made on first use. */
-	private lines = { mix: 0, on: false, drawing: null as LineDrawing | null, ink: '#111111', paper: '#ffffff', opacity: 1, weight: 0.5 };
+	private lines = {
+		mix: 0,
+		on: false,
+		drawing: null as LineDrawing | null,
+		ink: '#111111',
+		paper: '#ffffff',
+		opacity: 1,
+		weight: 0.5
+	};
 
 	/**
 	 * `web` is the landing's web-optimized mode (IsoDrawing); /cad leaves it
@@ -231,7 +239,9 @@ export class CadViewer {
 		const h = PHX_LIFT + 0.02;
 		const filler = new THREE.CylinderGeometry(FILLER.radius, FILLER.radius, h, 32, 1, true);
 		filler.translate(FILLER.x, FILLER.from + h / 2 - 0.01, FILLER.z);
-		root.add(new THREE.Mesh(filler, new THREE.MeshStandardMaterial({ color: 0xb8b8b8, metalness: 0.4, roughness: 0.5 })));
+		root.add(
+			new THREE.Mesh(filler, new THREE.MeshStandardMaterial({ color: 0xb8b8b8, metalness: 0.4, roughness: 0.5 }))
+		);
 		return this.show(root);
 	}
 
@@ -321,14 +331,16 @@ export class CadViewer {
 	}
 
 	private applyMaterials() {
-		for (const [mesh, original] of this.originals) mesh.material = this.painted ? this.paint : this.clay ? CLAY : original;
+		for (const [mesh, original] of this.originals)
+			mesh.material = this.painted ? this.paint : this.clay ? CLAY : original;
 		this.dirty = true;
 	}
 
 	setWireframe(on: boolean) {
 		CLAY.wireframe = on;
 		this.paint.wireframe = on;
-		for (const original of this.originals.values()) for (const m of [original].flat()) (m as THREE.MeshStandardMaterial).wireframe = on;
+		for (const original of this.originals.values())
+			for (const m of [original].flat()) (m as THREE.MeshStandardMaterial).wireframe = on;
 		this.dirty = true;
 	}
 
@@ -622,7 +634,11 @@ export class CadViewer {
 		// A sample's width one unit away.
 		const sample = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / h;
 		const { hide, show } = this.anchorThresholds;
-		const judge = (camera: THREE.PerspectiveCamera, planes: THREE.Plane[], patch: (x: number, y: number) => Float32Array) =>
+		const judge = (
+			camera: THREE.PerspectiveCamera,
+			planes: THREE.Plane[],
+			patch: (x: number, y: number) => Float32Array
+		) =>
 			(this.anchorShown = this.anchors.map((p, i) => {
 				const clear = this.anchorClear(p, camera, planes, w, h, sample, view, patch);
 				return this.anchorShown[i] ? clear > hide : clear > show;
@@ -655,7 +671,8 @@ export class CadViewer {
 		}
 		const px = new Float32Array(25 * 4);
 		judge(camera, planes, (x, y) => {
-			for (let row = 0; row < 5; row++) px.set(all.subarray(((y + row) * w + x) * 4, ((y + row) * w + x + 5) * 4), row * 20);
+			for (let row = 0; row < 5; row++)
+				px.set(all.subarray(((y + row) * w + x) * 4, ((y + row) * w + x + 5) * 4), row * 20);
 			return px;
 		});
 	}

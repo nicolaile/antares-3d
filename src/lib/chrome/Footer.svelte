@@ -48,7 +48,9 @@
 			{#if aside || link}
 				<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
 					{#if aside}<p class="aside type-body-default">{aside}</p>{/if}
-					{#if link}<div class="cta"><CtaButton {...link} arrow={false} tone={tone === 'dark' ? 'dark' : 'light'} /></div>{/if}
+					{#if link}<div class="cta">
+							<CtaButton {...link} arrow={false} tone={tone === 'dark' ? 'dark' : 'light'} />
+						</div>{/if}
 				</Cell>
 			{/if}
 		</Row>
@@ -78,7 +80,9 @@
 		</Row>
 		<p class="legal type-caption">
 			© {year}. {legal.owner}
-			{#each legal.links as link, i (link.label)}<a href={link.href}>{link.label}</a>{i < legal.links.length - 1 ? ', ' : '.'}{/each}
+			{#each legal.links as link, i (link.label)}<a href={link.href}>{link.label}</a>{i < legal.links.length - 1
+					? ', '
+					: '.'}{/each}
 		</p>
 	</div>
 </footer>

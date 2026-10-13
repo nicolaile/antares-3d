@@ -10,7 +10,15 @@
 	import { header, slideWithHeader } from '$lib/chrome/header.svelte';
 </script>
 
-<a class="mark" href="/" aria-label="Antares home" {@attach slideWithHeader(() => header.hidden, () => header.follow)}><Wordmark /></a>
+<a
+	class="mark"
+	href="/"
+	aria-label="Antares home"
+	{@attach slideWithHeader(
+		() => header.hidden,
+		() => header.follow
+	)}><Wordmark /></a
+>
 
 <style>
 	/* Centred on the menu button's line, matching the hero's resting mark. */

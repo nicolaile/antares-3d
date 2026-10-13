@@ -72,7 +72,13 @@
 	}
 </script>
 
-<section class="slideshow" data-tone="dark" aria-label={title} aria-roledescription="carousel" data-slideshow-frame={id}>
+<section
+	class="slideshow"
+	data-tone="dark"
+	aria-label={title}
+	aria-roledescription="carousel"
+	data-slideshow-frame={id}
+>
 	{#each ['previous', 'next'] as const as s (s)}
 		<button
 			type="button"
@@ -83,17 +89,14 @@
 			onpointerleave={() => (side = null)}
 		></button>
 	{/each}
-	<h2 class="title type-sub-headline">{title}{#if count}{` (${slides.length})`}{/if}</h2>
+	<h2 class="title type-sub-headline">
+		{title}{#if count}{` (${slides.length})`}{/if}
+	</h2>
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }} mobile={{ start: 1, span: 12 }}>
 			<div class="frame">
 				{#each slides as slide, i (i)}
-					<div
-						class="image"
-						class:current={i === current}
-						bind:this={images[i]}
-						aria-hidden={i !== current}
-					>
+					<div class="image" class:current={i === current} bind:this={images[i]} aria-hidden={i !== current}>
 						<Picture
 							{...slide.image}
 							ratio="2040 / 1338"

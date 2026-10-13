@@ -46,9 +46,7 @@
 	let textSplit: SplitText | null = null;
 	let detailSplit: SplitText | null = null;
 
-	const svg = $derived(
-		icon?.replace(/(stroke|fill)="(?!none)[^"]*"/g, '$1="currentColor"')
-	);
+	const svg = $derived(icon?.replace(/(stroke|fill)="(?!none)[^"]*"/g, '$1="currentColor"'));
 
 	/** Everything that rises and falls, in reading order. */
 	function parts(): Element[] {
@@ -124,15 +122,9 @@
 		detailSplit = d ? SplitText.create(detailEl, { type: 'chars', mask: 'chars' }) : null;
 		detailChars = detailSplit?.chars ?? [];
 		const changed =
-			before.length === detailChars.length
-				? detailChars.filter((c, i) => c.textContent !== before[i])
-				: detailChars;
+			before.length === detailChars.length ? detailChars.filter((c, i) => c.textContent !== before[i]) : detailChars;
 		if (!visible || !changed.length || prefersReducedMotion()) return;
-		gsap.fromTo(
-			changed,
-			{ yPercent: 100 },
-			{ yPercent: 0, duration: 0.6, ease: 'power3.out', stagger: 0.015 }
-		);
+		gsap.fromTo(changed, { yPercent: 100 }, { yPercent: 0, duration: 0.6, ease: 'power3.out', stagger: 0.015 });
 	});
 
 	let shown = false;

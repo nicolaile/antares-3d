@@ -17,7 +17,6 @@
 
 <Seo {title} {description} />
 
-
 <main id="content" tabindex="-1" class="legal">
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }}>

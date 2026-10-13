@@ -77,7 +77,12 @@
 	</div>
 	<div class="foot">
 		<div class="arrows">
-			<ArrowButton direction="previous" label="Previous openings" disabled={index === 0} onclick={() => show(index - 1)} />
+			<ArrowButton
+				direction="previous"
+				label="Previous openings"
+				disabled={index === 0}
+				onclick={() => show(index - 1)}
+			/>
 			<ArrowButton direction="next" label="Next openings" disabled={index >= last} onclick={() => show(index + 1)} />
 		</div>
 		<Button label="{all.label} ({total})" href={all.href} />

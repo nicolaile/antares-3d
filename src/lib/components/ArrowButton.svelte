@@ -56,7 +56,9 @@
 		background: none;
 		color: var(--black);
 		cursor: pointer;
-		transition: border-color 0.25s ease, opacity 0.25s ease;
+		transition:
+			border-color 0.25s ease,
+			opacity 0.25s ease;
 	}
 	.arrow:hover:not([aria-disabled='true']) {
 		border-color: var(--black);

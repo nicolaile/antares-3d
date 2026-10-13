@@ -50,12 +50,23 @@ const GLOW_SOFT = 0.25;
 /** Metres apart at which a group's pieces are shaded each by itself alone (`syncOpen`). */
 const OPEN_AT = 0.08;
 /** The tone curves the look can take (`tone`). */
-const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMapping, agx: THREE.AgXToneMapping } as const;
+const TONES = {
+	aces: THREE.ACESFilmicToneMapping,
+	neutral: THREE.NeutralToneMapping,
+	agx: THREE.AgXToneMapping
+} as const;
 export type Tone = keyof typeof TONES;
 /** The canvas's pixel ratio at most: a retina screen's own. The frame itself is drawn at `maxPixelRatio`. */
 const OUTPUT_PIXEL_RATIO = 2;
 /** The final colour grade (SweepPass `setGrade`), matched to the offline renders'. */
-const PRINT = { saturation: 0.6, tint: '#f2f6f8', contrast: 0.3, blackPoint: 0, shadows: '#c4cfdf', highlights: '#f6f8fa' };
+const PRINT = {
+	saturation: 0.6,
+	tint: '#f2f6f8',
+	contrast: 0.3,
+	blackPoint: 0,
+	shadows: '#c4cfdf',
+	highlights: '#f6f8fa'
+};
 /** How sharply the last pass sharpens the frame it scales up, 0–1 (SweepPass `sharpen`). */
 const SHARPEN = 0.6;
 /** How many pixels a level of detail's error may come to on screen (`chooseLod`). */
@@ -145,7 +156,10 @@ function bakedSurface(
 ) {
 	Object.assign(shader.uniforms, uniforms);
 	shader.vertexShader = shader.vertexShader
-		.replace('#include <common>', '#include <common>\nattribute vec4 _surf;\nvarying vec4 vSurf;\nuniform float uLocalScale;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;')
+		.replace(
+			'#include <common>',
+			'#include <common>\nattribute vec4 _surf;\nvarying vec4 vSurf;\nuniform float uLocalScale;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;'
+		)
 		.replace(
 			'#include <begin_vertex>',
 			'#include <begin_vertex>\nvSurf = _surf;\nvDetailAt = position * uLocalScale;\nvDetailNormal = normal;'
@@ -245,7 +259,10 @@ function bakedSurface(
 			}`
 		)
 		// Tuning: the bake alone, as grey (`bakedView`).
-		.replace('#include <dithering_fragment>', '#include <dithering_fragment>\nif ( uBakedView > 0.5 ) gl_FragColor = vec4( vec3( mix( vSurf.y, vSurf.x, uOpen ) ), 1.0 );')
+		.replace(
+			'#include <dithering_fragment>',
+			'#include <dithering_fragment>\nif ( uBakedView > 0.5 ) gl_FragColor = vec4( vec3( mix( vSurf.y, vSurf.x, uOpen ) ), 1.0 );'
+		)
 		.replace(
 			'#include <aomap_fragment>',
 			/* glsl */ `#include <aomap_fragment>
@@ -275,7 +292,10 @@ const PALETTE_SIZE = 16;
  * finish. In the palette, not the files: a colour changes or fades live,
  * with no recompile and no draw calls added.
  */
-function paletteColour(shader: THREE.WebGLProgramParametersWithUniforms, uniforms: { uPalette: { value: THREE.Vector4[] } }) {
+function paletteColour(
+	shader: THREE.WebGLProgramParametersWithUniforms,
+	uniforms: { uPalette: { value: THREE.Vector4[] } }
+) {
 	Object.assign(shader.uniforms, uniforms);
 	shader.vertexShader = shader.vertexShader
 		.replace('#include <common>', '#include <common>\nattribute float _slot;\nvarying float vSlot;')
@@ -298,7 +318,10 @@ function paletteColour(shader: THREE.WebGLProgramParametersWithUniforms, uniform
  * `extras.parts`), and the colour they start in (`amount` of it, 1 whole;
  * 0, the default, none yet). `label` names it in the controls panel.
  */
-export type ColourSlots = Record<string, { group: string; parts?: string[]; label?: string; colour?: string; amount?: number }>;
+export type ColourSlots = Record<
+	string,
+	{ group: string; parts?: string[]; label?: string; colour?: string; amount?: number }
+>;
 
 /** A colour slot as it stands (`colourSlots`): its colour as #rrggbb. */
 export type ColourSlot = { name: string; label: string; colour: string; amount: number };
@@ -361,17 +384,19 @@ export interface ModelViewerOptions {
 	 * The pass is always built so its controls stay live; `on` sets the
 	 * starting state of the toggle.
 	 */
-	gradientMap?: {
-		on?: boolean;
-		stops?: GradientStop[];
-		repeat?: RepeatMode;
-		space?: MixSpace;
-		amount?: number;
-		/** Drive the ramp offset from pointer position. */
-		followPointer?: boolean;
-		/** Seconds for the pointer value to catch up; higher is smoother. */
-		followDamping?: number;
-	} | false;
+	gradientMap?:
+		| {
+				on?: boolean;
+				stops?: GradientStop[];
+				repeat?: RepeatMode;
+				space?: MixSpace;
+				amount?: number;
+				/** Drive the ramp offset from pointer position. */
+				followPointer?: boolean;
+				/** Seconds for the pointer value to catch up; higher is smoother. */
+				followDamping?: number;
+		  }
+		| false;
 	/**
 	 * Starting values for any live render parameter — same names as the
 	 * controls panel, so a look dialled in there transfers here verbatim.
@@ -426,7 +451,10 @@ export interface ModelViewerOptions {
 	 * one can be carved out of an earlier one. List the
 	 * name in `groups` too. Needs the CAD's part index (`_part`).
 	 */
-	carve?: Record<string, { from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }>;
+	carve?: Record<
+		string,
+		{ from: string; min: [number, number, number]; max: [number, number, number]; maxSize?: number }
+	>;
 	/**
 	 * Parts given a colour of their own, from a small palette (`ColourSlots`,
 	 * `setColour`): up to 15 slots. Needs the CAD's part index (`_part`).
@@ -790,9 +818,11 @@ export class ModelViewer {
 				// The part ids, on the file's node (glTF extras), above the mesh.
 				let ids: string[] | undefined;
 				for (let up: THREE.Object3D | null = mesh; up && !ids; up = up.parent) ids = up.userData.parts;
-				const wanted = spec.parts && ids ? new Set(spec.parts.map((id) => ids!.indexOf(id)).filter((p) => p >= 0)) : null;
+				const wanted =
+					spec.parts && ids ? new Set(spec.parts.map((id) => ids!.indexOf(id)).filter((p) => p >= 0)) : null;
 				let attr = mesh.geometry.getAttribute('_slot') as THREE.BufferAttribute | undefined;
-				if (!attr) mesh.geometry.setAttribute('_slot', (attr = new THREE.BufferAttribute(new Uint8Array(part.count), 1)));
+				if (!attr)
+					mesh.geometry.setAttribute('_slot', (attr = new THREE.BufferAttribute(new Uint8Array(part.count), 1)));
 				const out = attr.array as Uint8Array;
 				for (let i = 0; i < part.count; i++) if (!wanted || wanted.has(Math.round(part.getX(i)))) out[i] = slot;
 			});
@@ -946,7 +976,8 @@ export class ModelViewer {
 				if (baked) bakedSurface(shader, surface);
 				if (painted) paletteColour(shader, this.palette);
 			};
-			material.customProgramCacheKey = () => baseKey.call(material) + '|glow' + (baked ? '|baked' : '') + (painted ? '|palette' : '');
+			material.customProgramCacheKey = () =>
+				baseKey.call(material) + '|glow' + (baked ? '|baked' : '') + (painted ? '|palette' : '');
 			const planes = [new THREE.Plane(), new THREE.Plane()];
 			material.clippingPlanes = planes;
 			material.clipIntersection = true;
@@ -975,7 +1006,19 @@ export class ModelViewer {
 			}
 			// Unsplit, the group lifts as one.
 			if (!pieces.length) pieces.push(piece(node, new THREE.Vector3()));
-			const g = { node, material, planes, level: 1, cut: 0, out: 0, up: 0, pieces, fold: split?.fold, phase, open: surface.uOpen };
+			const g = {
+				node,
+				material,
+				planes,
+				level: 1,
+				cut: 0,
+				out: 0,
+				up: 0,
+				pieces,
+				fold: split?.fold,
+				phase,
+				open: surface.uOpen
+			};
 			this.groups.set(name, g);
 			this.syncGroup(g);
 		}
@@ -1067,9 +1110,10 @@ export class ModelViewer {
 				const step = (Math.PI * 2) / fold;
 				classOf = (x, _y, z) => {
 					if (Math.hypot(x - ax, z - az) <= 0.15) return fold;
-					return (((Math.round((Math.atan2(z - az, x - ax) - first) / step) % fold) + fold) % fold);
+					return ((Math.round((Math.atan2(z - az, x - ax) - first) / step) % fold) + fold) % fold;
 				};
-				for (let k = 0; k < fold; k++) ways.push(new THREE.Vector3(Math.cos(first + k * step), 0, Math.sin(first + k * step)));
+				for (let k = 0; k < fold; k++)
+					ways.push(new THREE.Vector3(Math.cos(first + k * step), 0, Math.sin(first + k * step)));
 				// The axis's own piece stays.
 				ways.push(new THREE.Vector3());
 			}
@@ -1089,7 +1133,9 @@ export class ModelViewer {
 				const at = p * 3;
 				// A part index with no vertices in this mesh.
 				if (!(lo[at] <= hi[at])) continue;
-				boxes[pieceOfPart[p]].expandByPoint(corner.set(lo[at], lo[at + 1], lo[at + 2])).expandByPoint(corner.set(hi[at], hi[at + 1], hi[at + 2]));
+				boxes[pieceOfPart[p]]
+					.expandByPoint(corner.set(lo[at], lo[at + 1], lo[at + 2]))
+					.expandByPoint(corner.set(hi[at], hi[at + 1], hi[at + 2]));
 			}
 			buckets.forEach((tris, k) => {
 				const g = new THREE.BufferGeometry();
@@ -1251,7 +1297,12 @@ export class ModelViewer {
 	 */
 	private findEye() {
 		const r = this.root;
-		this.eyeRotation.set(this.scrollRotation.x, this.scrollRotation.y + this.autoRotation, this.scrollRotation.z, 'ZXY');
+		this.eyeRotation.set(
+			this.scrollRotation.x,
+			this.scrollRotation.y + this.autoRotation,
+			this.scrollRotation.z,
+			'ZXY'
+		);
 		this.eyeMatrix.compose(r.position, this.eyeQuaternion.setFromEuler(this.eyeRotation), r.scale).invert();
 		this.eye.copy(this.camera.position).applyMatrix4(this.eyeMatrix).applyMatrix4(r.matrixWorld);
 	}
@@ -1269,7 +1320,10 @@ export class ModelViewer {
 		g: { cut: number; planes: THREE.Plane[] },
 		section: { at: [number, number, number]; along: [number, number, number]; radius: number }
 	) {
-		const at = this.sectionAt.set(...section.at).add(this.offset).applyMatrix4(this.root.matrixWorld);
+		const at = this.sectionAt
+			.set(...section.at)
+			.add(this.offset)
+			.applyMatrix4(this.root.matrixWorld);
 		const along = this.sectionAlong.set(...section.along).transformDirection(this.root.matrixWorld);
 		const away = this.sectionAway.copy(at).sub(this.eye);
 		away.addScaledVector(along, -away.dot(along)).normalize();
@@ -1458,7 +1512,12 @@ export class ModelViewer {
 		// alpha: the page shows through untouched (tone mapping would shift a solid
 		// scene.background). No antialias or depth: only full-screen quads reach the
 		// canvas; the beauty target holds the MSAA and depth (16 MB saved at 2770×1478).
-		this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, depth: false, powerPreference: 'high-performance' });
+		this.renderer = new THREE.WebGLRenderer({
+			antialias: false,
+			alpha: true,
+			depth: false,
+			powerPreference: 'high-performance'
+		});
 		// The canvas at the screen's resolution; the frame at `maxPixelRatio` (or
 		// adaptive quality's lower steps), scaled up and sharpened by the last pass
 		// (SweepPass) rather than left for the browser to blur up.
@@ -1696,7 +1755,12 @@ export class ModelViewer {
 	}
 
 	async load(): Promise<THREE.Group> {
-		const [model] = await Promise.all([this.loadModel(), this.loadEnvironment(), this.addOptionalPasses(), this.loadDetail()]);
+		const [model] = await Promise.all([
+			this.loadModel(),
+			this.loadEnvironment(),
+			this.addOptionalPasses(),
+			this.loadDetail()
+		]);
 		if (this.disposed) return model;
 		this.lodErrors = foldLods(model);
 
@@ -2178,7 +2242,19 @@ export class ModelViewer {
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
-		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked'))) keys.push('bakedAO', 'bakedDirect', 'bakedView', 'finish', 'finishFloor', 'polymer', 'detail', 'detailTile', 'wrap', 'surfaceGrain');
+		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked')))
+			keys.push(
+				'bakedAO',
+				'bakedDirect',
+				'bakedView',
+				'finish',
+				'finishFloor',
+				'polymer',
+				'detail',
+				'detailTile',
+				'wrap',
+				'surfaceGrain'
+			);
 		if (this.grain) keys.push('grain');
 		if (this.contact) keys.push('shadow');
 		if (this.gradient) {
@@ -2567,7 +2643,14 @@ export class ModelViewer {
 	/** Where adaptive quality stands: its step, the pixel ratio, the drawing buffer's size. */
 	get quality() {
 		const { width, height } = this.composer.renderTarget1;
-		return { step: this.pace.step, steps: this.ladder.length, ratio: this.renderRatio, ao: this.aoScale, width, height };
+		return {
+			step: this.pace.step,
+			steps: this.ladder.length,
+			ratio: this.renderRatio,
+			ao: this.aoScale,
+			width,
+			height
+		};
 	}
 
 	/** Holds adaptive quality at step `i` (0, the full frame), for measuring like with like. */
@@ -2685,15 +2768,28 @@ export class ModelViewer {
 			});
 			const meshes: THREE.Mesh[] = [];
 			g.node.traverse((o) => {
-				if ((o as THREE.Mesh).isMesh && !o.userData.depthFirst && (o as THREE.Mesh).geometry.getAttribute('_part')) meshes.push(o as THREE.Mesh);
+				if ((o as THREE.Mesh).isMesh && !o.userData.depthFirst && (o as THREE.Mesh).geometry.getAttribute('_part'))
+					meshes.push(o as THREE.Mesh);
 			});
-			return { name, file: (g.node.userData.file as string | undefined) ?? name, g, material, meshes, see: g.level < 0.999 };
+			return {
+				name,
+				file: (g.node.userData.file as string | undefined) ?? name,
+				g,
+				material,
+				meshes,
+				see: g.level < 0.999
+			};
 		});
 		const saved = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
 		for (const id of ids) for (const m of id.meshes) saved.set(m, m.material);
 		const depthFirst: THREE.Object3D[] = [];
 		this.root.traverse((o) => o.userData.depthFirst && o.visible && depthFirst.push(o));
-		const pose = { turn: this.autoRotation, tilt: this.userRotation.x, fov: this.camera.fov, shadow: r.shadowMap.enabled };
+		const pose = {
+			turn: this.autoRotation,
+			tilt: this.userRotation.x,
+			fov: this.camera.fov,
+			shadow: r.shadowMap.enabled
+		};
 		const read = () => {
 			r.setRenderTarget(target);
 			r.setClearColor(0x000000, 0);
@@ -2817,7 +2913,8 @@ export class ModelViewer {
 	private targetBytes() {
 		const found = new Map<THREE.WebGLRenderTarget, string>();
 		const add = (rt: unknown, name: string) => {
-			if ((rt as THREE.WebGLRenderTarget)?.isWebGLRenderTarget && !found.has(rt as THREE.WebGLRenderTarget)) found.set(rt as THREE.WebGLRenderTarget, name);
+			if ((rt as THREE.WebGLRenderTarget)?.isWebGLRenderTarget && !found.has(rt as THREE.WebGLRenderTarget))
+				found.set(rt as THREE.WebGLRenderTarget, name);
 		};
 		add(this.beauty, 'beauty');
 		add(this.composer.renderTarget1, 'composer 1');
@@ -2837,16 +2934,21 @@ export class ModelViewer {
 		});
 		// Only those the GPU has storage for: a target three has never drawn
 		// into (GTAOPass's own normals, with ours in their place) holds none.
-		const allocated = (rt: THREE.WebGLRenderTarget) => (this.renderer.properties.get(rt) as { __webglFramebuffer?: unknown }).__webglFramebuffer !== undefined;
-		return [...found].filter(([rt]) => allocated(rt)).map(([rt, name]) => {
-			const tex = rt.texture;
-			const texel = (tex.type === THREE.FloatType ? 4 : tex.type === THREE.HalfFloatType ? 2 : 1) * (tex.format === THREE.RedFormat ? 1 : tex.format === THREE.RGFormat ? 2 : 4);
-			const samples = rt.samples;
-			// Multisampled: a sample buffer for colour and depth, resolved into the texture(s).
-			const color = texel * (rt.textures.length * (samples ? samples + 1 : 1));
-			const depth = rt.depthBuffer ? 4 * (samples ? samples + (rt.depthTexture ? 1 : 0) : 1) : 0;
-			return { name, width: rt.width, height: rt.height, samples, bytes: rt.width * rt.height * (color + depth) };
-		});
+		const allocated = (rt: THREE.WebGLRenderTarget) =>
+			(this.renderer.properties.get(rt) as { __webglFramebuffer?: unknown }).__webglFramebuffer !== undefined;
+		return [...found]
+			.filter(([rt]) => allocated(rt))
+			.map(([rt, name]) => {
+				const tex = rt.texture;
+				const texel =
+					(tex.type === THREE.FloatType ? 4 : tex.type === THREE.HalfFloatType ? 2 : 1) *
+					(tex.format === THREE.RedFormat ? 1 : tex.format === THREE.RGFormat ? 2 : 4);
+				const samples = rt.samples;
+				// Multisampled: a sample buffer for colour and depth, resolved into the texture(s).
+				const color = texel * (rt.textures.length * (samples ? samples + 1 : 1));
+				const depth = rt.depthBuffer ? 4 * (samples ? samples + (rt.depthTexture ? 1 : 0) : 1) : 0;
+				return { name, width: rt.width, height: rt.height, samples, bytes: rt.width * rt.height * (color + depth) };
+			});
 	}
 
 	/** The model's vertex and index buffers on the GPU, bytes, by attribute (each buffer once, however many meshes share it). */
@@ -2855,7 +2957,9 @@ export class ModelViewer {
 		const by: Record<string, number> = {};
 		const count = (name: string, a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute | null) => {
 			if (!a) return;
-			const array = (a as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute ? (a as THREE.InterleavedBufferAttribute).data.array : (a as THREE.BufferAttribute).array;
+			const array = (a as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute
+				? (a as THREE.InterleavedBufferAttribute).data.array
+				: (a as THREE.BufferAttribute).array;
 			if (seen.has(array)) return;
 			seen.add(array);
 			by[name] = (by[name] ?? 0) + array.byteLength;
@@ -2948,8 +3052,12 @@ export class ModelViewer {
 	 */
 	private chooseLod() {
 		if (!this.lodErrors.length || this.asleep) return;
-		const nearest = Math.max(this.fitRadius * 0.05, this.camera.position.distanceTo(this.root.position) - this.fitRadius);
-		const pixel = (2 * nearest * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / this.composer.renderTarget1.height;
+		const nearest = Math.max(
+			this.fitRadius * 0.05,
+			this.camera.position.distanceTo(this.root.position) - this.fitRadius
+		);
+		const pixel =
+			(2 * nearest * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / this.composer.renderTarget1.height;
 		let level = 0;
 		this.lodErrors.forEach((error, i) => {
 			if (error <= pixel * LOD_PIXELS) level = i + 1;
@@ -2977,7 +3085,9 @@ export class ModelViewer {
 			this.scene.environmentRotation.set(0, yaw, 0);
 			if (this.rig === 'black') this.syncProbe(yaw);
 		}
-		this.syncStrips(this.softbox ? Math.atan2(this.camera.position.x - this.target.x, this.camera.position.z - this.target.z) : 0);
+		this.syncStrips(
+			this.softbox ? Math.atan2(this.camera.position.x - this.target.x, this.camera.position.z - this.target.z) : 0
+		);
 		this.root.rotation.set(
 			this.scrollRotation.x + this.userRotation.x,
 			this.scrollRotation.y + this.userRotation.y + this.autoRotation,
@@ -2998,7 +3108,10 @@ export class ModelViewer {
 		if (this.groups.size) {
 			this.root.updateMatrixWorld();
 			this.aimCuts();
-			this.glowFrame.value.copy(this.root.matrixWorld).invert().premultiply(this.toAuthored.makeTranslation(-this.offset.x, -this.offset.y, -this.offset.z));
+			this.glowFrame.value
+				.copy(this.root.matrixWorld)
+				.invert()
+				.premultiply(this.toAuthored.makeTranslation(-this.offset.x, -this.offset.y, -this.offset.z));
 		}
 		if (this.studioOn && this.studioKeyFollow) this.aimKey();
 		this.fitShadow();
@@ -3089,7 +3202,8 @@ export class ModelViewer {
 		p.stepped = { from: p.step, median };
 		this.setStep(p.step + 1);
 		p.settleUntil = t + 1500;
-		if (import.meta.env.DEV) console.info(`[viewer] ${median.toFixed(1)} ms frames: step ${p.step}`, this.ladder[p.step]);
+		if (import.meta.env.DEV)
+			console.info(`[viewer] ${median.toFixed(1)} ms frames: step ${p.step}`, this.ladder[p.step]);
 	}
 
 	/**
@@ -3109,7 +3223,11 @@ export class ModelViewer {
 			const from = this.pace.step;
 			this.setStep(from + 1);
 			const next = await time();
-			if (import.meta.env.DEV) console.info(`[viewer] out of sight, ${ms.toFixed(1)} → ${next.toFixed(1)} ms at step ${this.pace.step}`, this.ladder[this.pace.step]);
+			if (import.meta.env.DEV)
+				console.info(
+					`[viewer] out of sight, ${ms.toFixed(1)} → ${next.toFixed(1)} ms at step ${this.pace.step}`,
+					this.ladder[this.pace.step]
+				);
 			// No faster for it (the time is the CPU's, say): back, and leave it to `keepPace`.
 			if (next > ms * STEP_GAIN) {
 				this.setStep(from);
@@ -3134,7 +3252,8 @@ export class ModelViewer {
 			for (const value of Object.values(o)) {
 				if ((value as THREE.Material)?.isMaterial) materials.add(value as THREE.Material);
 				else if (value instanceof FullScreenQuad && value.material) materials.add(value.material);
-				else if (depth === 0 && value && typeof value === 'object' && !(value as THREE.Object3D).isObject3D) collect(value, depth + 1);
+				else if (depth === 0 && value && typeof value === 'object' && !(value as THREE.Object3D).isObject3D)
+					collect(value, depth + 1);
 			}
 		};
 		for (const pass of this.composer.passes) collect(pass);
@@ -3592,7 +3711,13 @@ class SceneGTAOPass extends GTAOPass {
 		toneMapped: false
 	});
 
-	render(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget, delta: number, maskActive: boolean) {
+	render(
+		renderer: THREE.WebGLRenderer,
+		writeBuffer: THREE.WebGLRenderTarget,
+		readBuffer: THREE.WebGLRenderTarget,
+		delta: number,
+		maskActive: boolean
+	) {
 		// The normals, at the depth's own resolution.
 		const depth = this.depthTexture as THREE.DepthTexture;
 		const { width, height } = depth.image as { width: number; height: number };
@@ -3629,7 +3754,15 @@ class SceneGTAOPass extends GTAOPass {
 	 * renders', on the finished frame (when this pass finishes it): `amount` 0
 	 * leaves it as drawn. Colours as `#rrggbb`, taken as sRGB.
 	 */
-	setGrade(g: { amount: number; saturation: number; tint: string; contrast: number; blackPoint: number; shadows: string; highlights: string }) {
+	setGrade(g: {
+		amount: number;
+		saturation: number;
+		tint: string;
+		contrast: number;
+		blackPoint: number;
+		shadows: string;
+		highlights: string;
+	}) {
 		const u = this.composite.uniforms;
 		u.uGrade.value = g.amount;
 		u.uSaturation.value = g.saturation;
@@ -3656,7 +3789,8 @@ class SceneGTAOPass extends GTAOPass {
 		this.finishedAs = key;
 		const defines: Record<string, string> = {};
 		if (renderer) {
-			if (THREE.ColorManagement.getTransfer(renderer.outputColorSpace) === THREE.SRGBTransfer) defines.SRGB_TRANSFER = '';
+			if (THREE.ColorManagement.getTransfer(renderer.outputColorSpace) === THREE.SRGBTransfer)
+				defines.SRGB_TRANSFER = '';
 			const tone = (
 				{
 					[THREE.ACESFilmicToneMapping]: 'ACES_FILMIC_TONE_MAPPING',
@@ -3738,7 +3872,9 @@ class BeautyPass extends Pass {
 
 function piece(mesh: THREE.Object3D, out: THREE.Vector3): Piece {
 	mesh.updateWorldMatrix(true, false);
-	const toLocal = mesh.parent ? new THREE.Matrix3().setFromMatrix4(mesh.parent.matrixWorld).invert() : new THREE.Matrix3();
+	const toLocal = mesh.parent
+		? new THREE.Matrix3().setFromMatrix4(mesh.parent.matrixWorld).invert()
+		: new THREE.Matrix3();
 	return { mesh, base: mesh.position.clone(), out, up: new THREE.Vector3(0, 1, 0).applyMatrix3(toLocal) };
 }
 
@@ -3807,7 +3943,9 @@ function mergeStaticMeshes(model: THREE.Object3D, material: THREE.Material) {
 /** An attribute's raw storage: quantised (KHR_mesh_quantization) or not, interleaved or not. */
 function attributeView(attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute) {
 	const inter = (attr as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute;
-	const array = (inter ? (attr as THREE.InterleavedBufferAttribute).data.array : (attr as THREE.BufferAttribute).array) as ArrayLike<number>;
+	const array = (
+		inter ? (attr as THREE.InterleavedBufferAttribute).data.array : (attr as THREE.BufferAttribute).array
+	) as ArrayLike<number>;
 	const stride = inter ? (attr as THREE.InterleavedBufferAttribute).data.stride : attr.itemSize;
 	const offset = inter ? (attr as THREE.InterleavedBufferAttribute).offset : 0;
 	// Normalised integers map to [0, 1] or [−1, 1], as three's own denormalize.
@@ -3971,7 +4109,10 @@ function foldLods(model: THREE.Object3D) {
 	for (const level of levels) {
 		const position = level.geometry.getAttribute('position');
 		const full = level.parent?.children.find(
-			(c) => (c as THREE.Mesh).isMesh && !(c as THREE.Mesh).geometry.userData.lod && (c as THREE.Mesh).geometry.getAttribute('position') === position
+			(c) =>
+				(c as THREE.Mesh).isMesh &&
+				!(c as THREE.Mesh).geometry.userData.lod &&
+				(c as THREE.Mesh).geometry.getAttribute('position') === position
 		) as THREE.Mesh | undefined;
 		if (full && level.geometry.index) {
 			const lods = ((full.geometry.userData.lods as Lod[] | undefined) ??= []);
@@ -3985,11 +4126,18 @@ function foldLods(model: THREE.Object3D) {
 }
 
 /** `trianglesBy` for a geometry's levels of detail: each bucket's triangles at each level. */
-async function lodsBy(geometry: THREE.BufferGeometry, part: Uint32Array, count: number, bucketOf: (part: number) => number) {
+async function lodsBy(
+	geometry: THREE.BufferGeometry,
+	part: Uint32Array,
+	count: number,
+	bucketOf: (part: number) => number
+) {
 	const lods = (geometry.userData.lods ?? []) as Lod[];
 	const split: (Uint32Array | Uint16Array)[][] = [];
 	for (const lod of lods) split.push(await trianglesBy(geometry, part, count, bucketOf, lod.index.array));
-	return Array.from({ length: count }, (_, k) => lods.map((lod, i): Lod => ({ error: lod.error, index: new THREE.BufferAttribute(split[i][k], 1) })));
+	return Array.from({ length: count }, (_, k) =>
+		lods.map((lod, i): Lod => ({ error: lod.error, index: new THREE.BufferAttribute(split[i][k], 1) }))
+	);
 }
 
 /**
@@ -4118,12 +4266,7 @@ function createStudioEnvironment(): THREE.Scene {
 	room.scale.setScalar(60);
 	env.add(room);
 
-	const panel = (
-		scale: [number, number, number],
-		pos: [number, number, number],
-		color: number,
-		intensity: number
-	) => {
+	const panel = (scale: [number, number, number], pos: [number, number, number], color: number, intensity: number) => {
 		const m = new THREE.Mesh(geo, emissive(color, intensity));
 		m.scale.set(...scale);
 		m.position.set(...pos);
@@ -4183,7 +4326,12 @@ const SOFTBOXES: Softbox[] = [
  */
 function createSoftboxEnvironment(boxes: Softbox[], room = 0x000000): THREE.Scene {
 	const env = new THREE.Scene();
-	env.add(new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), new THREE.MeshBasicMaterial({ color: room, side: THREE.BackSide })));
+	env.add(
+		new THREE.Mesh(
+			new THREE.SphereGeometry(40, 32, 16),
+			new THREE.MeshBasicMaterial({ color: room, side: THREE.BackSide })
+		)
+	);
 	const radianceOf = (b: Softbox) => (b.power * b.distance * b.distance) / (b.width * b.length);
 	const key = radianceOf(boxes[0]);
 	for (const box of boxes) {
@@ -4191,10 +4339,15 @@ function createSoftboxEnvironment(boxes: Softbox[], room = 0x000000): THREE.Scen
 		const el = THREE.MathUtils.degToRad(box.elevation);
 		const panel = new THREE.Mesh(
 			new THREE.PlaneGeometry(box.width, box.length),
-			new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(radianceOf(box) / key), side: THREE.DoubleSide })
+			new THREE.MeshBasicMaterial({
+				color: new THREE.Color(1, 1, 1).multiplyScalar(radianceOf(box) / key),
+				side: THREE.DoubleSide
+			})
 		);
 		// −x: the cube PMREM renders the scene into reads back mirrored left to right.
-		panel.position.set(-Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).multiplyScalar(box.distance);
+		panel.position
+			.set(-Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az))
+			.multiplyScalar(box.distance);
 		panel.lookAt(0, 0, 0);
 		env.add(panel);
 	}

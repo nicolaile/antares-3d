@@ -16,7 +16,14 @@
  */
 import * as THREE from 'three';
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js';
-import { COOL, DEFAULT_TRAIL_LOOK, DEFAULT_TRAIL_PARAMS, RAMPS, type EnergyParams, type TrailLook } from '$lib/energy/energy';
+import {
+	COOL,
+	DEFAULT_TRAIL_LOOK,
+	DEFAULT_TRAIL_PARAMS,
+	RAMPS,
+	type EnergyParams,
+	type TrailLook
+} from '$lib/energy/energy';
 
 export interface TrailRoute {
 	/** The pipe's centre line, from where the energy starts. */
@@ -262,7 +269,6 @@ const SLEEVE_FS = /* glsl */ `
 		gl_FragColor = gain(heat(vArc, sd, px) * uLevel) * seen(vPos);
 	}`;
 
-
 const QUAD_VS = /* glsl */ `
 	varying vec2 vUv;
 	void main() {
@@ -328,7 +334,12 @@ function oklab(hex: string): [number, number, number] {
 }
 
 const target = () =>
-	new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+	new THREE.WebGLRenderTarget(1, 1, {
+		type: THREE.HalfFloatType,
+		depthBuffer: false,
+		minFilter: THREE.LinearFilter,
+		magFilter: THREE.LinearFilter
+	});
 
 /** What the trails need of the viewer they're drawn over (ModelViewer). */
 export interface TrailsHost {
@@ -363,7 +374,12 @@ export class EnergyTrails extends Pass {
 		blending: THREE.AdditiveBlending
 	});
 	private composite = new THREE.ShaderMaterial({
-		uniforms: { tBase: { value: null }, tTrails: { value: null }, tBloom: { value: null }, uBloom: { value: DEFAULT_TRAIL_LOOK.bloom } },
+		uniforms: {
+			tBase: { value: null },
+			tTrails: { value: null },
+			tBloom: { value: null },
+			uBloom: { value: DEFAULT_TRAIL_LOOK.bloom }
+		},
 		vertexShader: QUAD_VS,
 		fragmentShader: COMPOSITE_FS,
 		depthTest: false,
@@ -455,7 +471,6 @@ export class EnergyTrails extends Pass {
 		this.material.uniforms.uLevel.value = level;
 		this.enabled = level > 0.001;
 	}
-
 
 	/** The diagram's parameters (EnergyControls), live. */
 	setParams(p: EnergyParams) {

@@ -424,10 +424,7 @@
 				const y = AY + r * Math.sin(mid);
 				let clear = 1;
 				for (const box of avoidRects) {
-					const d = Math.hypot(
-						Math.max(box.left - x, x - box.right, 0),
-						Math.max(box.top - y, y - box.bottom, 0)
-					);
+					const d = Math.hypot(Math.max(box.left - x, x - box.right, 0), Math.max(box.top - y, y - box.bottom, 0));
 					clear = Math.min(clear, clamp(0, 1, d / 40));
 				}
 				g.globalAlpha = Math.min(1, 0.6 * brightness * alpha * ((k + 0.5) / steps) ** 1.6 * clear);
@@ -543,7 +540,8 @@
 				if (!gl) gsap.from(core, { scale: 0, duration: 0.9, ease: 'back.out(2)', delay: 0.4 });
 				gsap.fromTo(lux, { intro: 0 }, { intro: 1, duration: 2.4, ease: 'expo.out', delay: 0.4 });
 				// The fallback's glow and dots get tweens; the shader animates its own.
-				if (!gl) gsap.to(glow, { scale: 1.12, opacity: 0.7, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+				if (!gl)
+					gsap.to(glow, { scale: 1.12, opacity: 0.7, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 				if (!gl) {
 					for (const dot of dots) {
 						if (Math.random() > 0.35) continue;

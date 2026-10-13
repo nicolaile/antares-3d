@@ -55,8 +55,7 @@ export const company = {
 				name: 'Jordan Bramble',
 				role: 'CEO & Co-Founder',
 				image: { src: portrait, alt: 'Portrait of Jordan Bramble' },
-				bio:
-					'Jordan Bramble leads Antares as CEO and Co-Founder, guiding the company’s mission to deliver reliable fission power for the toughest environments on Earth and beyond. Since launching Antares in 2023, he has overseen more than $130 million in fundraising and built the foundation for the company’s next-generation power systems, designed for applications ranging from remote defense installations to lunar surface missions. Jordan’s background spans multidisciplinary engineering, entrepreneurship, and federal policy via the White House Office of Management and Budget. He holds degrees in Systems Engineering, Physics, and Statistics from George Mason University and Georgetown University, and is driven by the belief that nuclear power is a key enabler for resilience, space exploration, space superiority, and next-generation missile defense.'
+				bio: 'Jordan Bramble leads Antares as CEO and Co-Founder, guiding the company’s mission to deliver reliable fission power for the toughest environments on Earth and beyond. Since launching Antares in 2023, he has overseen more than $130 million in fundraising and built the foundation for the company’s next-generation power systems, designed for applications ranging from remote defense installations to lunar surface missions. Jordan’s background spans multidisciplinary engineering, entrepreneurship, and federal policy via the White House Office of Management and Budget. He holds degrees in Systems Engineering, Physics, and Statistics from George Mason University and Georgetown University, and is driven by the belief that nuclear power is a key enabler for resilience, space exploration, space superiority, and next-generation missile defense.'
 			},
 			{
 				name: 'Rian Bahran',

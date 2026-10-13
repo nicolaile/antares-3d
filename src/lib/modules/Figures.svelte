@@ -26,15 +26,16 @@
 		Math.round(n)
 			.toString()
 			.replace(/\B(?=(\d{3})+(?!\d))/g, separator);
-
-
 </script>
 
 <ul class="figures">
 	{#each items as item, i (i)}
 		<li class="row" style:--start={item.start}>
 			<p class="figure type-display type-tabular">
-				<span {@attach odometer({ duration: 1, travel: 4, ease: 'power2.inOut', digitStagger: 0.04, delay: i * 0.12 })} {@attach letterRoll()}>{format(item.value, item.separator)}{item.suffix ?? ''}</span>
+				<span
+					{@attach odometer({ duration: 1, travel: 4, ease: 'power2.inOut', digitStagger: 0.04, delay: i * 0.12 })}
+					{@attach letterRoll()}>{format(item.value, item.separator)}{item.suffix ?? ''}</span
+				>
 				{#if item.mark}<span class="mark" aria-hidden="true"></span>{/if}
 			</p>
 			<p class="label type-caption">{item.label}</p>

@@ -25,16 +25,13 @@ export const careers = {
 	positions: {
 		label: 'Latest openings',
 		// TODO(launch): replace the placeholder positions (the design's four, cycled) with the jobs feed.
-		items: Array.from(
-			{ length: 86 },
-			(_, i): Position => ({
-				label: titles[i % titles.length],
-				department: 'Finance & Accounting',
-				location: 'Los Angeles, Full-time',
-				// TODO(launch): link each position to its listing (href is '#').
-				href: '#'
-			})
-		),
+		items: Array.from({ length: 86 }, (_, i): Position => ({
+			label: titles[i % titles.length],
+			department: 'Finance & Accounting',
+			location: 'Los Angeles, Full-time',
+			// TODO(launch): link each position to its listing (href is '#').
+			href: '#'
+		})),
 		/** How many show, as the latest openings, in the carousel. */
 		featured: 12,
 		// TODO(launch): link "Explore all" to the full list of openings (href is '#').

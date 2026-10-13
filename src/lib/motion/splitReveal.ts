@@ -20,7 +20,8 @@ const splitConfig = {
 export function splitReveal(type: SplitRevealType = 'lines'): Attachment<HTMLElement> {
 	return (heading) => {
 		if (prefersReducedMotion()) return;
-		const typesToSplit = type === 'lines' ? ['lines'] : type === 'words' ? ['lines', 'words'] : ['lines', 'words', 'chars'];
+		const typesToSplit =
+			type === 'lines' ? ['lines'] : type === 'words' ? ['lines', 'words'] : ['lines', 'words', 'chars'];
 		// Start is unclamped: clamped, text on screen at load would get a start
 		// of 0, which a page sitting at 0 never passes, so it wouldn't play.
 		// Once played, a re-split leaves the lines alone: a new tween would hide

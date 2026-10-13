@@ -60,23 +60,24 @@
 	});
 
 	const bands = $derived([0, ...cuts, 1].slice(0, -1).map((top, i) => [top, [...cuts, 1][i]]));
-
 </script>
 
 <figure class="view" style:aspect-ratio={ratio}>
 	{#each bands as [top, bottom], i (i)}
-		<div
-			class="slice"
-			style:clip-path="inset({top * 100}% 0 {(1 - bottom) * 100}% 0)"
-			aria-hidden={i > 0}
-		>
+		<div class="slice" style:clip-path="inset({top * 100}% 0 {(1 - bottom) * 100}% 0)" aria-hidden={i > 0}>
 			<div class="drop">
 				<Picture {...image} alt={i === 0 ? image.alt : ''} {ratio} {sizes} fit="contain" loading="eager" />
 			</div>
 		</div>
 	{/each}
 
-	<div class="ruler" bind:this={scale} aria-hidden="true" style:top="{extent[0] * 100}%" style:bottom="{(1 - extent[1]) * 100}%">
+	<div
+		class="ruler"
+		bind:this={scale}
+		aria-hidden="true"
+		style:top="{extent[0] * 100}%"
+		style:bottom="{(1 - extent[1]) * 100}%"
+	>
 		<div class="rail"><div class="line"></div></div>
 		{#each { length: TICKS } as _, i (i)}
 			<span class="tick" style:top="{(i / (TICKS - 1)) * 100}%"></span>

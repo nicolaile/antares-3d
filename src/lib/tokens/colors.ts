@@ -4,7 +4,13 @@
  */
 import source from '$lib/styles/colors.css?raw';
 
-export type ScaleStep = { token: string; family: 'grey' | 'slate' | 'accent'; step: string; usage: string; hex: string };
+export type ScaleStep = {
+	token: string;
+	family: 'grey' | 'slate' | 'accent';
+	step: string;
+	usage: string;
+	hex: string;
+};
 
 /** Named swatches outside the numbered scale, and how the page labels them. */
 const NAMED: Record<string, { family: ScaleStep['family']; step: string }> = {

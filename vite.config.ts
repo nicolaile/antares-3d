@@ -36,8 +36,7 @@ export default defineConfig({
 		sveltekit({
 			compilerOptions: {
 				// Runes mode for the project, not its libraries; redundant from Svelte 6.
-				runes: ({ filename }) =>
-					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+				runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 			},
 
 			// Picks the host's adapter at build time; https://svelte.dev/docs/kit/adapters to pin one.

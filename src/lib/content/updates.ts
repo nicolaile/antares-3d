@@ -66,14 +66,12 @@ export const slug = (label: string) =>
 export const updates = {
 	title: 'Updates',
 	intro: 'The latest news stories, business developments and product updates',
-	items: stories.map(
-		([date, label, image]): UpdateItem => ({
-			date,
-			label,
-			href: `/updates/${slug(label)}`,
-			image: image ?? standIn
-		})
-	),
+	items: stories.map(([date, label, image]): UpdateItem => ({
+		date,
+		label,
+		href: `/updates/${slug(label)}`,
+		image: image ?? standIn
+	})),
 	/** How many items show at first, and how many each "Load more" adds. */
 	pageSize: 12,
 	pressKit: {

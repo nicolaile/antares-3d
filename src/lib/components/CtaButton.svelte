@@ -26,9 +26,9 @@
 	let pill: HTMLSpanElement;
 
 	function nudge(on: boolean) {
-		const fill = getComputedStyle(pill).getPropertyValue(
-			tone === 'dark' ? (on ? '--grey-800' : '--grey-900') : on ? '--grey-200' : '--grey-100'
-		).trim();
+		const fill = getComputedStyle(pill)
+			.getPropertyValue(tone === 'dark' ? (on ? '--grey-800' : '--grey-900') : on ? '--grey-200' : '--grey-100')
+			.trim();
 		if (prefersReducedMotion()) return gsap.set(pill, { backgroundColor: fill });
 		gsap.to(pill, { backgroundColor: fill, duration: 0.3, ease: 'menu', overwrite: true });
 		if (icon) gsap.to(icon, { xPercent: on ? 20 : 0, duration: 0.4, ease: 'power3.out', overwrite: true });
@@ -44,7 +44,8 @@
 
 {#if href}
 	<a
-		class="cta type-caption" class:dark={tone === 'dark'}
+		class="cta type-caption"
+		class:dark={tone === 'dark'}
 		{href}
 		{onclick}
 		onpointerenter={() => nudge(true)}
@@ -53,7 +54,8 @@
 {:else}
 	<button
 		type="button"
-		class="cta type-caption" class:dark={tone === 'dark'}
+		class="cta type-caption"
+		class:dark={tone === 'dark'}
 		{onclick}
 		onpointerenter={() => nudge(true)}
 		onpointerleave={() => nudge(false)}>{@render content()}</button

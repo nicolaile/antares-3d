@@ -13,14 +13,14 @@ npm install
 npm run dev
 ```
 
-| Script                 | What it does                                                                     |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| `npm run dev`          | Dev server, with the dev tools below                                             |
-| `npm run build`        | Production build; every page is prerendered                                      |
-| `npm run preview`      | Serves the production build locally                                              |
-| `npm run check`        | Design-token lint (`scripts/check-system.mjs`), then `svelte-check` (TypeScript) |
-| `npm run lint`         | Prettier and ESLint                                                              |
-| `npm run format`       | Prettier, writing                                                                |
+| Script            | What it does                                                                     |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `npm run dev`     | Dev server, with the dev tools below                                             |
+| `npm run build`   | Production build; every page is prerendered                                      |
+| `npm run preview` | Serves the production build locally                                              |
+| `npm run check`   | Design-token lint (`scripts/check-system.mjs`), then `svelte-check` (TypeScript) |
+| `npm run lint`    | Prettier and ESLint                                                              |
+| `npm run format`  | Prettier, writing                                                                |
 
 CI (`.github/workflows/ci.yml`) runs `check`, `lint` and `build` on every push to `main` and on pull requests.
 

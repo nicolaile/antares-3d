@@ -61,7 +61,12 @@
 				.timeline({
 					scrollTrigger: { trigger: section, start: 0, end: 'top top', scrub: true, invalidateOnRefresh: true }
 				})
-				.fromTo(frame, { clipPath: inset }, { clipPath: 'inset(0px 0px round 0px)', ease: 'power2.inOut', duration: 1 }, 0)
+				.fromTo(
+					frame,
+					{ clipPath: inset },
+					{ clipPath: 'inset(0px 0px round 0px)', ease: 'power2.inOut', duration: 1 },
+					0
+				)
 				.fromTo(line, { autoAlpha: 0 }, { autoAlpha: 1, ease: 'power1.out', duration: 0.5 }, 0.5);
 
 			const h = () => window.innerHeight;

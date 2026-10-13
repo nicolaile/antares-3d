@@ -11,12 +11,8 @@
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import type { Picture as Source } from 'vite-imagetools';
 
-	let {
-		text,
-		name,
-		role,
-		image
-	}: { text: string; name: string; role?: string; image: { src: Source; alt: string } } = $props();
+	let { text, name, role, image }: { text: string; name: string; role?: string; image: { src: Source; alt: string } } =
+		$props();
 
 	/** Where the quote is fully lit; the name fades in from there. */
 	const QUOTE_END = 'center 50%';
@@ -50,7 +46,6 @@
 				.fromTo(frame, { clipPath: inset }, { clipPath: 'inset(0px 0px round 0px)', ease: 'power2.inOut' }, 0)
 				.fromTo(photo, { scale: 1.25 }, { scale: 1 }, 0);
 
-
 			gsap.from(by, {
 				autoAlpha: 0,
 				y: 12,
@@ -66,7 +61,13 @@
 				{
 					y: () => band.offsetHeight * 0.4,
 					ease: 'none',
-					scrollTrigger: { trigger: band, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true }
+					scrollTrigger: {
+						trigger: band,
+						start: 'top bottom',
+						end: 'bottom top',
+						scrub: true,
+						invalidateOnRefresh: true
+					}
 				}
 			);
 		}, band);
@@ -81,7 +82,9 @@
 		</div>
 	</div>
 	<figure class="quote">
-		<blockquote class="text type-h5" bind:this={quote} {@attach highlightText({ scrollEnd: QUOTE_END })}>{text}</blockquote>
+		<blockquote class="text type-h5" bind:this={quote} {@attach highlightText({ scrollEnd: QUOTE_END })}>
+			{text}
+		</blockquote>
 		<figcaption class="by type-annotation" bind:this={by}>
 			{name}{#if role}<span class="divider" aria-hidden="true">|</span>{role}{/if}
 		</figcaption>

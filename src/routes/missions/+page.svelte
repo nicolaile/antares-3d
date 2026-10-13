@@ -15,7 +15,6 @@
 
 <Seo title="Missions" description={intro} />
 
-
 <main id="content" tabindex="-1" class="missions">
 	<div class="intro"><PageIntro {title} {intro} /></div>
 

@@ -44,8 +44,8 @@ export const mission = {
  * lets `lookAt` roll freely, so "top-down" sits 6° off vertical, on a long
  * lens from further back so it reads flat, like a plan view.
  */
-/** Mark-0 whole, centred. */
-const vessel: Shot = { pos: [0, 0.35, 1.45], target: [0, -0.03, 0], spin: 0, fov: 29 };
+/** Mark-0 whole, close and looking down on it, sitting low in the panel. */
+const vessel: Shot = { pos: [0, 0.62, 0.95], target: [0, 0.11, 0], spin: 0, fov: 29 };
 /**
  * The power conversion system whole, pulled back and raised, three-quarters
  * on, so the power path reads left to right: the exchanger, the down pipe,
@@ -65,15 +65,15 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': {
 		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
 		// Colour slots, a group each (ModelViewer's `colours`, live via `setColour`
-		// and the controls panel); off unless `amount` is set: only the control
-		// drums show, in #ff751f, a tone of its own rather than colors.css --orange.
+		// and the controls panel); off unless `amount` is set: the core and the
+		// context are tinted grey, the rest keep the material's colour.
 		colours: {
-			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#ff751f' },
+			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#333333' },
 			drives: { group: 'f2_drives', label: 'Drive mechanisms', colour: '#ff751f' },
-			reactivity: { group: 'f2_reactivity', label: 'Control drums', colour: '#ff751f', amount: 1 },
-			core: { group: 'f3_core', label: 'Core', colour: '#ff751f' },
-			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
-			context: { group: 'context', label: 'Context', colour: '#ff751f' }
+			reactivity: { group: 'f2_reactivity', label: 'Control drums', colour: '#6b6b6b' },
+			core: { group: 'f3_core', label: 'Core', colour: '#8a8a8a', amount: 1 },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#8a8a8a' },
+			context: { group: 'context', label: 'Context', colour: '#6b6b6b', amount: 1 }
 		}
 	},
 	'power-conversion-system': {

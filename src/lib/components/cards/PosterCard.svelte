@@ -77,7 +77,7 @@
 		margin: 0;
 		color: var(--white);
 		mix-blend-mode: exclusion;
-		text-box: trim-both cap alphabetic;
+		text-box: trim-both cap alphabetic; /* check-system: allow — set on cap height, as Display is */
 		pointer-events: none;
 	}
 	.title {

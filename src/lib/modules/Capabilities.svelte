@@ -140,9 +140,8 @@
 		border-radius: var(--card-radius);
 		list-style: none;
 	}
-	/* Under the heading and intro, 56px at 1440 (between the 48 and 64 steps). */
 	.headed .list {
-		margin-top: calc(var(--size-font) * 3.5);
+		margin-top: var(--space-56);
 	}
 	.item + .item {
 		border-top: 1px solid var(--grey-200);

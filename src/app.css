@@ -99,7 +99,7 @@ body {
 	position: absolute;
 	width: 1px;
 	height: 1px;
-	margin: -1px;
+	margin: -1px; /* check-system: allow — the visually-hidden pattern */
 	overflow: hidden;
 	clip-path: inset(50%);
 	white-space: nowrap;

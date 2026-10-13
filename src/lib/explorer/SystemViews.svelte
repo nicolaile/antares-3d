@@ -206,8 +206,8 @@
 		const style = getComputedStyle(figure);
 		const read = (name: string, fallback: number) => parseFloat(style.getPropertyValue(name)) || fallback;
 		viewer.setLineStyle({
-			ink: style.getPropertyValue('--c-outline').trim() || style.getPropertyValue('--ink').trim() || '#ffffff',
-			paper: style.getPropertyValue('--stage').trim() || '#000000',
+			ink: style.getPropertyValue('--c-outline').trim() || style.getPropertyValue('--ink').trim() || '#ffffff', // check-system: allow — WebGL fallback
+			paper: style.getPropertyValue('--stage').trim() || '#000000', // check-system: allow
 			opacity: read('--o-outline', 1),
 			weight: read('--weight', 0.5) * read('--fit-weight', 1) * read('--density', 1)
 		});

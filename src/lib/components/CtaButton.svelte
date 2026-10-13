@@ -71,6 +71,9 @@
 		/* 34px tall at 1440, the pill and the square alike; 8px corners on both. */
 		--cta-size: calc(var(--size-font) * 2.125);
 		--cta-radius: 8px;
+		/* The label 18px clear either side; the arrow 9px clear all round. */
+		--cta-inset: calc(var(--size-font) * 1.125);
+		--cta-icon-inset: calc(var(--size-font) * 0.5625);
 		display: inline-flex;
 		align-items: stretch;
 		gap: var(--space-8);
@@ -86,24 +89,23 @@
 		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
-	/* The label centred in the pill, 18px either side. */
 	.label {
 		display: flex;
 		align-items: center;
 		box-sizing: border-box;
 		height: var(--cta-size);
-		padding: 0 calc(var(--size-font) * 1.125);
+		padding: 0 var(--cta-inset);
 		border-radius: var(--cta-radius);
 		background: var(--grey-100);
 	}
-	/* 34px square at 1440, the arrow 9px clear all round (16px). */
+	/* 34px square at 1440, the arrow 16px. */
 	.square {
 		display: grid;
 		place-items: center;
 		box-sizing: border-box;
 		width: var(--cta-size);
 		height: var(--cta-size);
-		padding: calc(var(--size-font) * 0.5625);
+		padding: var(--cta-icon-inset);
 		border-radius: var(--cta-radius);
 		background: var(--black);
 		color: var(--white);

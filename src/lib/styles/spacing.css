@@ -36,6 +36,8 @@
 	--space-40: calc(var(--size-font) * 2.5);
 	/** Between a block and the group it opens. */
 	--space-48: calc(var(--size-font) * 3);
+	/** Off-scale: between a section's heading and intro and the list under them (capabilities). */
+	--space-56: calc(var(--size-font) * 3.5);
 	/** Between groups inside a section. */
 	--space-64: calc(var(--size-font) * 4);
 	/** Between closely related sections. */

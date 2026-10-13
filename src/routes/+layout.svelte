@@ -70,7 +70,7 @@
 	.skip-link:not(:focus-visible) {
 		width: 1px;
 		height: 1px;
-		margin: -1px;
+		margin: -1px; /* check-system: allow — the visually-hidden pattern */
 		padding: 0;
 		overflow: hidden;
 		clip-path: inset(50%);

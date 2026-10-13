@@ -207,7 +207,7 @@
 		display: grid;
 		margin: 0;
 		padding-bottom: var(--space-8);
-		text-box: trim-end cap alphabetic;
+		text-box: trim-end cap alphabetic; /* check-system: allow — trims the blurb's foot only */
 	}
 	/* 16px (body default), breaking where the copy does, 8px above the text. */
 	.title {
@@ -215,14 +215,14 @@
 		color: var(--black);
 		white-space: pre-line;
 	}
-	/* 14px, at the caption's size and leading; a little narrower than its
+	/* Caption type without the caption's trim; a little narrower than its
 	   column, 296px at 1440. */
 	.text {
 		max-width: calc(var(--size-font) * 18.5);
 		color: var(--grey-700);
-		font-size: var(--type-caption-size);
-		line-height: var(--type-caption-leading);
-		letter-spacing: var(--type-caption-tracking);
+		font-size: var(--type-caption-size); /* check-system: allow — caption tokens */
+		line-height: var(--type-caption-leading); /* check-system: allow */
+		letter-spacing: var(--type-caption-tracking); /* check-system: allow */
 	}
 
 	/* Full bleed. The photo is 40% taller than its mask and starts raised

@@ -18,12 +18,20 @@ const RULES = [
 		fix: 'use a .type-* class',
 		source: 'src/lib/styles/typography.css',
 		extensions: /\.(svelte|css|html|ts|js)$/,
-		// Reads the system for the /design-system page; names properties, never sets them.
-		exempt: ['src/lib/tokens/typography.ts'],
-		// `font: inherit` only resets a control to the system; any other `font:`
-		// shorthand sets a size.
+		exempt: [
+			// Reads the system for the /design-system page; names properties, never sets them.
+			'src/lib/tokens/typography.ts',
+			// Sizes each digit's cell to the roll, in the text's own em.
+			'src/lib/motion/odometer.ts',
+			// Developer readout, not part of the design.
+			'src/lib/dev/PerfHud.svelte',
+			// A pre-launch marker on unfinished parts; goes with the last of them.
+			'src/lib/components/WipBadge.svelte'
+		],
+		// `inherit` only resets an element to the system around it; any other
+		// `font:` shorthand sets a size.
 		banned:
-			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform|text-box(?:-trim|-edge)?)\s*:|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
+			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform|text-box(?:-trim|-edge)?)\s*:(?!\s*inherit\b)|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
 	},
 	{
 		name: 'Colour',
@@ -46,10 +54,10 @@ const RULES = [
 		source: 'src/lib/styles/spacing.css',
 		extensions: /\.(svelte|css|html)$/,
 		exempt: [
-			// Developer tool panels, hidden behind Shift+H: dense, not part of
-			// the design.
+			// Developer tool panels and readout: dense, not part of the design.
 			'src/lib/explorer/Controls.svelte',
-			'src/lib/explorer/EnergyControls.svelte'
+			'src/lib/explorer/EnergyControls.svelte',
+			'src/lib/dev/PerfHud.svelte'
 		],
 		// A margin, padding or gap set in raw lengths or base units. Tokens,
 		// 0, auto, percentages and a component's own derived variables are fine.
@@ -79,6 +87,8 @@ for (const rule of RULES) {
 		if (skip.has(file.rel) || !rule.extensions.test(file.rel)) continue;
 		file.lines ??= readFileSync(join(ROOT, file.rel), 'utf8').split('\n');
 		file.lines.forEach((line, i) => {
+			// A deliberate exception names itself on its line, with the reason.
+			if (line.includes('check-system: allow')) return;
 			const code = line.replace(/\/\*.*?\*\/|<!--.*?-->|\/\/.*$/g, '');
 			if (rule.banned.test(code)) errors.push(`${file.rel}:${i + 1}  ${line.trim()}`);
 		});

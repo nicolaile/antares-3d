@@ -884,8 +884,8 @@
 			mask-image: linear-gradient(
 				to right,
 				transparent,
-				#000 var(--fade-left, 0px),
-				#000 calc(100% - var(--fade-right, 0px)),
+				#000 var(--fade-left, 0px), /* check-system: allow — mask alpha, not a colour */
+				#000 calc(100% - var(--fade-right, 0px)), /* check-system: allow */
 				transparent
 			);
 		}

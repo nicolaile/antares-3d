@@ -72,7 +72,6 @@
 	import { onMount, untrack } from 'svelte';
 	import FeatureTab from '$lib/components/FeatureTab.svelte';
 	import PauseButton from '$lib/components/PauseButton.svelte';
-	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import WipBadge from '$lib/components/WipBadge.svelte';
 	import CadStage from '$lib/explorer/CadStage.svelte';
 	import Picture from '$lib/components/Picture.svelte';
@@ -776,11 +775,6 @@
 		<!-- Under the model, centred on the panel's foot: on the model it's about, not the panel. -->
 		{#if wip}<WipBadge label="3D model · WIP" corner="bottom" />{/if}
 
-		<div class="steps">
-			<ArrowButton direction="previous" tone="dark" label="Previous feature" onclick={() => step(-1)} />
-			<ArrowButton direction="next" tone="dark" label="Next feature" onclick={() => step(1)} />
-		</div>
-
 		<div class="pause">
 			<PauseButton bind:paused label="Pause animation" tone="dark" />
 		</div>
@@ -888,7 +882,7 @@
 	}
 
 	/* The panel: a lifted card the model sits in, the feature in its top
-	   corner, the steps in its bottom one. */
+	   corner, the pause in its bottom one. */
 	.viewport {
 		position: relative;
 		overflow: hidden;
@@ -951,14 +945,6 @@
 		white-space: nowrap;
 	}
 
-	.steps {
-		position: absolute;
-		left: var(--space-16);
-		bottom: var(--space-16);
-		z-index: 1;
-		display: flex;
-		gap: var(--space-8);
-	}
 	/* Each model and each panel fill the stage, stacked; GSAP fades between
 	   them (see the script). Panels start hidden: the page opens on a model. */
 	.layer {
@@ -1024,8 +1010,9 @@
 
 	.pause {
 		position: absolute;
-		right: var(--space-16);
+		left: var(--space-16);
 		bottom: var(--space-16);
+		z-index: 1;
 	}
 
 	/* Phones: narrower tabs, still scrolling; the panel square, the

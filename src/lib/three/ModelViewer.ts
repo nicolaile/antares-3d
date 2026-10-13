@@ -1037,7 +1037,6 @@ export class ModelViewer {
 			if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.getAttribute('_part')) meshes.push(o as THREE.Mesh);
 		});
 		const pieces: Piece[] = [];
-		const v = new THREE.Vector3();
 		let phase: number | undefined;
 		for (const mesh of meshes) {
 			const geometry = mesh.geometry;

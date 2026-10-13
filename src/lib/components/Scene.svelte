@@ -29,7 +29,7 @@
 	import { LOOK } from '$lib/three/look';
 
 	let {
-		src = '/models/cylinder.glb',
+		src,
 		groups = undefined,
 		explode = undefined,
 		carve = undefined,
@@ -44,7 +44,7 @@
 		onready = undefined
 	}: {
 		/** The model: one .glb, or several that make it up between them (ModelViewer's `url`). */
-		src?: string | string[];
+		src: string | string[];
 		/** The model's groups, kept apart so each can be dimmed or cut open (ModelViewer's `groups`). */
 		groups?: string[];
 		/** Groups split into pieces that move apart (ModelViewer's `explode`). */

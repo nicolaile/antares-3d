@@ -22,10 +22,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Licensed desktop font originals. The build serves only the .woff2 files
-# in static/fonts, so these never need to leave the machine.
-src/fonts/
-.env*
+# Frames and timings saved by the dev perf runs (scripts/vite-perf.js).
+captures/
 
 # Raw STEP exports from the client: hundreds of MB each, and confidential.
 # Only the converted .glb in static/models/cad is committed.

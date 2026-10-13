@@ -63,14 +63,6 @@ const vessel: Shot = { pos: [0, 0.35, 1.45], target: [0, -0.03, 0], spin: 0, fov
  * the skid's generator, the cooler.
  */
 const system: Shot = { pos: [0, 0.44, 1.23], target: [0, -0.03, 0], spin: 0, turn: -Math.PI / 4, fov: 29 };
-/** In on the open point (`aim`), a little above it, looking slightly down. */
-const close = (distance: number, below = 0): Shot => ({
-	pos: [0, distance * 0.3, distance],
-	target: [0, -below, 0],
-	spin: 0,
-	fov: 29,
-	aim: 'point'
-});
 
 /**
  * The CAD on the stage, one model at a time: Mark-0 for the reactor

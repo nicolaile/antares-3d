@@ -28,7 +28,7 @@
 		onclick?: (event: MouseEvent) => void;
 	} = $props();
 
-	let icon: HTMLSpanElement | undefined;
+	let icon = $state<HTMLSpanElement>();
 	let pill: HTMLSpanElement;
 
 	function nudge(on: boolean) {

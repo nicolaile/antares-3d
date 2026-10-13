@@ -291,7 +291,7 @@
 							</div>
 							{#if updates.length > 1}
 								<div class="dashes">
-									{#each updates as update, i (i)}
+									{#each updates, i (i)}
 										<button
 											type="button"
 											class="dash"

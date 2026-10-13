@@ -44,8 +44,8 @@ export const mission = {
  * lets `lookAt` roll freely, so "top-down" sits 6° off vertical, on a long
  * lens from further back so it reads flat, like a plan view.
  */
-/** Mark-0 whole, close and looking down on it, sitting low in the panel. */
-const vessel: Shot = { pos: [0, 0.62, 0.95], target: [0, 0.11, 0], spin: 0, fov: 29 };
+/** Mark-0 close, looking well down on its top, sitting low in the panel. */
+const vessel: Shot = { pos: [0, 0.74, 0.87], target: [0, 0.11, 0], spin: 0, fov: 29 };
 /**
  * The power conversion system whole, pulled back and raised, three-quarters
  * on, so the power path reads left to right: the exchanger, the down pipe,
@@ -65,15 +65,15 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': {
 		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
 		// Colour slots, a group each (ModelViewer's `colours`, live via `setColour`
-		// and the controls panel); off unless `amount` is set: the heat pipes and
-		// the context are tinted grey, the rest keep the material's colour.
+		// and the controls panel); off unless `amount` is set: the core is tinted
+		// grey, the rest keep the material's colour.
 		colours: {
 			cradle: { group: 'f1_cradle', label: 'Shield & cradle', colour: '#333333' },
 			drives: { group: 'f2_drives', label: 'Drive mechanisms', colour: '#ff751f' },
 			reactivity: { group: 'f2_reactivity', label: 'Control drums', colour: '#6b6b6b' },
-			core: { group: 'f3_core', label: 'Core', colour: '#8a8a8a' },
-			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#6e6e6e', amount: 1 },
-			context: { group: 'context', label: 'Context', colour: '#6b6b6b', amount: 1 }
+			core: { group: 'f3_core', label: 'Core', colour: '#8a8a8a', amount: 1 },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#6e6e6e' },
+			context: { group: 'context', label: 'Context', colour: '#6b6b6b' }
 		}
 	},
 	'power-conversion-system': {
@@ -157,7 +157,7 @@ const features: Feature[] = [
 		// Close, from about 30° above: the nearest drums and their drives
 		// large at the front, the ring curving away round the core; leaning
 		// 15° to the right as it comes apart.
-		shot: { pos: [0, 0.9, 1.55], target: [0, 0.03, 0], spin: 0, fov: 29, lean: (-15 * Math.PI) / 180 },
+		shot: { pos: [0, 1.0, 1.74], target: [0, 0.03, 0], spin: 0, fov: 29, lean: (-15 * Math.PI) / 180 },
 		// Taken apart in order, as the video shows it.
 		look: {
 			explode: {

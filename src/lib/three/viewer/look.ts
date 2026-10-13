@@ -18,7 +18,7 @@ export const LOOK: Partial<RenderParams> = {
 
 	// Material: a light grey, mostly dielectric, with no clearcoat or
 	// environment reflection.
-	color: '#a1a1a1',
+	color: '#c2c2c2',
 	roughness: 0.35,
 	metalness: 0.13,
 	clearcoat: 0,
@@ -28,9 +28,9 @@ export const LOOK: Partial<RenderParams> = {
 	// Light
 	key: 14,
 	rim: 2.1,
-	ambient: 0,
+	ambient: 0.75,
 	environment: 1.1,
-	exposure: 0.75,
+	exposure: 0.39,
 
 	// Gradient map: off, kept tuned for when it's switched on.
 	gradient: 0,

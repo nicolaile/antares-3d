@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Grid from '$lib/dev/Grid.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import CtaButton from '$lib/components/CtaButton.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
@@ -63,7 +62,6 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<Grid visible={false} />
 
 <div class="page">
 	<header class="intro">

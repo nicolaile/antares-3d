@@ -5,7 +5,6 @@
 	columns, then the footer. Content comes from `$lib/content/legal`.
 -->
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -21,7 +20,6 @@
 	<meta name="description" content={description} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="legal">
 	<Row>

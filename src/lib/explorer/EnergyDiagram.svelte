@@ -18,6 +18,7 @@
 	markers where they are.
 -->
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { onMount, untrack, type Snippet } from 'svelte';
 	import DiagramLabel from '$lib/explorer/DiagramLabel.svelte';
 	import EnergyControls from '$lib/explorer/EnergyControls.svelte';
@@ -97,7 +98,7 @@
 	let ink = $state('');
 	let paused = $state(false);
 	let dark = $state(untrack(() => startDark));
-	// The tuning panel: hidden for now, ?controls only.
+	// The tuning panel: dev only, with ?controls.
 	let showControls = $state(false);
 	/** Motion allowed: false means a still frame and no pause button. */
 	let moving = $state(false);
@@ -153,7 +154,7 @@
 	const DESKTOP_WIDTH = 880;
 
 	onMount(() => {
-		showControls = new URLSearchParams(location.search).has('controls');
+		showControls = dev && new URLSearchParams(location.search).has('controls');
 		const readInk = () => (ink = getComputedStyle(host).getPropertyValue('--ink').trim());
 		readInk();
 		const stopInk = $effect.root(() => {

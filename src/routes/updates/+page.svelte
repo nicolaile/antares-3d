@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import UpdateCard from '$lib/components/cards/UpdateCard.svelte';
@@ -31,7 +30,6 @@
 	<meta name="description" content={intro} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="updates" data-tone="dark">
 	<Row>

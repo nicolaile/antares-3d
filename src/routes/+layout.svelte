@@ -4,6 +4,7 @@
 	import '$lib/styles/spacing.css';
 	import '$lib/styles/typography.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { onNavigate, afterNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -13,6 +14,7 @@
 	import HeaderBar from '$lib/chrome/HeaderBar.svelte';
 	import { trackHeader, updateHeader } from '$lib/chrome/header.svelte';
 	import { menu } from '$lib/content/site';
+	import DevTools from '$lib/dev/DevTools.svelte';
 	let { children } = $props();
 
 	/**
@@ -32,29 +34,7 @@
 	/** The header follows the scroll on every page, and starts out showing on each new one. */
 	onMount(trackHeader);
 	afterNavigate(() => updateHeader(true));
-
-	/** Remembered across visits, so the tools stay how you left them. */
-	const KEY = 'antares:tools';
-
-	/**
-	 * Shift+H shows or hides every tool button (pause, render and energy
-	 * controls) at once. Hidden by default. The state lives on <html> as
-	 * `data-tools`, which app.css reads; app.html restores it before paint.
-	 */
-	function onkeydown(e: KeyboardEvent) {
-		if (!e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== 'h') return;
-		const el = e.target as HTMLElement | null;
-		if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
-		const on = document.documentElement.toggleAttribute('data-tools');
-		try {
-			localStorage.setItem(KEY, on ? '1' : '0');
-		} catch {
-			// Storage blocked: the toggle still works for this visit.
-		}
-	}
 </script>
-
-<svelte:window {onkeydown} />
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
@@ -67,3 +47,5 @@
 {#if page.url.pathname !== '/'}<BrandMark />{/if}
 
 {@render children?.()}
+
+{#if dev}<DevTools />{/if}

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import PersonCard from '$lib/components/cards/PersonCard.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
 	import FeatureCards from '$lib/modules/FeatureCards.svelte';
@@ -20,7 +19,6 @@
 	<meta name="description" content={intro} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <PersonPanel bind:this={panel}>
 	<main class="company">

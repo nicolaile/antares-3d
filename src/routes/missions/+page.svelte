@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
 	import Capabilities from '$lib/modules/Capabilities.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -18,7 +17,6 @@
 	<meta name="description" content={intro} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="missions">
 	<div class="intro"><PageIntro {title} {intro} /></div>

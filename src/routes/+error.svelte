@@ -5,7 +5,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import StarField from '$lib/modules/StarField.svelte';
@@ -40,7 +39,6 @@
 	<title>{title} — Antares</title>
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="error" data-tone="dark">
 	<StarField {...error.star} href={error.home.href} home={error.home.label} {onwarp} />

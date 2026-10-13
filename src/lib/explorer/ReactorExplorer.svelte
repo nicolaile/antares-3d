@@ -70,6 +70,7 @@
 </script>
 
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { onMount, untrack } from 'svelte';
 	import FeatureTab from '$lib/components/FeatureTab.svelte';
 	import IconButton from '$lib/components/IconButton.svelte';
@@ -544,11 +545,10 @@
 	/** The viewer on stage, for the render controls. */
 	const viewers: Partial<Record<CadModel, ModelViewer>> = $state({});
 	const viewer = $derived(typeof onStage === 'string' ? (viewers[onStage] ?? null) : null);
-	// The render tuning panel: on in dev, or with ?controls on any build.
+	// Dev only: the render tuning panel always, the energy tuning panel with
+	// ?controls, the 3D's live readout and measuring runs (PerfHud) with ?perf.
 	let showControls = $state(false);
-	// The energy tuning panel: hidden for now, ?controls only.
 	let showEnergyControls = $state(false);
-	// The 3D's live readout and measuring runs (PerfHud): ?perf only.
 	let showPerf = $state(false);
 	const perfTarget: PerfTarget = {
 		count: untrack(() => features.length),
@@ -671,9 +671,12 @@
 		});
 		seenOnPage.observe(explorerEl);
 		paused = prefersReducedMotion();
-		showControls = import.meta.env.DEV || new URLSearchParams(location.search).has('controls');
-		showEnergyControls = new URLSearchParams(location.search).has('controls');
-		showPerf = new URLSearchParams(location.search).has('perf');
+		if (dev) {
+			const flags = new URLSearchParams(location.search);
+			showControls = true;
+			showEnergyControls = flags.has('controls');
+			showPerf = flags.has('perf');
+		}
 		return () => {
 			viewportEl.removeEventListener('reveal', onRevealed);
 			viewportEl.removeEventListener('pointerdown', grab);

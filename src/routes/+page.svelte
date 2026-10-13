@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import Hero from '$lib/sections/home/Hero.svelte';
 	import MissionIntro from '$lib/sections/home/MissionIntro.svelte';
 	import R1Microreactor from '$lib/sections/home/R1Microreactor.svelte';
@@ -20,7 +19,6 @@
 	/>
 </svelte:head>
 
-<Grid visible={false} />
 
 <Hero {...hero} />
 

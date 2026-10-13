@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import Picture from '$lib/components/Picture.svelte';
 	import PositionsCarousel from '$lib/modules/PositionsCarousel.svelte';
 	import OperatingModel from '$lib/modules/OperatingModel.svelte';
@@ -19,7 +18,6 @@
 	<meta name="description" content={intro} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="careers">
 	<div class="head">

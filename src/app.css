@@ -94,8 +94,8 @@ body {
 	color: var(--black);
 }
 
-/* Tool buttons (pause, render and energy controls) are hidden until
-   Shift+H shows them; the layout toggles `data-tools` on <html>. */
+/* Dev tool panels (render and energy controls) stay hidden until Shift+H
+   shows them (src/lib/dev/DevTools.svelte). */
 html:not([data-tools]) [data-tool] {
 	display: none !important;
 }

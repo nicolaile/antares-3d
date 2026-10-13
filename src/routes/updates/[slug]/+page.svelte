@@ -6,7 +6,6 @@
 	(RecentArticles).
 -->
 <script lang="ts">
-	import Grid from '$lib/dev/Grid.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
@@ -32,7 +31,6 @@
 	<meta name="description" content={article.title} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="article">
 	<Row as="header">

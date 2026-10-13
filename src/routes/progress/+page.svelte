@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { SplitText } from 'gsap/SplitText';
-	import Grid from '$lib/dev/Grid.svelte';
 	import TimelineEntry from '$lib/components/cards/TimelineEntry.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
@@ -83,7 +82,6 @@
 	<meta name="description" content={intro} />
 </svelte:head>
 
-<Grid visible={false} />
 
 <main class="progress">
 	<section class="hero" bind:this={hero}>

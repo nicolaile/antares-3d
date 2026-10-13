@@ -8,7 +8,7 @@ import type { Picture } from 'vite-imagetools';
 // The exploded R1 render, three columns (338px at 1440): 694px is as wide as it comes.
 import r1 from '$lib/assets/images/progress/image 171.png?w=694;347&enhanced';
 // The line drawing, traced from line-diagram.png into strokes
-// (scripts/trace-line-drawing.py), so it can draw itself on.
+// (scripts/lab/trace-line-drawing.py), so it can draw itself on.
 import diagram from '$lib/assets/images/progress/line-diagram.svg?raw';
 // The clusters' photos, at three, four or five columns.
 import site from '$lib/assets/images/progress/image-cluster-01.jpg?w=1722;1148;574&enhanced';

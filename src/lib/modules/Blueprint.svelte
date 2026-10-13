@@ -1,7 +1,7 @@
 <!--
 	@component
 	A line drawing that sketches itself in when it comes into view, once, like an architect's concept: pencil, then ink — long construction lines, then shapes, then details. Takes the drawing as SVG markup of stroked paths
-	(scripts/trace-line-drawing.py makes one from a scan), drawn in hairlines
+	(scripts/lab/trace-line-drawing.py makes one from a scan), drawn in hairlines
 	whatever its size. Sized by its container; let it run past the screen's
 	edge and the page clips it there. With reduced motion it's simply there.
 -->

@@ -179,7 +179,7 @@ export async function shot(target: PerfTarget, label: string, name: string, para
 }
 
 /**
- * Which CAD parts can ever be seen, for scripts/bake-surface.mjs to leave
+ * Which CAD parts can ever be seen, for scripts/lab/bake-surface.mjs to leave
  * the rest out of the landing's models: every feature, settled, sampled all
  * the way round and through the drag's tilt (`ModelViewer.visibleParts`),
  * and the moves between them, as they play, once every SAMPLE_MS. Saved as

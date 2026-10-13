@@ -1,5 +1,5 @@
 /**
- * The systems page's numbered points (01–07, $lib/content/systems.ts),
+ * The systems page's numbered points (01–07, $lib/lab/content/systems.ts),
  * pinned to their parts in the CAD test bench (/cad), per model view.
  * Positions are in each STEP file's own frame, Y-up metres, about 1 cm
  * proud of a surface of the part that faces out, so a label shows only

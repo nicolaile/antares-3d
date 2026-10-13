@@ -46,7 +46,7 @@ export const ANCHORS: Record<string, [number, number, number]> = {
 	'Waste heat rejection': [3.8, 1.499, -3.925]
 };
 
-/** The baked model (scripts/iso-model.mjs). */
+/** The baked model (scripts/lab/iso-model.mjs). */
 const MODEL = '/models/cad/web/iso.glb';
 
 /** The isometric: turned 45° from the elevation, looking down 30°. */
@@ -96,7 +96,7 @@ export class IsoDrawing extends CadViewer {
 	}
 
 	/**
-	 * Loads the model (baked by scripts/iso-model.mjs: the assembly as one
+	 * Loads the model (baked by scripts/lab/iso-model.mjs: the assembly as one
 	 * mesh, positions and normals only) and shows it as a drawing at the
 	 * current pose, its programs compiled first so the first frame is quick.
 	 */

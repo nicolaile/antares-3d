@@ -67,8 +67,8 @@ const system: Shot = { pos: [0, 0.44, 1.23], target: [0, -0.03, 0], spin: 0, tur
 /**
  * The CAD on the stage, one model at a time: Mark-0 for the reactor
  * (01–04), the power conversion system from the exchanger on (05–07).
- * Each as its web groups (scripts/split-web-model.mjs), baked for the
- * landing (scripts/bake-surface.mjs: static/models/landing/).
+ * Each as its web groups (scripts/lab/split-web-model.mjs), baked for the
+ * landing (scripts/lab/bake-surface.mjs: static/models/landing/).
  */
 const cad = (model: string, groups: string[]) => groups.map((g) => `/models/landing/${model}/${g}.glb`);
 

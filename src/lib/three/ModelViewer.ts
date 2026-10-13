@@ -54,13 +54,13 @@ const TONES = { aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMap
 export type Tone = keyof typeof TONES;
 /** The canvas's pixel ratio at most: a retina screen's own. The frame itself is drawn at `maxPixelRatio`. */
 const OUTPUT_PIXEL_RATIO = 2;
-/** The black studio renders' print (scripts/render/mark-0-black.json, render.py's grade; SweepPass `setGrade`). */
+/** The black studio renders' print (scripts/lab/render/mark-0-black.json, render.py's grade; SweepPass `setGrade`). */
 const PRINT = { saturation: 0.6, tint: '#f2f6f8', contrast: 0.3, blackPoint: 0, shadows: '#c4cfdf', highlights: '#f6f8fa' };
 /** How sharply the last pass sharpens the frame it scales up, 0–1 (SweepPass `sharpen`). */
 const SHARPEN = 0.6;
 /** How many pixels a level of detail's error may come to on screen (`chooseLod`). */
 const LOD_PIXELS = 1;
-/** Roughness detail over the finishes (scripts/surface-detail.mjs). */
+/** Roughness detail over the finishes (scripts/lab/surface-detail.mjs). */
 const DETAIL_URL = '/textures/surface-detail.webp';
 
 /**
@@ -115,7 +115,7 @@ function glowFromWithin(
 }
 
 /**
- * The bake (scripts/bake-surface.mjs, the `_surf` attribute): occlusion and
+ * The bake (scripts/lab/bake-surface.mjs, the `_surf` attribute): occlusion and
  * finish per vertex.
  *
  * Its finish (z, w) is the approved studio renders' for the part's CAD
@@ -127,7 +127,7 @@ function glowFromWithin(
  * their measured albedo (`uPolymer` scales it).
  *
  * And over it, the surface's own detail (static/textures/surface-detail.webp,
- * scripts/surface-detail.mjs): roughness that varies across a finish as real
+ * scripts/lab/surface-detail.mjs): roughness that varies across a finish as real
  * metal's does, brushed streaks on the polished parts and handling smudges on
  * the rest, `uDetail` of it. Projected from the three axes in each part's own
  * frame (`uLocalScale` to metres, a tile every `uDetailTile`), so it sticks to
@@ -4081,7 +4081,7 @@ function shareBounds(source: THREE.BufferGeometry, g: THREE.BufferGeometry) {
 type Lod = { error: number; index: THREE.BufferAttribute };
 
 /**
- * Levels of detail (the landing's files, scripts/bake-surface.mjs): the
+ * Levels of detail (the landing's files, scripts/lab/bake-surface.mjs): the
  * coarser primitives load as meshes beside the full one, over the same
  * vertex data. Each one's triangles go onto the full mesh's geometry
  * (`userData.lods`, finest first) and the mesh goes. Returns the errors.

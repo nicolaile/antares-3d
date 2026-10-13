@@ -25,19 +25,15 @@ vite.config.ts.timestamp-*
 # Frames and timings saved by the dev perf runs (scripts/vite-perf.js).
 captures/
 
-# Raw STEP exports from the client: hundreds of MB each, and confidential.
-# Only the converted .glb in static/models/cad is committed.
+# Local-only lab: the /cad and /systems test benches, the model and render
+# pipeline, and the client's CAD (confidential). Kept on the machine that
+# makes the models; the site ships only their output in static/models.
+src/routes/(lab)/
+src/lib/lab/
+scripts/lab/
 src/lib/cad files/
-
-# Output of scripts/render/render.py
+static/models/cad/*.glb
 renders/
-# Tagging-tool conversions (/cad/tag): ~50–80 MB each, rebuilt with
-# `npm run convert:step -- <stp> <glb> 0.0008 --parts`.
-static/models/cad/*.parts.glb
 
-# NASA Blue Marble textures for the orbit look (public domain, ~60 MB).
-# Re-download with the URLs in scripts/render/render.py.
-scripts/render/textures/
-
-# Python bytecode from scripts/render.
+# Python bytecode
 __pycache__/

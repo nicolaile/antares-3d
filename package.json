@@ -14,9 +14,9 @@
 		"check": "npm run check:system && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:system": "node scripts/check-system.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"optimize:model": "bash scripts/optimize-model.sh",
-		"convert:step": "bash scripts/step-to-glb.sh",
-		"tag:auto": "node --max-old-space-size=8000 scripts/auto-tag-cad.mjs"
+		"optimize:model": "bash scripts/lab/optimize-model.sh",
+		"convert:step": "bash scripts/lab/step-to-glb.sh",
+		"tag:auto": "node --max-old-space-size=8000 scripts/lab/auto-tag-cad.mjs"
 	},
 	"devDependencies": {
 		"@gltf-transform/core": "^4.5.1",

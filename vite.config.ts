@@ -1,9 +1,17 @@
 import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { enhancedImages } from '@sveltejs/enhanced-img';
-import { defineConfig } from 'vite';
-import { cadTags } from './scripts/vite-cad-tags.js';
+import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { defineConfig, type PluginOption } from 'vite';
 import { perfCaptures } from './scripts/vite-perf.js';
+
+// The local-only lab (/cad, /systems, the model pipeline) is gitignored, so
+// its dev plugin loads only where it exists.
+const LAB_PLUGIN = 'scripts/lab/vite-cad-tags.js';
+const lab: PluginOption[] = existsSync(LAB_PLUGIN)
+	? [(await import(/* @vite-ignore */ pathToFileURL(LAB_PLUGIN).href)).cadTags()]
+	: [];
 
 export default defineConfig({
 	server: {
@@ -21,8 +29,8 @@ export default defineConfig({
 		noExternal: ['gsap']
 	},
 	plugins: [
-		// Dev only: lets the CAD tagging tool (/cad/tag) save into the repo.
-		cadTags(),
+		// Dev only: lets the CAD tagging tool (/cad/tag) save its tags.
+		...lab,
 		// Dev only: lets the R1 perf runs (perf.ts) save frames and timings.
 		perfCaptures(),
 		// Must run before sveltekit(): rewrites <enhanced:img> into a <picture>

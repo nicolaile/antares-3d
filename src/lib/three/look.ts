@@ -25,7 +25,7 @@ export const LOOK: Partial<RenderParams> = {
 	materialEnv: 1.2,
 
 	// Each part its own finish, as in the studio renders (the landing's
-	// models, scripts/bake-surface.mjs), mapped onto this lighter look at 60%,
+	// models, scripts/lab/bake-surface.mjs), mapped onto this lighter look at 60%,
 	// with a little roughness detail over them. No grain in the relief: it
 	// costs and barely shows.
 	finish: 0.6,

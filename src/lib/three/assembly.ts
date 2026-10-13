@@ -11,7 +11,7 @@
  * FILLER bridges. What the stack makes redundant is left out of it:
  * Mark-0's drive motors (their own group, f2_drives) and the exchanger's
  * own stand (`standalone`, for the landing, where the system stands on its
- * own; scripts/auto-tag-cad.mjs). Inferred from the geometry and the
+ * own; scripts/lab/auto-tag-cad.mjs). Inferred from the geometry and the
  * product video; not confirmed by an engineer.
  *
  * The two files aren't clocked alike: Mark-0 turns 30° about its axis

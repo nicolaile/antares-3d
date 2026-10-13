@@ -1,17 +1,27 @@
 <!--
 	@component
-	The title block that opens a light page: its name, then a line about it.
+	The title block that opens a page: its name, then a line about it.
+	`tone="dark"` on dark pages (Updates).
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 
-	let { title, intro }: { title: string; intro: string } = $props();
+	let {
+		title,
+		intro,
+		tone = 'light'
+	}: {
+		title: string;
+		intro: string;
+		/** `dark`: the line in Grey 400, for dark pages. */
+		tone?: 'light' | 'dark';
+	} = $props();
 </script>
 
 <Row>
 	<Cell span={4} tablet={{ span: 6 }}>
-		<div class="intro type-h5">
+		<div class="intro type-h5" class:dark={tone === 'dark'}>
 			<h1>{title}</h1>
 			<p>{intro}</p>
 		</div>
@@ -26,5 +36,8 @@
 	}
 	.intro p {
 		color: var(--grey-700);
+	}
+	.dark p {
+		color: var(--grey-400);
 	}
 </style>

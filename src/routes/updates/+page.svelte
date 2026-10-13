@@ -1,8 +1,7 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
 	import { tick } from 'svelte';
-	import Row from '$lib/layout/Row.svelte';
-	import Cell from '$lib/layout/Cell.svelte';
+	import PageIntro from '$lib/modules/PageIntro.svelte';
 	import UpdateCard from '$lib/components/cards/UpdateCard.svelte';
 	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -29,14 +28,7 @@
 <Seo title="Updates" description={intro} />
 
 <main id="content" tabindex="-1" class="updates" data-tone="dark">
-	<Row>
-		<Cell span={4} tablet={{ span: 6 }}>
-			<div class="intro type-h5">
-				<h1>{title}</h1>
-				<p class="secondary">{intro}</p>
-			</div>
-		</Cell>
-	</Row>
+	<PageIntro {title} {intro} tone="dark" />
 
 	<section aria-label="All updates" bind:this={list}>
 		<ul class="list">
@@ -71,15 +63,6 @@
 		padding: var(--space-160) var(--grid-margin) var(--space-160);
 		background: var(--grey-950);
 		color: var(--white);
-	}
-
-	/* Only the name is the heading; the line under it is set the same. */
-	.intro h1,
-	.intro p {
-		margin: 0;
-	}
-	.secondary {
-		color: var(--grey-400);
 	}
 
 	section {

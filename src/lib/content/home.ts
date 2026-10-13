@@ -45,7 +45,7 @@ export const mission = {
  * lens from further back so it reads flat, like a plan view.
  */
 /** Mark-0 close, looking well down on its top, sitting low in the panel. */
-const vessel: Shot = { pos: [0, 0.74, 0.87], target: [0, 0.11, 0], spin: 0, fov: 29 };
+const vessel: Shot = { pos: [0, 0.8, 0.82], target: [0, 0.11, 0], spin: 0, fov: 29 };
 /**
  * The power conversion system whole, pulled back and raised, three-quarters
  * on, so the power path reads left to right: the exchanger, the down pipe,
@@ -79,14 +79,14 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'power-conversion-system': {
 		// `standalone`: the exchanger's stand, which the stacked system leaves out.
 		files: cad('power-conversion-system', ['f4_heatpipes', 'f5_phx', 'standalone', 'f6_brayton', 'context']),
-		// Colour slots, a group each, all off. The carved turbo-alternator
-		// takes the skid's (`brayton`).
+		// Colour slots, a group each: everything a dark grey, the heat pipes
+		// half orange. The carved turbo-alternator takes the skid's (`brayton`).
 		colours: {
-			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#ff751f' },
-			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#ff751f' },
-			brayton: { group: 'f6_brayton', label: 'Brayton skid', colour: '#ff751f' },
-			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
-			context: { group: 'context', label: 'Context', colour: '#ff751f' }
+			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#4a4a4a', amount: 0.8 },
+			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#4a4a4a', amount: 0.8 },
+			brayton: { group: 'f6_brayton', label: 'Brayton skid', colour: '#4a4a4a', amount: 0.8 },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f', amount: 0.54 },
+			context: { group: 'context', label: 'Context', colour: '#4a4a4a', amount: 0.8 }
 		},
 		// The vessel at the back of the skid, carved out to cut open: a shaft on its
 		// axis (along x at y 1.09 m, z −4.20 m; Ø1.44 m), ~1 m discs, two inlets on

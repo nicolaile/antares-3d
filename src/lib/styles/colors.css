@@ -36,6 +36,8 @@
 	--grey-800: #3f4041;
 	/** Raised surfaces on dark: the cards and stage inside a dark band, article body copy. */
 	--grey-900: #272829;
+	/** A step up from grey-950, for hover and progress on it: the explorer's tabs. */
+	--grey-925: #1e1f20;
 	/** Dark backgrounds: the R1 band, the explorer's containers, the Updates page and its footer. */
 	--grey-950: #161718;
 	/** Primary text and active fills. */

@@ -73,7 +73,7 @@
 		transition: background 0.25s ease;
 	}
 	.face:hover {
-		background: var(--grey-900);
+		background: var(--grey-925);
 	}
 	.face:focus-visible {
 		outline: 1px solid var(--white);
@@ -101,7 +101,7 @@
 	.fill {
 		position: absolute;
 		inset: 0;
-		background: var(--grey-900);
+		background: var(--grey-925);
 		transform-origin: left;
 		pointer-events: none;
 	}

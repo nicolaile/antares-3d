@@ -45,7 +45,14 @@ export const mission = {
  * lens from further back so it reads flat, like a plan view.
  */
 /** Mark-0 close, looking well down on its top, sitting low in the panel. */
-const vessel: Shot = { pos: [0, 0.8, 0.82], target: [0, 0.11, 0], spin: 0, fov: 29 };
+const vessel: Shot = {
+	pos: [0, 0.68, 0.91],
+	target: [0, 0.11, 0],
+	spin: 0,
+	fov: 29,
+	// The entrance starts looking down on the vessel's top (6° off vertical, so the camera keeps its roll).
+	enterFrom: { pos: [0, 1.18, 0.11] }
+};
 /**
  * The power conversion system whole, pulled back and raised, three-quarters
  * on, so the power path reads left to right: the exchanger, the down pipe,
@@ -217,7 +224,7 @@ const features: Feature[] = [
 		// still; from Mark-0 it turns the last 50° in as the camera sweeps down to level.
 		// A little left of centre, so the model sits right of the panel's text.
 		shot: {
-			pos: [-0.06, 0.035, 1.1],
+			pos: [-0.06, 0.044, 1.23],
 			target: [-0.06, -0.04, 0],
 			spin: 0,
 			turn: Math.PI / 2,

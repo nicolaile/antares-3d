@@ -567,8 +567,9 @@
 
 	/**
 	 * The entrance: when the section's reveal fades the viewport in, the
-	 * model on stage turns a quarter turn into place. If it isn't loaded
-	 * yet, it turns in once it is. Grabbing it ends the turn there.
+	 * model on stage turns a quarter turn into place, and the camera sweeps
+	 * in from the shot's `enterFrom` if it has one. If it isn't loaded yet, it
+	 * turns in once it is. Grabbing it ends the turn there.
 	 */
 	const TURN_IN = { from: -Math.PI / 2, duration: 2.4, ease: 'power3.out' };
 	let viewportEl: HTMLDivElement;
@@ -583,6 +584,19 @@
 	function spinIn(v: ModelViewer) {
 		turnedIn = true;
 		turnIn = gsap.fromTo(v.userRotation, { y: TURN_IN.from }, { y: 0, duration: TURN_IN.duration, ease: TURN_IN.ease });
+		const shot = features[active]?.shot;
+		const from = shot?.enterFrom;
+		if (!shot || !from || prefersReducedMotion()) return;
+		// Next frame: a model that has just loaded is framed once more as it
+		// comes on stage, and that would cut this sweep short.
+		requestAnimationFrame(() => {
+			const r = v.radius;
+			const [x, y, z] = from.pos;
+			const [tx, ty, tz] = from.target ?? shot.target;
+			const sweep = { duration: TURN_IN.duration, ease: TURN_IN.ease };
+			gsap.from(v.camera.position, { x: x * r, y: y * r, z: z * r, ...sweep });
+			gsap.from(v.target, { x: tx * r, y: ty * r, z: tz * r, ...sweep });
+		});
 	}
 	function onRevealed() {
 		revealed = true;

@@ -27,6 +27,12 @@ export type Shot = {
 	 * sweeping in to `pos` and `target` as the model is revealed.
 	 */
 	swingFrom?: { pos: [number, number, number]; target?: [number, number, number] };
+	/**
+	 * The explorer's entrance (ReactorExplorer): on the first feature, where the
+	 * camera starts (and looks), in the shot's units, sweeping in to `pos` and
+	 * `target` as the model turns in.
+	 */
+	enterFrom?: { pos: [number, number, number]; target?: [number, number, number] };
 	/** Seconds before the camera starts its move: waiting for the stage to be seen. */
 	after?: number;
 	/** Cut to the shot at once rather than gliding there: the stage isn't seen yet. */

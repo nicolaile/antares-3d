@@ -65,7 +65,7 @@ export const LOOK: Partial<RenderParams> = {
 	// the Blender renders' bevels and cavity have them (screen space, on the
 	// finished frame).
 	ao: 0.65,
-	edges: 0.6,
+	edges: 0.9,
 	cavity: 0.5,
 	grade: 0.2,
 	sharpen: 0.65,
@@ -94,7 +94,7 @@ export const LOOK: Partial<RenderParams> = {
 	finishFloor: 0.45,
 	polymer: 1,
 	finishSheen: 0,
-	finishReflect: 1,
+	finishReflect: 2.5,
 	detail: 0.35,
 	detailTile: 1.2,
 	wrap: 0,

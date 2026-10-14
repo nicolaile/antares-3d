@@ -6,6 +6,7 @@
  *
  *   PUT /__perf/baseline/01.png      ← a captured frame
  *   PUT /__perf/baseline/report.json ← the run's timings
+ *   PUT /__perf/hidden-seen/mark-0__f3_core.bin ← triangles seen (perf.ts `hidden`)
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +25,7 @@ export function perfCaptures() {
 					res.statusCode = 405;
 					return res.end();
 				}
-				if (!/^[\w-]+$/.test(label ?? '') || !/^[\w-]+\.(png|json)$/.test(file ?? '')) {
+				if (!/^[\w-]+$/.test(label ?? '') || !/^[\w-]+\.(png|json|bin)$/.test(file ?? '')) {
 					res.statusCode = 400;
 					return res.end('bad path');
 				}

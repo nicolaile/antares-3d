@@ -50,9 +50,9 @@ const vessel: Shot = {
 	pos: [0, 0.71, 0.91],
 	target: [0, 0.14, 0],
 	spin: 0,
-	fov: 29,
-	// The entrance starts looking down on the vessel's top (6° off vertical, so the camera keeps its roll).
-	enterFrom: { pos: [0, 1.21, 0.11] }
+	fov: 29
+	// (No `enterFrom`: the sweep down from the top view faded parts in oddly
+	// on the way; the entrance is the quarter turn alone.)
 };
 /**
  * The power conversion system whole, pulled back and raised, three-quarters

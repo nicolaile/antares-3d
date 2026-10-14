@@ -14,6 +14,7 @@
  * or the Run button on the readout (PerfHud). Same window size each time:
  * the report records it and the compare flags a mismatch.
  */
+import type * as THREE from 'three';
 import type { ModelViewer, RenderParams, ViewProfile } from '$lib/three/viewer/ModelViewer';
 
 /** What a run needs of the explorer (ReactorExplorer, with ?perf). */
@@ -240,4 +241,105 @@ export async function visibility(target: PerfTarget, { log = console.info } = {}
 		await save('visibility', `${model}.json`, JSON.stringify(json) + '\n');
 	}
 	log('[visibility] saved to captures/perf/visibility/');
+}
+
+/**
+ * How many triangles are never seen (`ModelViewer.visibleTriangles`): the
+ * visibility tour (every feature, the moves between them, the drag's tilts
+ * all the way round), counting triangles rather than parts, at full detail.
+ * Logs and returns, per model and group, triangles in all and never seen.
+ * From a fresh load with ?perf, in the console:
+ *
+ *   await __perf.hidden()
+ */
+export async function hidden(target: PerfTarget, { log = console.info, scale = 1.25, keep = false } = {}) {
+	const seen = new Map<ModelViewer, Map<THREE.Mesh, Uint8Array>>();
+	const counts = new Map<ModelViewer, Map<THREE.Mesh, number>>();
+	const files = new Map<THREE.Mesh, string>();
+	const models = new Map<ModelViewer, string>();
+	const look = async (v: ModelViewer, o?: Parameters<ModelViewer['visibleTriangles']>[1]) => {
+		if (!seen.has(v)) seen.set(v, new Map());
+		if (!counts.has(v)) counts.set(v, new Map());
+		for (const { mesh, count, file } of await v.visibleTriangles(seen.get(v)!, o)) {
+			counts.get(v)!.set(mesh, count);
+			files.set(mesh, file);
+		}
+	};
+	target.setPaused(true);
+	const order = [target.count - 1, ...Array.from({ length: target.count }, (_, i) => i)];
+	for (const i of order) {
+		target.select(i);
+		const v = await viewerOf(target, i);
+		if (!v) continue;
+		models.set(v, target.modelFor(i) ?? '?');
+		// The move there, as it plays, round about and tilted, until nothing
+		// on stage has moved for a while: parts only seen mid-move (layers
+		// lifting apart) count too.
+		const start = performance.now();
+		let key = v.stageKey();
+		let still = performance.now();
+		while (performance.now() - start < 30000) {
+			await look(v, { turns: 8, tilts: [-0.4, 0, 0.4], scale: Math.min(scale, 1.5) });
+			const now = v.stageKey();
+			if (Math.abs(now - key) > 1e-6) {
+				key = now;
+				still = performance.now();
+			} else if (performance.now() - still > 2000 && performance.now() - start > 6000) break;
+		}
+		await settle(v, { min: 500 });
+		await look(v, { scale });
+		log(`[hidden] ${i + 1} sampled, ${Math.round((performance.now() - start) / 1000)} s`);
+	}
+	const report: Record<string, Record<string, { triangles: number; unseen: number }>> = {};
+	for (const [v, meshes] of counts) {
+		const model = models.get(v) ?? '?';
+		const byGroup = (report[model] ??= {});
+		const groupOf = new Map<THREE.Object3D, string>();
+		for (const name of v.groupNames) v.groupNode(name)?.traverse((o) => groupOf.set(o, name));
+		for (const [mesh, count] of meshes) {
+			const bits = seen.get(v)!.get(mesh);
+			let shown = 0;
+			if (bits) for (let k = 0; k < bits.length; k++) shown += bits[k];
+			const g = (byGroup[groupOf.get(mesh) ?? '?'] ??= { triangles: 0, unseen: 0 });
+			g.triangles += count;
+			g.unseen += count - shown;
+		}
+	}
+	for (const [model, groups] of Object.entries(report)) {
+		const all = Object.values(groups).reduce((a, g) => ({ t: a.t + g.triangles, u: a.u + g.unseen }), { t: 0, u: 0 });
+		log(`[hidden] ${model}: ${all.u} of ${all.t} triangles never seen (${Math.round((all.u / all.t) * 100)}%)`);
+		for (const [g, c] of Object.entries(groups))
+			log(`[hidden]   ${g}: ${c.unseen} of ${c.triangles} (${Math.round((c.unseen / c.triangles) * 100)}%)`);
+	}
+	await save('hidden', 'report.json', JSON.stringify(report, null, 2) + '\n');
+	// `keep`: the seen triangles themselves, for the bake to keep (bake-surface
+	// --prune): per model and file, each as its primitive and its three
+	// vertices in the file (`_pid`, `_vid`, stamped by bake-surface --tag).
+	if (keep)
+		for (const [v, meshes] of seen) {
+			const byFile = new Map<string, number[]>();
+			for (const [mesh, bits] of meshes) {
+				const g = mesh.geometry;
+				const pid = g.getAttribute('_pid');
+				const vid = g.getAttribute('_vid');
+				// The full level's triangles, which the bits number (not a coarser one swapped in since).
+				const index = (g.userData.full as THREE.BufferAttribute | undefined) ?? g.index;
+				if (!pid || !vid || !index) throw new Error('no _pid/_vid: tag the files first (bake-surface --tag)');
+				const out = byFile.get(files.get(mesh)!) ?? [];
+				byFile.set(files.get(mesh)!, out);
+				for (let t = 0; t < bits.length; t++) {
+					if (!bits[t]) continue;
+					const a = index.getX(t * 3);
+					out.push(
+						Math.round(pid.getX(a)),
+						Math.round(vid.getX(a)),
+						Math.round(vid.getX(index.getX(t * 3 + 1))),
+						Math.round(vid.getX(index.getX(t * 3 + 2)))
+					);
+				}
+			}
+			for (const [file, list] of byFile)
+				await save('hidden-seen', `${models.get(v)}__${file}.bin`, new Blob([Uint32Array.from(list)]));
+		}
+	return report;
 }

@@ -871,6 +871,26 @@ export class ModelViewer {
 	}
 
 	/**
+	 * Where every group and piece stands (levels, cuts, moves, lifts), as a
+	 * number that changes while any of them moves: dev tooling (perf.ts
+	 * `hidden`), to sample a feature's move until it's over.
+	 */
+	stageKey() {
+		let k = 0;
+		let i = 1;
+		for (const g of this.groups.values()) {
+			k += i++ * (g.level * 3 + g.cut * 5 + g.out * 7 + g.up * 11);
+			for (const p of g.pieces) k += i++ * (p.mesh.position.x * 13 + p.mesh.position.y * 17 + p.mesh.position.z * 19);
+		}
+		return k;
+	}
+
+	/** A group's node, for dev tooling (perf.ts `hidden`). */
+	groupNode(name: string) {
+		return this.groups.get(name)?.node;
+	}
+
+	/**
 	 * A group lit from within (its emissive, so tone mapped with the scene),
 	 * `amount` 0 for off. With a `sweep`, only what's above `front` (a height
 	 * in the authored frame, metres) glows, or below it with `up` (a rising
@@ -3319,6 +3339,180 @@ export class ModelViewer {
 		}
 		return Object.fromEntries([...seen].map(([file, set]) => [file, [...set].sort((a, b) => a - b)]));
 	}
+
+	/**
+	 * Dev tooling (perf.ts `hidden`): which triangles can be seen from the view
+	 * as it stands, sampled as `visibleParts` samples parts (turns and tilts,
+	 * the frame widened), each triangle drawn in its own colour on a copy of
+	 * its mesh. Full level of detail. Adds to `seen` (one bit per triangle, by
+	 * mesh) and returns each mesh's triangle count and file.
+	 */
+	async visibleTriangles(
+		seen: Map<THREE.Mesh, Uint8Array>,
+		{ turns = 24, tilts = [-0.6, -0.3, 0, 0.3, 0.6], scale = 1.25, widen = 1.5 } = {}
+	) {
+		const r = this.renderer;
+		this.profiling = true;
+		this.lodHold = 0;
+		this.pose();
+		const groups = [...this.groups.values()].filter((g) => g.node.visible && g.level > 0.001);
+		const meshes: THREE.Mesh[] = [];
+		const groupOf = new Map<THREE.Mesh, (typeof groups)[number]>();
+		for (const g of groups)
+			g.node.traverse((o) => {
+				if ((o as THREE.Mesh).isMesh && !o.userData.depthFirst && o.visible) {
+					meshes.push(o as THREE.Mesh);
+					groupOf.set(o as THREE.Mesh, g);
+				}
+			});
+		// See-through groups hide nothing: drawn each on its own (as `visibleParts`).
+		const see = groups.filter((g) => g.level < 0.999);
+		// Each mesh's triangles numbered on from the last's, from 1.
+		const copies = (this.triangleCopies ??= new Map());
+		let next = 1;
+		const ranges: { mesh: THREE.Mesh; from: number; count: number }[] = [];
+		for (const mesh of meshes) {
+			let copy = copies.get(mesh);
+			if (!copy) {
+				const flat = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+				for (const name of Object.keys(flat.attributes)) if (name !== 'position') flat.deleteAttribute(name);
+				const n = flat.getAttribute('position').count;
+				const tri = new Float32Array(n);
+				for (let i = 0; i < n; i++) tri[i] = Math.floor(i / 3);
+				flat.setAttribute('_tri', new THREE.BufferAttribute(tri, 1));
+				copies.set(mesh, (copy = { geometry: flat, count: n / 3 }));
+			}
+			ranges.push({ mesh, from: next, count: copy.count });
+			next += copy.count;
+		}
+		const material = new THREE.ShaderMaterial({
+			uniforms: { uFrom: { value: 0 } },
+			vertexShader: /* glsl */ `
+				#include <common>
+				#include <clipping_planes_pars_vertex>
+				attribute float _tri;
+				flat varying float vTri;
+				void main() {
+					vTri = _tri;
+					#include <begin_vertex>
+					#include <project_vertex>
+					#include <clipping_planes_vertex>
+				}`,
+			fragmentShader: /* glsl */ `
+				#include <clipping_planes_pars_fragment>
+				uniform float uFrom;
+				flat varying float vTri;
+				void main() {
+					#include <clipping_planes_fragment>
+					float id = uFrom + vTri;
+					gl_FragColor = vec4( mod( id, 256.0 ), mod( floor( id / 256.0 ), 256.0 ), floor( id / 65536.0 ), 255.0 ) / 255.0;
+				}`,
+			clipping: true
+		});
+		const buffer = r.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(scale).round();
+		const target = new THREE.WebGLRenderTarget(buffer.x, buffer.y);
+		const pixels = new Uint8Array(buffer.x * buffer.y * 4);
+		const saved = ranges.map(({ mesh }) => ({ mesh, geometry: mesh.geometry, material: mesh.material }));
+		const pose = {
+			turn: this.autoRotation,
+			tilt: this.userRotation.x,
+			fov: this.camera.fov,
+			shadow: r.shadowMap.enabled
+		};
+		const depthFirst: THREE.Object3D[] = [];
+		this.root.traverse((o) => o.userData.depthFirst && o.visible && depthFirst.push(o));
+		// Each mesh its own material (its own offset, its group's cuts).
+		const materials = ranges.map(({ mesh, from }) => {
+			const m = material.clone();
+			m.uniforms.uFrom.value = from;
+			const own = mesh.material as THREE.Material;
+			m.clippingPlanes = own.clippingPlanes;
+			m.clipIntersection = own.clipIntersection;
+			m.side = own.side;
+			return m;
+		});
+		const byId = (id: number) => {
+			let lo = 0;
+			let hi = ranges.length - 1;
+			while (lo < hi) {
+				const mid = (lo + hi + 1) >> 1;
+				if (ranges[mid].from <= id) lo = mid;
+				else hi = mid - 1;
+			}
+			return ranges[lo];
+		};
+		try {
+			r.shadowMap.enabled = false;
+			for (const o of depthFirst) o.visible = false;
+			ranges.forEach(({ mesh }, i) => {
+				mesh.geometry = copies.get(mesh)!.geometry;
+				mesh.material = materials[i];
+			});
+			for (let k = 0; k < turns; k++) {
+				for (const tilt of tilts) {
+					this.autoRotation = pose.turn + (k / turns) * Math.PI * 2;
+					this.userRotation.x = tilt;
+					this.pose();
+					this.camera.fov = Math.min(150, pose.fov * widen);
+					this.camera.updateProjectionMatrix();
+					const read = () => {
+						r.setRenderTarget(target);
+						r.setClearColor(0x000000, 0);
+						r.clear();
+						r.render(this.scene, this.camera);
+						r.readRenderTargetPixels(target, 0, 0, buffer.x, buffer.y, pixels);
+						for (let i = 0; i < pixels.length; i += 4) {
+							const id = pixels[i] + pixels[i + 1] * 256 + pixels[i + 2] * 65536;
+							if (!id) continue;
+							const range = byId(id);
+							let bits = seen.get(range.mesh);
+							if (!bits) seen.set(range.mesh, (bits = new Uint8Array(range.count)));
+							bits[id - range.from] = 1;
+						}
+					};
+					// The solid groups together, hiding each other, then each see-through one alone.
+					for (const g of groups) g.node.visible = !see.includes(g);
+					read();
+					for (const one of see) {
+						for (const g of groups) g.node.visible = g === one;
+						read();
+					}
+					for (const g of groups) g.node.visible = true;
+					this.camera.fov = pose.fov;
+					this.camera.updateProjectionMatrix();
+				}
+				await yieldToMain();
+			}
+		} finally {
+			for (const { mesh, geometry, material: m } of saved) {
+				mesh.geometry = geometry;
+				mesh.material = m;
+			}
+			for (const m of materials) m.dispose();
+			material.dispose();
+			for (const o of depthFirst) o.visible = true;
+			target.dispose();
+			r.setRenderTarget(null);
+			r.shadowMap.enabled = pose.shadow;
+			this.autoRotation = pose.turn;
+			this.userRotation.x = pose.tilt;
+			this.camera.fov = pose.fov;
+			this.camera.updateProjectionMatrix();
+			this.lodHold = null;
+			this.pose();
+			this.profiling = false;
+			this.invalidate();
+		}
+		return ranges.map(({ mesh, count }) => ({
+			mesh,
+			count,
+			file:
+				(groupOf.get(mesh)!.node.userData.file as string | undefined) ??
+				[...this.groups].find(([, g]) => g === groupOf.get(mesh))![0]
+		}));
+	}
+	/** `visibleTriangles`' flat copies of the meshes, made once. */
+	private triangleCopies: Map<THREE.Mesh, { geometry: THREE.BufferGeometry; count: number }> | null = null;
 
 	/** Set while `profile` runs: the ticker's frames stay out of its timing. */
 	private profiling = false;

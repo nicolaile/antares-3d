@@ -8,7 +8,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { ModelViewer, ViewProfile } from '$lib/three/viewer/ModelViewer';
-	import { run, shot, visibility, type PerfTarget } from '$lib/dev/perf';
+	import { hidden, run, shot, visibility, type PerfTarget } from '$lib/dev/perf';
 
 	let {
 		viewers,
@@ -57,6 +57,7 @@
 		(window as unknown as Record<string, unknown>).__perf = {
 			run: (l: string, o?: Parameters<typeof run>[2]) => run(target, l, o),
 			visibility: (o?: Parameters<typeof visibility>[1]) => visibility(target, o),
+			hidden: (o?: Parameters<typeof hidden>[1]) => hidden(target, o),
 			shot: (l: string, n: string, p?: Parameters<typeof shot>[3], f?: number) => shot(target, l, n, p, f),
 			// For poking at a feature's viewer from the console.
 			viewer: (f = 0) => target.viewerFor(f)

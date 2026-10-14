@@ -279,9 +279,15 @@ pre {
 }
 
 /* -------------------------------- Modifiers -------------------------------- */
-/* Combine with any style above. They change glyph features, never size. */
+/* Combine with any style above. They change glyph features or leading,
+   never size. */
 
 /** Tabular — equal-width figures, for numbers that update in place. */
 .type-tabular {
 	font-variant-numeric: tabular-nums;
+}
+
+/** Tight — 1.2 leading, for short stacked lines that read as a pair: a person's name over their role. */
+.type-tight {
+	line-height: 1.2;
 }

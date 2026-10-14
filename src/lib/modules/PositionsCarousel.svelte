@@ -1,7 +1,7 @@
 <!--
 	@component
 	The latest openings as a carousel of position cards, stepped one card at
-	a time by arrows, with a link to every opening and their total.
+	a time by arrows, with a link to every opening beside the title.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -15,13 +15,11 @@
 	let {
 		label,
 		items,
-		total,
 		all
 	}: {
 		label: string;
 		items: Position[];
 		/** Count of all openings, shown on the link. */
-		total: number;
 		all: Link;
 	} = $props();
 
@@ -67,7 +65,10 @@
 </script>
 
 <section class="positions" aria-labelledby="{id}-label">
-	<h2 id="{id}-label" class="label type-h5">{label}</h2>
+	<div class="top">
+		<h2 id="{id}-label" class="label type-h5">{label}</h2>
+		<Button {...all} />
+	</div>
 	<div class="window">
 		<ul class="track" bind:this={track}>
 			{#each items as position, i (i)}
@@ -85,7 +86,6 @@
 			/>
 			<ArrowButton direction="next" label="Next openings" disabled={index >= last} onclick={() => show(index + 1)} />
 		</div>
-		<Button label="{all.label} ({total})" href={all.href} />
 	</div>
 </section>
 
@@ -94,11 +94,18 @@
 	.positions {
 		min-width: 0;
 	}
+	/* The title with the link to every opening across from it. */
+	.top {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-24);
+	}
 	.label {
 		margin: 0;
 	}
 	.window {
-		margin-top: var(--space-48);
+		margin-top: var(--space-16);
 		overflow: hidden;
 	}
 	.track {
@@ -125,9 +132,7 @@
 	.foot {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-24);
-		margin-top: var(--space-24);
+		margin-top: var(--space-16);
 	}
 	.arrows {
 		display: flex;

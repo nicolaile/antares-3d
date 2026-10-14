@@ -156,20 +156,15 @@ export function trackHeader() {
 	};
 }
 
-/** The wordmarks already toned once, which set their colour rather than fade to it. */
-const toned = new WeakSet<Element>();
-
 /**
  * Attachment: the wordmark white over dark sections and black over light,
- * crossfading as the menu button does. `{@attach markTone}`
+ * switching at once, as the bar and menu button do. `{@attach markTone}`
  */
 export function markTone(el: HTMLElement) {
 	const color = getComputedStyle(el)
 		.getPropertyValue(header.markDark ? '--white' : '--black')
 		.trim();
-	if (!toned.has(el) || prefersReducedMotion()) gsap.set(el, { color });
-	else gsap.to(el, { color, duration: 0.15, ease: 'power1.out', overwrite: 'auto' });
-	toned.add(el);
+	gsap.set(el, { color, overwrite: 'auto' });
 }
 
 /**

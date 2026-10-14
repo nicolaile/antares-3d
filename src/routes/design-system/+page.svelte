@@ -263,8 +263,8 @@
 					<h3 class="type-body-large">ToggleRing</h3>
 					<code class="type-body-large class">&lt;ToggleRing open? active? /&gt;</code>
 					<p class="type-body-large usage">
-						The plus/minus ring for anything that opens and closes, like the accordion rows. Open, the + turns to a −
-						and the ring darkens; <code>active</code> darkens it on hover. A decoration: it sits inside the button that does
+						The plus/minus ring for anything that opens and closes, like the accordion rows. Open, the + turns to a −;
+						the ring stays light, and <code>active</code> darkens it on hover. A decoration: it sits inside the button that does
 						the opening. Shown closed (press it) and open.
 					</p>
 				</div>
@@ -589,7 +589,7 @@
 		color: var(--black);
 	}
 	.stage.dark {
-		background: var(--grey-900);
+		background: var(--grey-950);
 		color: var(--white);
 	}
 	.stage.wide {

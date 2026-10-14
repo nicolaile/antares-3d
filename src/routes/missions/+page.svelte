@@ -16,7 +16,7 @@
 <Seo title="Missions" description={intro} />
 
 <main id="content" tabindex="-1" class="missions">
-	<div class="intro"><PageIntro {title} {intro} /></div>
+	<div class="intro"><PageIntro {title} /></div>
 
 	<WordCycle {...cycle} />
 
@@ -35,15 +35,15 @@
 	   band runs edge to edge. */
 	.missions {
 		display: grid;
-		padding-bottom: var(--space-120);
+		padding-bottom: calc(var(--space-120) + var(--space-20));
 	}
 	.intro,
 	.body {
 		padding-inline: var(--grid-margin);
 	}
 	.intro {
-		padding-top: var(--space-160);
-		padding-bottom: var(--space-160);
+		padding-top: var(--space-120);
+		padding-bottom: var(--space-120);
 	}
 	.body {
 		display: grid;

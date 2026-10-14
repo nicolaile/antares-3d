@@ -1,3 +1,4 @@
+import { onMount } from 'svelte';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -48,6 +49,17 @@ export function initScroll() {
 	resized.observe(document.body);
 
 	return lenis;
+}
+
+/**
+ * Smooth scroll for a page that has no other reason to start it. Call
+ * during component setup; it starts on mount and stops on unmount.
+ */
+export function smoothScroll() {
+	onMount(() => {
+		initScroll();
+		return destroyScroll;
+	});
 }
 
 function tickLenis(time: number) {

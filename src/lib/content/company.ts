@@ -9,7 +9,6 @@
 import type { Picture } from 'vite-imagetools';
 import type { ComponentProps } from 'svelte';
 import type FeatureCards from '$lib/modules/FeatureCards.svelte';
-import { footer } from './site';
 import slide01 from '$lib/assets/images/company/slideshow-01.jpg?w=2040;1384;692&enhanced';
 import slide02 from '$lib/assets/images/company/slideshow-02.jpg?w=2040;1384;692&enhanced';
 import slide03 from '$lib/assets/images/company/slideshow-03.jpg?w=2040;1384;692&enhanced';
@@ -189,7 +188,12 @@ export const company = {
 		title: 'Culture & Operations',
 		intro:
 			'Antares combines first-principles engineering with a high-velocity operating model to build scalable industrial infrastructure.',
-		dark: { label: 'Scalable' },
+		dark: {
+			image: {
+				src: iterativeBackground,
+				alt: 'Hazy aerial view of a reactor test site and its car park on open plains'
+			}
+		},
 		note: {
 			label: 'Mission driven',
 			statement: ['Mission-critical energy,', 'engineered for Earth and beyond.'],
@@ -197,20 +201,10 @@ export const company = {
 			points: ['Bullet #1', 'Bullet #2', 'Bullet #3']
 		},
 		photo: {
-			label: 'Iterative',
 			background: {
-				src: iterativeBackground,
-				alt: 'Hazy aerial view of a reactor test site and its car park on open plains'
-			},
-			inset: {
 				src: iterativeImage,
 				alt: 'A technician leaning in under a piece of reactor hardware'
 			}
-		},
-		join: {
-			text: 'Come and do your life’s work. We are for the pragmatic dreamers.',
-			/** The same call to action as the footer's. */
-			link: footer.link
 		}
 	} satisfies FeatureCardsContent
 };

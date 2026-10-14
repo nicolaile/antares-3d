@@ -83,16 +83,17 @@
 <main id="content" class="progress-page" tabindex="-1">
 	<div class="progress">
 		<section class="hero" bind:this={hero}>
-			<Row>
-				<Cell span={6} tablet={{ span: 8 }}>
-					<h1 class="title type-h1" {@attach splitReveal()}>
-						{#each title as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
-					</h1>
-				</Cell>
-				<Cell start={9} span={4} tablet={{ start: 9, span: 4 }} mobile={{ start: 9, span: 4 }}>
-					<p class="name type-display" bind:this={name}>{model.name}</p>
-				</Cell>
-			</Row>
+			<!-- The page intro's hairline and title (as PageIntro), with the model's name beside it. -->
+			<div class="head">
+				<Row>
+					<Cell span={8}>
+						<h1 class="title type-h2" {@attach splitReveal()}>{title.join(' ')}</h1>
+					</Cell>
+					<Cell start={9} span={4} tablet={{ start: 9, span: 4 }} mobile={{ start: 9, span: 4 }}>
+						<p class="name type-display" bind:this={name}>{model.name}</p>
+					</Cell>
+				</Row>
+			</div>
 
 			<div class="opening" bind:this={opening}>
 				<Row align="center" gap={64}>
@@ -159,8 +160,13 @@
 	/* On the grid's margins; anything running past the right edge is cut
 	   there. */
 	.progress {
-		padding: var(--space-160) var(--grid-margin) var(--space-120);
+		padding: var(--space-120) var(--grid-margin) var(--space-120);
 		overflow-x: clip;
+	}
+	/* Lighter than PageIntro's Grey 200, which would vanish on this grey. */
+	.head {
+		padding-top: var(--space-16);
+		border-top: 1px solid var(--grey-300);
 	}
 
 	.title,
@@ -173,7 +179,7 @@
 		text-align: right;
 	}
 	.opening {
-		margin-top: var(--space-64);
+		margin-top: var(--space-160);
 	}
 	/* The render and its ruler lifted a little, and a touch past their
 	   columns: the ruler still spans the machine, and stays under the name. */

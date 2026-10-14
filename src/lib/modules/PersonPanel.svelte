@@ -11,6 +11,7 @@
 <script lang="ts">
 	import { tick, type Snippet } from 'svelte';
 	import Picture from '$lib/components/Picture.svelte';
+	import closeIcon from '$lib/assets/icons/close.svg?raw';
 	import { SplitText } from 'gsap/SplitText';
 	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { holdPage } from '$lib/chrome/modal';
@@ -199,30 +200,28 @@
 		tabindex="-1"
 	>
 		{#if person}
-			<header class="head">
-				<h2 id="person-name" class="name type-sub-headline">
-					{person.name}
-					<span class="role">{person.role}</span>
-				</h2>
-				<button class="close type-body-default" type="button" onclick={hide}>Close</button>
-			</header>
+			<button class="close type-caption" type="button" onclick={hide}>
+				Close
+				<span class="close-icon" aria-hidden="true">{@html closeIcon}</span>
+			</button>
 
-			<div class="body">
-				<div class="portrait">
-					<!-- Eager, with the card's sizes, so it reuses the card's loaded image. -->
-					<Picture
-						{...person.image}
-						ratio="996 / 648"
-						surface
-						loading="eager"
-						sizes="(max-width: 767px) 50vw, (max-width: 991px) 33vw, 25vw"
-					/>
-				</div>
-				<div class="about">
-					<h3 class="label type-body-default">About</h3>
-					<p class="bio type-body-default">{person.bio}</p>
-				</div>
+			<h2 id="person-name" class="name type-sub-headline">
+				{person.name}
+				<span class="role">{person.role}</span>
+			</h2>
+
+			<div class="portrait">
+				<!-- Eager, so it reuses the card's loaded image where it can. -->
+				<Picture
+					{...person.image}
+					ratio="996 / 648"
+					surface
+					loading="eager"
+					sizes="(max-width: 767px) 100vw, 33vw"
+				/>
 			</div>
+
+			<p class="bio type-body-default">{person.bio}</p>
 		{/if}
 	</div>
 
@@ -257,14 +256,14 @@
 		pointer-events: auto;
 	}
 
-	/* Waits past the right edge; half the width plus half a gutter covers
-	   columns 7–12 and the margin. */
+	/* Waits past the right edge; a third of the grid plus a gutter's third
+	   covers columns 9–12 and the margin. */
 	.panel {
 		position: absolute;
 		left: 100%;
 		display: flex;
 		flex-direction: column;
-		width: calc(50% + var(--grid-gutter) / 2);
+		width: calc((100% - 2 * var(--grid-margin) + var(--grid-gutter)) / 3 + var(--grid-margin));
 		height: 100svh;
 		box-sizing: border-box;
 		padding: var(--page-margin);
@@ -296,82 +295,67 @@
 		visibility: hidden;
 	}
 
-	.head {
-		display: flex;
-		align-items: start;
-		justify-content: space-between;
-		gap: var(--space-24);
-	}
-	.name {
-		margin: 0;
-	}
-	.role {
-		display: block;
-		color: var(--grey-700);
-	}
-	/* Phones only, where the panel covers the page and there's nothing to tap outside. */
+	/* Top right, on every size: Escape and the dimmed page also close it. */
 	.close {
-		display: none;
+		display: flex;
+		align-items: center;
+		gap: var(--space-8);
+		align-self: flex-end;
 		padding: 0;
 		border: 0;
 		background: none;
-		color: var(--grey-700);
+		color: var(--black);
 		cursor: pointer;
+	}
+	/* Sized to the 14px label. */
+	.close-icon :global(svg) {
+		display: block;
+		width: var(--space-12);
+		height: var(--space-12);
 	}
 	.close:focus-visible {
 		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 
-	/* Pinned to the panel's foot. */
-	.body {
-		display: grid;
-		grid-template-columns: repeat(6, minmax(0, 1fr));
-		column-gap: var(--grid-gutter);
-		margin-top: auto;
-		padding-top: var(--space-64);
-	}
-	.portrait {
-		grid-column: 5 / span 2;
-		overflow: hidden;
-		border-radius: var(--card-radius);
-	}
-	.about {
-		display: grid;
-		grid-column: 1 / -1;
-		grid-template-columns: subgrid;
-		margin-top: var(--space-32);
-		padding-top: var(--space-24);
-		border-top: 1px solid var(--grey-200);
-	}
-	.label,
+	.name,
 	.bio {
 		margin: 0;
 	}
-	.label {
-		grid-column: 1 / span 2;
+	/* Nothing shrinks to fit a short window (the portrait would crop); the
+	   panel scrolls instead. */
+	.panel > * {
+		flex-shrink: 0;
+	}
+	.name {
+		margin-top: var(--space-160);
+	}
+	.role {
+		display: block;
+		color: var(--grey-700);
+	}
+	.portrait {
+		margin-top: var(--space-16);
+		overflow: hidden;
+		border-radius: var(--card-radius);
 	}
 	.bio {
-		grid-column: 3 / span 4;
-		color: var(--black);
+		margin-top: var(--space-64);
+		color: var(--grey-700);
 	}
 
+	/* Tablet: columns 7–12, as a third would be too narrow. */
+	@media screen and (max-width: 991px) {
+		.panel {
+			width: calc(50% + var(--grid-gutter) / 2);
+		}
+	}
 	@media screen and (max-width: 767px) {
 		.panel {
 			width: 100%;
 		}
-		.close {
-			display: block;
-		}
-		.portrait {
-			grid-column: 1 / span 3;
-		}
-		.label,
-		.bio {
-			grid-column: 1 / -1;
-		}
-		.bio {
-			margin-top: var(--space-16);
+		.name {
+			margin-top: var(--space-64);
 		}
 	}
 </style>

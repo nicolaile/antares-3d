@@ -58,14 +58,14 @@
 		width: calc(var(--size-font) * 2.25);
 		height: calc(var(--size-font) * 2.25);
 		border: 1px solid var(--grey-200);
-		border-radius: 4px;
+		border-radius: 8px;
 		color: var(--black);
 	}
 	.toggle::after {
 		position: absolute;
 		inset: -1px;
 		border: 1px solid var(--black);
-		border-radius: 4px;
+		border-radius: 8px;
 		opacity: var(--ring, 0);
 		content: '';
 	}

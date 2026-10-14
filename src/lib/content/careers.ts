@@ -22,6 +22,12 @@ export const careers = {
 		src: heroImage,
 		alt: 'Silhouette of a face against a window onto Earth from orbit'
 	},
+	// TODO(launch): placeholder copy from the design.
+	/** The line over the hero's foot. */
+	heroText:
+		'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
+	/** The hero's link down to the openings. */
+	openings: { label: 'All openings', href: '#' },
 	positions: {
 		label: 'Latest openings',
 		// TODO(launch): replace the placeholder positions (the design's four, cycled) with the jobs feed.

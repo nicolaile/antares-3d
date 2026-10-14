@@ -9,10 +9,13 @@
 	import Summary from '$lib/modules/Summary.svelte';
 	import { company } from '$lib/content/company';
 	import { footer } from '$lib/content/site';
+	import { smoothScroll } from '$lib/motion/scroll';
 
 	const { title, intro, leadership, slideshow, summary, culture } = company;
 
 	let panel: PersonPanel;
+
+	smoothScroll();
 </script>
 
 <Seo title="Company" description={intro} />
@@ -20,7 +23,7 @@
 <PersonPanel bind:this={panel}>
 	<main id="content" tabindex="-1">
 		<div class="company">
-			<PageIntro {title} {intro} />
+			<PageIntro {title} />
 
 			<section class="leadership" aria-labelledby="leadership-label">
 				<h2 id="leadership-label" class="label type-body-default">{leadership.label}</h2>
@@ -32,12 +35,11 @@
 			</section>
 		</div>
 
+		<div class="summary"><Summary {...summary} /></div>
+
 		<Slideshow {...slideshow} />
 
-		<div class="culture">
-			<Summary {...summary} />
-			<div class="operations"><FeatureCards {...culture} /></div>
-		</div>
+		<div class="culture"><FeatureCards {...culture} /></div>
 	</main>
 
 	<Footer {...footer} />
@@ -46,18 +48,18 @@
 <style>
 	.company {
 		display: grid;
-		padding: var(--space-160) var(--grid-margin) var(--space-96);
+		padding: var(--space-120) var(--grid-margin) var(--space-96);
 	}
 
 	.leadership {
-		margin-top: var(--space-160);
+		margin-top: calc(var(--space-120) + var(--space-20));
 	}
 
+	.summary {
+		padding: var(--space-64) var(--grid-margin) var(--space-96);
+	}
 	.culture {
 		padding: var(--space-120) var(--grid-margin) var(--space-128);
-	}
-	.operations {
-		margin-top: var(--space-160);
 	}
 	.label {
 		margin: 0;

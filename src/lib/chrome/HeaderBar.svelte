@@ -2,7 +2,7 @@
 	@component
 	The full-width bar behind the wordmark and menu button. Slides in when the
 	visitor scrolls back up mid-page, away on scroll down or at the top.
-	White over light sections, dark over dark ones, crossfading between them.
+	White over light sections, dark over dark ones, switching at once.
 	A page on another light colour sets `--header-light` on <html> (Progress).
 -->
 <script lang="ts">
@@ -40,11 +40,9 @@
 	const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 	const colour = () => (header.barDark ? token('--black') : token('--header-light') || token('--white'));
 
-	// Crossfades while shown; while hidden it just takes the colour it will return in.
+	// Switches at once, shown or hidden: a fade lags the section edge it follows.
 	$effect(() => {
-		const color = colour();
-		if (untrack(() => header.backed)) gsap.to(bar, { backgroundColor: color, duration: 0.3, ease: 'power1.out' });
-		else gsap.set(bar, { backgroundColor: color });
+		gsap.set(bar, { backgroundColor: colour() });
 	});
 </script>
 

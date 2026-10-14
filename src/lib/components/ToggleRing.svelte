@@ -1,8 +1,9 @@
 <!--
 	@component
 	The plus/minus ring for anything that opens and closes, like an accordion
-	row. Open, the + turns to a − and a dark ring fades in; the dark ring also
-	shows while `active`. The same ring as ArrowButton's.
+	row. Open, the + turns to a −; the ring darkens only while `active` (the
+	row hovered), so an open row keeps the light ring. The same ring as
+	ArrowButton's.
 
 	A decoration, not a button: the control around it carries the label and
 	aria-expanded.
@@ -15,7 +16,7 @@
 		active = false
 	}: {
 		open?: boolean;
-		/** Show the dark ring without opening, e.g. while the row is hovered. */
+		/** Show the dark ring, e.g. while the row is hovered. */
 		active?: boolean;
 	} = $props();
 
@@ -32,7 +33,7 @@
 		else gsap.to(upright, { ...turn, ...MOTION, overwrite: true });
 	});
 	$effect(() => {
-		const to = { '--ring': open || active ? 1 : 0 };
+		const to = { '--ring': active ? 1 : 0 };
 		if (first || prefersReducedMotion()) gsap.set(ring, to);
 		else gsap.to(ring, { ...to, duration: 0.4, ease: 'power2.out', overwrite: true });
 		first = false;

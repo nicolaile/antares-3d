@@ -11,7 +11,7 @@
 
 <Row as="section">
 	<Cell start={7} span={5} tablet={{ start: 5, span: 8 }}>
-		<h2 class="title type-body-large">{title}</h2>
+		<h2 class="title type-sub-headline">{title}</h2>
 		<p class="text type-body-default">{text}</p>
 	</Cell>
 </Row>

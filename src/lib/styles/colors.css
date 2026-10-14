@@ -34,7 +34,7 @@
 	--grey-750: #434343;
 	/** Outlines and fills on dark: the Load more button, the R1 strip's badges. */
 	--grey-800: #3f4041;
-	/** Raised surfaces on dark: the cards and stage inside a dark band, article body copy. */
+	/** Raised surfaces on dark: the cards and stage inside a dark band, the menu button, article body copy. */
 	--grey-900: #272829;
 	/** A step up from grey-950, for hover and progress on it: the explorer's tabs. */
 	--grey-925: #1e1f20;

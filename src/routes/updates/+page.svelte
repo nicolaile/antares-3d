@@ -28,7 +28,7 @@
 <Seo title="Updates" description={intro} />
 
 <main id="content" tabindex="-1" class="updates" data-tone="dark">
-	<PageIntro {title} {intro} tone="dark" />
+	<PageIntro {title} tone="dark" />
 
 	<section aria-label="All updates" bind:this={list}>
 		<ul class="list">
@@ -60,13 +60,13 @@
 
 	.updates {
 		display: grid;
-		padding: var(--space-160) var(--grid-margin) var(--space-160);
+		padding: var(--space-120) var(--grid-margin) var(--space-160);
 		background: var(--grey-950);
 		color: var(--white);
 	}
 
 	section {
-		margin-top: var(--space-160);
+		margin-top: calc(var(--space-120) + var(--space-20));
 	}
 	/* Three up, four columns each (456px at 1440), on the page's gutter.
 	   Two up on tablet, one on mobile. */

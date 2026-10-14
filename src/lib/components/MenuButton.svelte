@@ -24,10 +24,9 @@
 	let face: HTMLSpanElement;
 
 	/**
-	 * Tone changes crossfade the dark fill (--dark, 0 to 1) and the dot colour,
-	 * resolved from tokens so GSAP can blend them. Open, the dots stay dark.
+	 * The dark fill (--dark, 0 to 1) and the dot colour, resolved from tokens
+	 * so GSAP can blend them on open and close. Open, the dots stay dark.
 	 */
-	const FADE = { duration: 0.15, ease: 'power1.out' };
 	/* Matches the white fill's timing, so the dark one never drops out ahead
 	   of it and flashes the translucent grey. */
 	const TOGGLE = { duration: 0.3, ease: 'menu' };
@@ -41,8 +40,10 @@
 			'--dark': dark && !isOpen ? 1 : 0,
 			color: token(dark && !isOpen ? '--white' : '--black')
 		};
-		if (first || prefersReducedMotion()) gsap.set(button, to);
-		else gsap.to(button, { ...to, ...(isOpen !== wasOpen ? TOGGLE : FADE), overwrite: 'auto' });
+		// A tone change switches at once, with the header bar; opening and
+		// closing still fade, in step with the panel.
+		if (first || prefersReducedMotion() || isOpen === wasOpen) gsap.set(button, { ...to, overwrite: 'auto' });
+		else gsap.to(button, { ...to, ...TOGGLE, overwrite: 'auto' });
 		first = false;
 		wasOpen = isOpen;
 	});
@@ -148,7 +149,7 @@
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
-		background: var(--grey-800);
+		background: var(--grey-900);
 		opacity: var(--dark, 0);
 	}
 	/* Matches the panel it opened. */

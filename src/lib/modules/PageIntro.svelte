@@ -1,43 +1,32 @@
 <!--
 	@component
-	The title block that opens a page: its name, then a line about it.
-	`tone="dark"` on dark pages (Updates).
+	The title block that opens a page: a hairline across the grid, the page's
+	name under it. `tone="dark"` on dark pages (Updates).
 -->
 <script lang="ts">
-	import Row from '$lib/layout/Row.svelte';
-	import Cell from '$lib/layout/Cell.svelte';
-
 	let {
 		title,
-		intro,
 		tone = 'light'
 	}: {
 		title: string;
-		intro: string;
-		/** `dark`: the line in Grey 400, for dark pages. */
+		/** `dark`: the hairline in Grey 800, for dark pages. */
 		tone?: 'light' | 'dark';
 	} = $props();
 </script>
 
-<Row>
-	<Cell span={4} tablet={{ span: 6 }}>
-		<div class="intro type-h5" class:dark={tone === 'dark'}>
-			<h1>{title}</h1>
-			<p>{intro}</p>
-		</div>
-	</Cell>
-</Row>
+<div class="intro" class:dark={tone === 'dark'}>
+	<h1 class="type-h2">{title}</h1>
+</div>
 
 <style>
-	/* Only the name is the heading; the line under it is set the same. */
-	.intro h1,
-	.intro p {
+	.intro {
+		padding-top: var(--space-16);
+		border-top: 1px solid var(--grey-200);
+	}
+	.dark {
+		border-top-color: var(--grey-800);
+	}
+	h1 {
 		margin: 0;
-	}
-	.intro p {
-		color: var(--grey-700);
-	}
-	.dark p {
-		color: var(--grey-400);
 	}
 </style>

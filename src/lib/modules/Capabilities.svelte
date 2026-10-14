@@ -1,7 +1,7 @@
 <!--
 	@component
-	A labelled accordion in a hairline box: each row a numbered title that
-	opens to a paragraph and photo. The first row starts open.
+	A labelled accordion in a hairline box: each row a title that opens to a
+	paragraph and photo. The first row starts open.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -29,21 +29,30 @@
 	let open = $state(untrack(() => items.map((_, i) => i === 0)));
 	const id = $props.id();
 	let panels: HTMLElement[] = $state([]);
+	let bodies: HTMLElement[] = $state([]);
 	/** The hovered row's ring darkens. */
 	let hovered = $state(-1);
 
 	const MOTION = { duration: 0.6, ease: 'power3.inOut' };
 
+	/**
+	 * Closed, a panel keeps its min-height as room under the title, and its
+	 * content fades out so none of it shows in that room.
+	 */
 	function set(i: number, on: boolean) {
 		if (open[i] === on) return;
 		open[i] = on;
 		const el = panels[i];
-		gsap.killTweensOf(el);
+		const body = bodies[i];
+		const height = on ? 'auto' : getComputedStyle(el).minHeight;
+		gsap.killTweensOf([el, body]);
 		if (prefersReducedMotion()) {
-			gsap.set(el, { height: on ? 'auto' : 0 });
+			gsap.set(el, { height });
+			gsap.set(body, { autoAlpha: on ? 1 : 0 });
 			return;
 		}
-		gsap.fromTo(el, { height: el.offsetHeight }, { height: on ? 'auto' : 0, ...MOTION });
+		gsap.fromTo(el, { height: el.offsetHeight }, { height, ...MOTION });
+		gsap.to(body, { autoAlpha: on ? 1 : 0, ...MOTION });
 	}
 
 	function toggle(i: number) {
@@ -77,13 +86,13 @@
 						onpointerenter={() => (hovered = i)}
 						onpointerleave={() => (hovered = -1)}
 					>
-						<span class="number type-caption type-tabular">{i + 1}</span>
 						<span class="title type-h3">{item.title}</span>
 						<span class="toggle"><ToggleRing open={open[i]} active={hovered === i} /></span>
 					</button>
 				</h3>
+				<!-- Closed, the 0 height gives way to the min-height. -->
 				<div class="panel" id="{id}-{i}" bind:this={panels[i]} style:height={i === 0 ? 'auto' : '0px'} inert={!open[i]}>
-					<div class="body">
+					<div class="body" bind:this={bodies[i]} style:opacity={i === 0 ? 1 : 0}>
 						<p class="text type-body-default">{item.text}</p>
 						<div class="image">
 							<Picture
@@ -134,7 +143,7 @@
 	}
 
 	/* Head and body on the page's columns (the box spans the grid), so the
-	   title and paragraph line up with the page's second column. */
+	   paragraph lines up with the page's second column. */
 	.head,
 	.body {
 		display: grid;
@@ -157,13 +166,9 @@
 		outline: 1px solid var(--black);
 		outline-offset: -4px;
 	}
-	.number {
-		grid-column: 1;
-		padding-top: var(--space-8);
-		padding-left: var(--space-16);
-	}
 	.title {
-		grid-column: 2 / span 9;
+		grid-column: 1 / span 10;
+		padding-left: var(--space-16);
 	}
 
 	.toggle {
@@ -173,16 +178,18 @@
 		display: flex;
 	}
 
+	/* The min-height is a closed row's room under its title. */
 	.panel {
+		min-height: var(--space-40);
 		overflow: hidden;
 	}
 	.body {
 		align-items: end;
-		padding: 0 0 var(--space-32);
+		padding: var(--space-20) 0 var(--space-24);
 	}
 	.text {
 		grid-column: 2 / span 4;
-		margin: 0 0 var(--space-32);
+		margin: 0 0 var(--space-40);
 		color: var(--grey-700);
 	}
 	.image {
@@ -201,33 +208,22 @@
 		}
 	}
 
-	/* Phones: the number above the title; the photo, then the paragraph. */
+	/* Phones: the photo, then the paragraph. */
 	@media screen and (max-width: 767px) {
 		.head {
 			padding: var(--space-16);
 		}
 		.body {
-			padding: 0 var(--space-16) var(--space-32);
+			padding: var(--space-20) var(--space-16) var(--space-24);
 		}
-		.number,
+		.title,
 		.toggle,
 		.image {
 			padding-left: 0;
 			margin-right: 0;
 		}
-		.number {
-			grid-column: 1 / span 6;
-			grid-row: 1;
-			padding-top: 0;
-		}
-		.title {
-			grid-column: 1 / span 10;
-			grid-row: 2;
-			margin-top: var(--space-16);
-		}
 		.toggle {
 			grid-column: 11 / span 2;
-			grid-row: 1 / span 2;
 		}
 		.image {
 			grid-column: 1 / -1;

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
 	import Picture from '$lib/components/Picture.svelte';
+	import CtaButton from '$lib/components/CtaButton.svelte';
 	import PositionsCarousel from '$lib/modules/PositionsCarousel.svelte';
 	import OperatingModel from '$lib/modules/OperatingModel.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
@@ -8,10 +9,13 @@
 	import Slideshow from '$lib/modules/Slideshow.svelte';
 	import { careers } from '$lib/content/careers';
 	import { footer } from '$lib/content/site';
+	import { smoothScroll } from '$lib/motion/scroll';
 
-	const { title, intro, image, positions, quote, why, life } = careers;
+	const { title, intro, image, heroText, openings, positions, quote, why, life } = careers;
 
 	const shown = positions.items.slice(0, positions.featured);
+
+	smoothScroll();
 </script>
 
 <Seo title="Careers" description={intro} />
@@ -19,15 +23,20 @@
 <main id="content" tabindex="-1">
 	<div class="careers">
 		<div class="head">
-			<PageIntro {title} {intro} />
+			<PageIntro {title} />
+		</div>
 
-			<div class="hero">
-				<Picture {...image} ratio="20 / 9" sizes="100vw" loading="eager" />
+		<!-- Edge to edge, a line and a link to the openings over its foot. -->
+		<div class="hero" data-tone="dark">
+			<Picture {...image} ratio="20 / 9" sizes="100vw" loading="eager" />
+			<div class="hero-body">
+				<p class="hero-text type-body-default">{heroText}</p>
+				<CtaButton {...openings} arrow={false} tone="dark" />
 			</div>
 		</div>
 
 		<div class="positions">
-			<PositionsCarousel label={positions.label} items={shown} total={positions.items.length} all={positions.all} />
+			<PositionsCarousel label={positions.label} items={shown} all={positions.all} />
 		</div>
 
 		<figure class="quote">
@@ -59,8 +68,8 @@
 		padding-bottom: var(--space-160);
 	}
 
-	/* Everything but the founder band sits on the grid's margins; the band
-	   runs edge to edge. */
+	/* Everything but the hero and the founder band sits on the grid's
+	   margins; those two run edge to edge. */
 	.head,
 	.positions,
 	.why {
@@ -68,12 +77,24 @@
 	}
 
 	.head {
-		padding-top: var(--space-160);
+		padding-top: var(--space-120);
 	}
 	.hero {
-		margin-top: var(--space-48);
-		overflow: hidden;
-		border-radius: var(--card-radius);
+		position: relative;
+		margin-top: calc(var(--space-120) + var(--space-20));
+	}
+	.hero-body {
+		position: absolute;
+		bottom: var(--space-48);
+		left: var(--grid-margin);
+		display: grid;
+		justify-items: start;
+		gap: var(--space-40);
+		width: min(calc(100% - 2 * var(--grid-margin)), calc(var(--size-font) * 23));
+	}
+	.hero-text {
+		margin: 0;
+		color: var(--grey-200);
 	}
 
 	.positions {

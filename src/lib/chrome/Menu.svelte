@@ -19,6 +19,21 @@
 	import { holdPage } from '$lib/chrome/modal';
 	import type { Link, Update } from '$lib/content/site';
 
+	/**
+	 * Hovering a link greys the rest of its list, so the hovered one stands
+	 * out; leaving the list brings them all back to black.
+	 */
+	function dim(e: PointerEvent) {
+		const list = e.currentTarget as HTMLElement;
+		const hovered = e.type === 'pointerleave' ? null : (e.target as Element).closest('.link');
+		if (e.type !== 'pointerleave' && !hovered) return;
+		const token = (name: string) => getComputedStyle(list).getPropertyValue(name).trim();
+		for (const link of list.querySelectorAll('.link')) {
+			const color = token(!hovered || link === hovered ? '--black' : '--grey-700');
+			gsap.to(link, { color, duration: prefersReducedMotion() ? 0 : 0.2, ease: 'power1.out', overwrite: 'auto' });
+		}
+	}
+
 	let {
 		links,
 		secondary = [],
@@ -225,7 +240,7 @@
 			<Cell start={8} span={5} tablet={{ start: 7, span: 6 }}>
 				<div class="panel" id="site-menu" bind:this={panel} inert={!open}>
 					<div class="nav">
-						<ul class="links">
+						<ul class="links" onpointerover={dim} onpointerleave={dim}>
 							{#each links as link (link.label)}
 								<li class="line">
 									<a
@@ -240,7 +255,7 @@
 							{/each}
 						</ul>
 						{#if secondary.length}
-							<ul class="links secondary">
+							<ul class="links secondary" onpointerover={dim} onpointerleave={dim}>
 								{#each secondary as link (link.label)}
 									<li class="line">
 										<a
@@ -393,10 +408,6 @@
 		display: inline-block;
 		color: var(--black);
 		text-decoration: none;
-		transition: color 0.2s ease;
-	}
-	.link:hover {
-		color: var(--grey-700);
 	}
 	a:focus-visible,
 	button:focus-visible {
@@ -406,7 +417,7 @@
 
 	.updates {
 		position: relative;
-		padding-top: var(--space-32);
+		padding-top: var(--space-24);
 	}
 	/* Hairline across the panel's full width, through its padding. */
 	.updates::before {

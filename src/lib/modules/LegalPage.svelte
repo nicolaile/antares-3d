@@ -8,11 +8,14 @@
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Footer from '$lib/chrome/Footer.svelte';
+	import { smoothScroll } from '$lib/motion/scroll';
 	import { footer } from '$lib/content/site';
 
 	let { title, description, updated, body }: import('$lib/content/legal').LegalPage = $props();
 
 	const iso = $derived(updated.split('.').reverse().join('-'));
+
+	smoothScroll();
 </script>
 
 <Seo {title} {description} />

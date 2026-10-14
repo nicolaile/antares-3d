@@ -53,7 +53,7 @@
 			</span>
 		</span>
 	</span>
-	<span class="caption type-body-large">
+	<span class="caption type-body-large type-tight">
 		{name}
 		<span class="role">{role}</span>
 	</span>

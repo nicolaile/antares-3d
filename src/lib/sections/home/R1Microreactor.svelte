@@ -63,7 +63,7 @@
 	.band {
 		--secondary: var(--grey-400);
 		margin-inline: calc(var(--grid-margin) * -1);
-		padding: var(--space-32) var(--grid-margin) var(--space-64);
+		padding: var(--space-32) var(--grid-margin) var(--space-96);
 		background: var(--black);
 		color: var(--white);
 	}

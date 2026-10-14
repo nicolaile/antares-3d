@@ -2,7 +2,9 @@
 	@component
 	A titled set of three cards: a dark card and a slate note (a statement
 	over numbered points) stacked beside a photo card, whose shape sets the
-	row's height. Optionally a full-width banner with a link underneath.
+	row's height. The dark card can hold a photo instead, filling it; the
+	photo card's label and inset are optional, so it can be one photo, full
+	bleed. Optionally a full-width banner with a link underneath.
 	Used by Company's Culture & Operations and home's Graphite Machining.
 	TODO(launch): the dark card shows only its label; its content isn't final.
 -->
@@ -27,14 +29,15 @@
 	}: {
 		title: string;
 		intro: string;
-		dark: { label?: string };
+		/** With an image, the card is that photo, cropped to fill. */
+		dark: { label?: string; image?: Image };
 		note: {
 			label: string;
 			/** Each entry is one line. */
 			statement: string[];
 			points: string[];
 		};
-		photo: { label: string; background: Image; inset?: Image };
+		photo: { label?: string; background: Image; inset?: Image };
 		join?: { text: string; link: Link };
 		/** Photo on the left (desktop only). */
 		flip?: boolean;
@@ -53,7 +56,12 @@
 	</Row>
 
 	<div class="cards">
-		<article class="card dark">
+		<article class="card dark" class:filled={dark.image}>
+			{#if dark.image}
+				<div class="fill">
+					<Picture {...dark.image} ratio={ratio(dark.image)} sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, 33vw" />
+				</div>
+			{/if}
 			{#if dark.label}<h3 class="label type-caption">{dark.label}</h3>{/if}
 		</article>
 
@@ -78,7 +86,7 @@
 					<Picture {...photo.inset} ratio={ratio(photo.inset)} sizes="(max-width: 991px) 43vw, 28vw" />
 				</div>
 			{/if}
-			<h3 class="label type-caption">{photo.label}</h3>
+			{#if photo.label}<h3 class="label type-caption">{photo.label}</h3>{/if}
 		</article>
 	</div>
 
@@ -113,7 +121,7 @@
 		grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
 		grid-template-rows: 1fr 1fr;
 		gap: var(--grid-gutter);
-		margin-top: var(--space-48);
+		margin-top: var(--space-32);
 	}
 	.dark {
 		grid-area: 1 / 1 / 2 / span 4;
@@ -184,6 +192,18 @@
 	.photo {
 		padding: 0;
 		color: var(--white);
+	}
+	/* The dark card as a photo: the image covers it, whatever the row's height. */
+	.filled {
+		padding: 0;
+	}
+	.fill {
+		position: absolute;
+		inset: 0;
+	}
+	.fill :global(.picture) {
+		height: 100%;
+		aspect-ratio: auto !important;
 	}
 	.photo .label {
 		position: absolute;

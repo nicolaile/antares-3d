@@ -11,7 +11,7 @@ import type { FeatureCardsContent } from './company';
 import specialPurposeReactors from '$lib/assets/images/landing/special-purpose-reactors.jpg?w=2028;1014;676;338&enhanced';
 import heatPipes from '$lib/assets/images/landing/heat-pipes.jpg?w=2028;1014;676;338&enhanced';
 import controlSystems from '$lib/assets/images/landing/control-systems.jpg?w=2028;1014;676;338&enhanced';
-import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1862;928;464&enhanced';
+import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1856;928;464&enhanced';
 import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;1800;1200;800&enhanced';
 // TODO(launch): replace the stand-in hero film with the final cut.
 import heroVideo from '$lib/assets/images/landing/hero-placeholder.mp4';

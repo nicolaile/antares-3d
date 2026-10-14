@@ -1,13 +1,8 @@
 <!--
 	@component
 	A block placed on the grid by column: `start` and `span` for desktop, with
-	optional `tablet` and `mobile` overrides. On mobile a cell spans all 12
-	columns unless told otherwise.
-
-	`subgrid` makes the cell a grid of its own that reuses the page's column
-	lines, so its children are placed with the same column numbers.
-
-	Attachments (`{@attach reveal()}`) pass through to its element.
+	optional `tablet` and `mobile` overrides. On mobile it spans all 12
+	columns unless told otherwise. Attachments pass through to its element.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -31,6 +26,7 @@
 		span?: Column;
 		tablet?: Placement;
 		mobile?: Placement;
+		/** Reuse the page's column lines, so children place by the same column numbers. */
 		subgrid?: boolean;
 		/** Row gap, when `subgrid`. */
 		gap?: Space;

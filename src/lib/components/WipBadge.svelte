@@ -1,9 +1,7 @@
 <!--
 	@component
-	A small "WIP" tag for stand-in media: says the image or video it sits on
-	isn't final. Place it inside a positioned box; it pins itself to the
-	top-right corner (or `corner`). Orange by default, the accent; light or
-	dark to sit back.
+	A "WIP" tag marking stand-in media as not final. Place it inside a
+	positioned box; it pins itself to `corner`.
 -->
 <script lang="ts">
 	let {
@@ -14,7 +12,7 @@
 		label?: string;
 		/** `bottom`: centred along the foot, under what it tags. */
 		corner?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'bottom';
-		/** `accent`: orange, as the open tab's badge (the default); `dark` or `light` to sit back. */
+		/** `dark` or `light` to sit back from the orange accent. */
 		tone?: 'accent' | 'light' | 'dark';
 	} = $props();
 </script>
@@ -22,7 +20,6 @@
 <span class="wip type-annotation {corner} {tone}" title="Work in progress: not final">{label}</span>
 
 <style>
-	/* 8px in from its corner at 1440, over whatever it's tagging. */
 	.wip {
 		position: absolute;
 		z-index: 2;
@@ -55,16 +52,16 @@
 		right: var(--space-8);
 	}
 	.accent {
-		background: var(--accent-500);
-		color: var(--grey-0);
+		background: var(--orange);
+		color: var(--white);
 	}
 	.dark {
-		background: var(--grey-950);
-		color: var(--grey-0);
+		background: var(--black);
+		color: var(--white);
 		box-shadow: inset 0 0 0 1px var(--grey-700);
 	}
 	.light {
-		background: var(--grey-0);
-		color: var(--grey-950);
+		background: var(--white);
+		color: var(--black);
 	}
 </style>

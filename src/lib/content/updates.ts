@@ -7,14 +7,15 @@
  * design, and the Standard Nuclear and Series C stories keep theirs. The
  * rest borrow the lab photo, the one example image not tied to a story,
  * with empty alt text since it isn't of theirs.
+ *
+ * Image widths (`w`) start from the display width at 1440: the grid's cards
+ * four columns (456px, sources at 3×), the press-kit card three (338px).
  */
 import type { Picture } from 'vite-imagetools';
 import type { Link } from './site';
-// 1368px sources: three times the 456px card at 1440.
 import news01 from '$lib/assets/images/updates/news-example-01.jpg?w=1368;912;456&enhanced';
 import news02 from '$lib/assets/images/updates/news-example-02.jpg?w=1368;912;456&enhanced';
 import news03 from '$lib/assets/images/updates/news-example-03.jpg?w=1368;912;456&enhanced';
-// Three columns (340px at 1440) on the press-kit card.
 import pressKitImage from '$lib/assets/images/article/article-thumbnail.jpg?w=1020;680;340&enhanced';
 
 /** One item in the updates grid. */
@@ -23,6 +24,7 @@ export type UpdateItem = Link & { date: string; image?: { src: Picture; alt: str
 const standardNuclear = { src: news01, alt: 'The Antares and Standard Nuclear logos' };
 const seriesC = { src: news03, alt: '$470M Series C' };
 const lab = { src: news02, alt: 'Two engineers in the lab, each holding a piece of reactor hardware' };
+// TODO(launch): give each story its own image; those without one borrow the lab photo.
 const standIn = { src: news02, alt: '' };
 
 const stories: [date: string, label: string, image?: UpdateItem['image']][] = [
@@ -64,20 +66,19 @@ export const slug = (label: string) =>
 export const updates = {
 	title: 'Updates',
 	intro: 'The latest news stories, business developments and product updates',
-	items: stories.map(
-		([date, label, image]): UpdateItem => ({
-			date,
-			label,
-			href: `/updates/${slug(label)}`,
-			image: image ?? standIn
-		})
-	),
+	items: stories.map(([date, label, image]): UpdateItem => ({
+		date,
+		label,
+		href: `/updates/${slug(label)}`,
+		image: image ?? standIn
+	})),
 	/** How many items show at first, and how many each "Load more" adds. */
 	pageSize: 12,
 	pressKit: {
 		title: 'Download Press Kit',
 		size: '38 MB',
 		image: { src: pressKitImage, alt: '' },
+		// TODO(launch): link the press kit file and match `size` to it (href is '#').
 		href: '#'
 	}
 };

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
-	import DownloadCard from '$lib/components/DownloadCard.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
 	import Capabilities from '$lib/modules/Capabilities.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import PageIntro from '$lib/modules/PageIntro.svelte';
-	import ProductCard from '$lib/modules/ProductCard.svelte';
+	import ProductCard from '$lib/components/cards/ProductCard.svelte';
 	import Summary from '$lib/modules/Summary.svelte';
 	import WordCycle from '$lib/modules/WordCycle.svelte';
 	import { missions } from '$lib/content/missions';
@@ -13,14 +13,9 @@
 	const { title, intro, cycle, summary, applications, product, specs } = missions;
 </script>
 
-<svelte:head>
-	<title>Missions — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Missions" description={intro} />
 
-<Grid visible={false} />
-
-<main class="missions">
+<main id="content" tabindex="-1" class="missions">
 	<div class="intro"><PageIntro {title} {intro} /></div>
 
 	<WordCycle {...cycle} />

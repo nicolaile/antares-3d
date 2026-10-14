@@ -1,18 +1,14 @@
 /*
  * Spacing system — the only place spacing is defined.
  *
- * An 8px scale: every step is a multiple of 8 at the 1440 design width,
- * with 4 as a half-step for hairline offsets and 20 for card padding. Horizontal placement
- * comes from the grid (columns, --grid-gutter, --grid-margin, also 16px);
- * these tokens cover everything else: gaps between stacked blocks, padding
- * inside cards and panels, space between sections.
- *
+ * An 8px scale at the 1440 design width, plus a few off-scale steps (4, 12,
+ * 20, 56). Each token is named after its px value at 1440 and scales with
+ * Osmo. Horizontal placement comes from the grid (columns, --grid-gutter
+ * 16px, --grid-margin 20px, in app.css); these cover everything else.
  * Margins, padding and gaps anywhere else use these tokens, the grid's, or
- * 0; `npm run check` fails on a raw length (scripts/check-system.mjs).
+ * 0; `npm run check` (scripts/check-system.mjs) fails on a raw length.
  *
- * Each token is named after its px value at 1440 and scales with the Osmo
- * system like everything else. The /design-system page reads this file, so
- * keep the doc-comment format:
+ * The /design-system page reads this file, so keep the doc-comment format:
  *
  *     /** When to use it. *\/
  *     --space-n: calc(var(--size-font) * …);
@@ -22,6 +18,8 @@
 	--space-4: calc(var(--size-font) * 0.25);
 	/** Between a heading and the line under it; stacked cards. */
 	--space-8: calc(var(--size-font) * 0.5);
+	/** Between a badge and its label (feature tabs). */
+	--space-12: calc(var(--size-font) * 0.75);
 	/** Card and panel padding; caption under media. Matches the gutter. */
 	--space-16: calc(var(--size-font) * 1);
 	/** Off-scale: padding inside a content card, like the press kit. */
@@ -34,6 +32,8 @@
 	--space-40: calc(var(--size-font) * 2.5);
 	/** Between a block and the group it opens. */
 	--space-48: calc(var(--size-font) * 3);
+	/** Off-scale: between a section's heading and intro and the list under them (capabilities). */
+	--space-56: calc(var(--size-font) * 3.5);
 	/** Between groups inside a section. */
 	--space-64: calc(var(--size-font) * 4);
 	/** Between closely related sections. */

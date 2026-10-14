@@ -54,15 +54,11 @@ void main() {
 	gl_Position = vec4(((aPos - uOrigin) / uView * 2.0 - 1.0) * vec2(1.0, -1.0), 0.0, 1.0);
 }`;
 
-// Each segment is a capsule-shaped quad. A pixel in reach records how far
-// along the loop it is, its signed distance from the centreline (the side
-// matters: sparks sit off-centre), and whether that stretch runs inside a
-// drawn pipe; the depth test keeps the nearest.
-//
-// Baked twice. The second pass skips whatever the first pass found at that
-// pixel — the same stretch of pipe — so it records the next-nearest pipe.
-// Shading both lets two pipes' glows overlap instead of meeting at a hard
-// edge halfway between them.
+// Each segment is a capsule-shaped quad. A pixel in reach records its arc
+// along the loop, signed distance from the centreline (sparks sit off-centre)
+// and whether that stretch is inside a drawn pipe; the depth test keeps the
+// nearest. A second bake skips the first's stretch to record the next-nearest
+// pipe, so two pipes' glows overlap instead of meeting at a hard edge.
 const BAKE_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec2 vPos;
@@ -283,11 +279,15 @@ function compile(gl: WebGL2RenderingContext, vs: string, fs: string) {
 /** Six vertices per segment: a quad grown by REACH on every side, so rounded ends are covered. */
 function segments(route: Sampled, out: number[]) {
 	for (let i = 0; i < route.arcs.length - 1; i++) {
-		const x0 = route.points[i * 2], y0 = route.points[i * 2 + 1];
-		const x1 = route.points[i * 2 + 2], y1 = route.points[i * 2 + 3];
+		const x0 = route.points[i * 2],
+			y0 = route.points[i * 2 + 1];
+		const x1 = route.points[i * 2 + 2],
+			y1 = route.points[i * 2 + 3];
 		const len = Math.hypot(x1 - x0, y1 - y0) || 1;
-		const tx = ((x1 - x0) / len) * REACH, ty = ((y1 - y0) / len) * REACH;
-		const nx = -ty, ny = tx;
+		const tx = ((x1 - x0) / len) * REACH,
+			ty = ((y1 - y0) / len) * REACH;
+		const nx = -ty,
+			ny = tx;
 		const a = [x0 - tx + nx, y0 - ty + ny];
 		const b = [x0 - tx - nx, y0 - ty - ny];
 		const c = [x1 + tx + nx, y1 + ty + ny];
@@ -295,7 +295,8 @@ function segments(route: Sampled, out: number[]) {
 		// A segment is in a pipe only if both its ends are.
 		const pipe = route.inPipe[i] && route.inPipe[i + 1] ? 1 : 0;
 		const end = i === 0 ? -1 : i === route.arcs.length - 2 ? 1 : 0;
-		for (const v of [a, b, c, c, b, d]) out.push(v[0], v[1], x0, y0, x1, y1, route.arcs[i], route.arcs[i + 1], pipe, end);
+		for (const v of [a, b, c, c, b, d])
+			out.push(v[0], v[1], x0, y0, x1, y1, route.arcs[i], route.arcs[i + 1], pipe, end);
 	}
 }
 
@@ -364,9 +365,40 @@ export class FlowMapEnergy {
 		gl.bindVertexArray(null);
 
 		for (const name of [
-			'uNearest', 'uSecond', 'uRes', 'uView', 'uOrigin', 'uReach', 'uArcMax', 'uHead', 'uPeriod', 'uTail', 'uTime',
-			'uSpeed', 'uCore', 'uGlow', 'uGlowAmount', 'uAmbient', 'uFlicker', 'uPx', 'uFill', 'uWall', 'uSparks',
-			'uTempAmount', 'uAgitation', 'uContrast', 'uCoolLevel', 'uBore', 'uCut', 'uRamp', 'uRampX', 'uCool', 'uRoutes', 'uRouteCount', 'uDots', 'uDotRgb'
+			'uNearest',
+			'uSecond',
+			'uRes',
+			'uView',
+			'uOrigin',
+			'uReach',
+			'uArcMax',
+			'uHead',
+			'uPeriod',
+			'uTail',
+			'uTime',
+			'uSpeed',
+			'uCore',
+			'uGlow',
+			'uGlowAmount',
+			'uAmbient',
+			'uFlicker',
+			'uPx',
+			'uFill',
+			'uWall',
+			'uSparks',
+			'uTempAmount',
+			'uAgitation',
+			'uContrast',
+			'uCoolLevel',
+			'uBore',
+			'uCut',
+			'uRamp',
+			'uRampX',
+			'uCool',
+			'uRoutes',
+			'uRouteCount',
+			'uDots',
+			'uDotRgb'
 		]) {
 			this.u[name] = gl.getUniformLocation(this.shade, name);
 		}

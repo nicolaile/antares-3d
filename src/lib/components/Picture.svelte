@@ -1,11 +1,9 @@
 <!--
 	@component
-	An image on a fixed aspect ratio, filling whatever grid cell it's in.
-	Sources come from `?enhanced` imports, so every image ships as AVIF/WebP
-	at several widths; `sizes` tells the browser which one to pick.
-
-	Without a `src` it renders the empty surface — a placeholder that already
-	holds the layout.
+	An image on a fixed aspect ratio, filling its cell. Sources come from
+	`?enhanced` imports (AVIF/WebP at several widths), so set `sizes`.
+	Without a `src` it renders an empty placeholder that holds the layout.
+	A block-level span, not a div, so it can sit inside a button or link.
 -->
 <script lang="ts">
 	import type { Picture } from 'vite-imagetools';
@@ -30,24 +28,25 @@
 		/** Grey panel behind the image, for cut-outs and placeholders. */
 		surface?: boolean;
 		loading?: 'lazy' | 'eager';
-		/** The first thing on screen (a hero): fetched ahead of the page's other images. */
+		/** Above the fold (a hero): fetched ahead of the page's other images. */
 		priority?: boolean;
 	} = $props();
 </script>
 
-<div class="picture" class:surface class:contain={fit === 'contain'} style:aspect-ratio={ratio}>
+<span class="picture" class:surface class:contain={fit === 'contain'} style:aspect-ratio={ratio}>
 	{#if src}
 		<enhanced:img {src} {alt} {sizes} {loading} fetchpriority={priority ? 'high' : undefined} />
 	{/if}
-</div>
+</span>
 
 <style>
 	.picture {
+		display: block;
 		position: relative;
 		overflow: hidden;
 	}
 	.surface {
-		background: var(--grey-100);
+		background: var(--grey-50);
 	}
 	.picture :global(picture),
 	.picture :global(img) {

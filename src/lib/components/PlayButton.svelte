@@ -1,9 +1,8 @@
 <!--
 	@component
-	The label laid over a video's still: "Play" and the running time, on a
-	translucent pill. Place it in the corner of whatever holds the still
-	(position it from the parent). Without `onclick` it's only the label, the
-	player to come.
+	"Play" and the running time on a translucent pill, laid over a video's
+	still. Position it from the parent.
+	TODO(launch): no video player yet; without `onclick` it is label-only.
 -->
 <script lang="ts">
 	let {
@@ -40,14 +39,14 @@
 		border-radius: var(--stage-radius);
 		background: var(--scrim);
 		backdrop-filter: blur(8px);
-		color: var(--grey-0);
+		color: var(--white);
 		cursor: pointer;
 	}
 	.duration {
-		color: var(--grey-300);
+		color: var(--button);
 	}
 	.play:focus-visible {
-		outline: 1px solid var(--grey-0);
+		outline: 1px solid var(--white);
 		outline-offset: 2px;
 	}
 </style>

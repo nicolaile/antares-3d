@@ -1,20 +1,16 @@
 <!--
 	@component
-	The latest openings as a carousel: a label, then a row of position
-	cards four up (two on tablet, one on phones), stepped one card at a
-	time by the round arrows under the row's left end. A link to every
-	opening, with the total, sits under its right end.
-
-	The row slides with GSAP; the arrows fade out at either end of it.
+	The latest openings as a carousel of position cards, stepped one card at
+	a time by arrows, with a link to every opening and their total.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import PositionCard from '$lib/components/PositionCard.svelte';
+	import PositionCard from '$lib/components/cards/PositionCard.svelte';
 	import ArrowButton from '$lib/components/ArrowButton.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import type { Position } from '$lib/content/careers';
 	import type { Link } from '$lib/content/site';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		label,
@@ -23,11 +19,9 @@
 		all
 	}: {
 		label: string;
-		/** The cards in the row. */
 		items: Position[];
-		/** Every opening, for the link's count. */
+		/** Count of all openings, shown on the link. */
 		total: number;
-		/** Where every opening is listed. */
 		all: Link;
 	} = $props();
 
@@ -35,7 +29,7 @@
 	let track: HTMLUListElement;
 	/** The first card in view. */
 	let index = $state(0);
-	/** How many cards fit in view, read from the layout. */
+	/** Read from the layout (CSS --per-view). */
 	let perView = $state(4);
 	const last = $derived(Math.max(0, items.length - perView));
 
@@ -57,8 +51,7 @@
 
 	onMount(() => {
 		const measure = () => {
-			// The window holds perView cards and one gap fewer: its width over
-			// one step rounds to the count.
+			// perView cards and one gap fewer: width over one step rounds to the count.
 			const s = step();
 			perView = s ? Math.max(1, Math.round(track.parentElement!.clientWidth / s)) : 1;
 			show(index, true);
@@ -74,7 +67,7 @@
 </script>
 
 <section class="positions" aria-labelledby="{id}-label">
-	<h2 id="{id}-label" class="label type-h3">{label}</h2>
+	<h2 id="{id}-label" class="label type-h5">{label}</h2>
 	<div class="window">
 		<ul class="track" bind:this={track}>
 			{#each items as position, i (i)}
@@ -84,7 +77,12 @@
 	</div>
 	<div class="foot">
 		<div class="arrows">
-			<ArrowButton direction="previous" label="Previous openings" disabled={index === 0} onclick={() => show(index - 1)} />
+			<ArrowButton
+				direction="previous"
+				label="Previous openings"
+				disabled={index === 0}
+				onclick={() => show(index - 1)}
+			/>
 			<ArrowButton direction="next" label="Next openings" disabled={index >= last} onclick={() => show(index + 1)} />
 		</div>
 		<Button label="{all.label} ({total})" href={all.href} />
@@ -92,20 +90,17 @@
 </section>
 
 <style>
-	/* Never wider than where it's put, however long the row. */
+	/* So the long track can't widen its grid cell. */
 	.positions {
 		min-width: 0;
 	}
 	.label {
 		margin: 0;
 	}
-	/* Clipped to the grid, so the cards beyond it wait out of sight. */
 	.window {
 		margin-top: var(--space-48);
 		overflow: hidden;
 	}
-	/* Four up, three columns each (338px at 1440), on the page's gutter.
-	   Two up on tablet, one on phones. */
 	.track {
 		--per-view: 4;
 		display: grid;

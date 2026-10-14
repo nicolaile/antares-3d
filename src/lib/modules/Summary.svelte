@@ -1,8 +1,6 @@
 <!--
 	@component
-	A short titled paragraph set to the right: the title over a paragraph in
-	the secondary grey, on columns 7–11 (the right half on tablet, full width
-	on phones).
+	A short titled paragraph set to the right of the grid.
 -->
 <script lang="ts">
 	import Row from '$lib/layout/Row.svelte';

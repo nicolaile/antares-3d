@@ -1,9 +1,7 @@
 <!--
 	@component
-	A list of figures: value in the first column, what it measures in the
-	rest. With a `title` it sits under a rule, headed; without one it's the
-	bare list. `quiet` sets it all in the secondary grey, in Small. Place in
-	a `subgrid` cell; it uses that cell's columns.
+	A list of figures: the value, then what it measures. Place in a `subgrid`
+	cell; it lays out on that cell's columns.
 -->
 <script lang="ts">
 	let {
@@ -11,8 +9,10 @@
 		items,
 		quiet = false
 	}: {
+		/** Heads the list, under a rule. */
 		title?: string;
 		items: { value: string; label: string }[];
+		/** Smaller, in the secondary grey. */
 		quiet?: boolean;
 	} = $props();
 </script>

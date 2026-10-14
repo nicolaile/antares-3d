@@ -11,7 +11,7 @@
 		onclick,
 		children
 	}: {
-		/** Accessible name — the button has no visible text. */
+		/** Accessible name; the button has no visible text. */
 		label: string;
 		pressed?: boolean;
 		onclick: () => void;
@@ -32,7 +32,7 @@
 		padding: 0;
 		border: 0;
 		background: var(--grey-200);
-		color: var(--grey-950);
+		color: var(--black);
 		cursor: pointer;
 		transition: background 0.25s ease;
 	}
@@ -40,7 +40,7 @@
 		background: var(--grey-400);
 	}
 	.icon-button:focus-visible {
-		outline: 1px solid var(--grey-950);
+		outline: 1px solid var(--black);
 		outline-offset: 2px;
 	}
 	.icon-button :global(svg) {

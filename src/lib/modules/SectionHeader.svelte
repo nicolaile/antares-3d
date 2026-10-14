@@ -1,11 +1,8 @@
 <!--
 	@component
-	Opens a section. `split` (the default): the title on the left and an
-	optional aside on the right (columns 9–11), level with it. `center`: the
-	title and the aside as one short block in the middle four columns, the
-	same size, the aside straight under the title. Takes the section's text
-	colour, so it works on light and dark; the aside is the secondary tone of
-	either. Place in a full-width `subgrid` cell.
+	Opens a section with a title and optional aside. Takes the section's text
+	colour; the aside uses `--secondary` if set. Place in a full-width
+	`subgrid` cell.
 -->
 <script lang="ts">
 	import Cell from '$lib/layout/Cell.svelte';
@@ -17,6 +14,7 @@
 	}: {
 		title: string;
 		aside?: string;
+		/** `split`: aside to the right, level with the title. `center`: one centred block. */
 		align?: 'split' | 'center';
 	} = $props();
 </script>
@@ -24,8 +22,8 @@
 <header class="header" class:center={align === 'center'}>
 	{#if align === 'center'}
 		<Cell start={5} span={4} tablet={{ start: 3, span: 8 }}>
-			<h2 class="title type-h2-small">{title}</h2>
-			{#if aside}<p class="aside type-h2-small">{aside}</p>{/if}
+			<h2 class="title type-h4">{title}</h2>
+			{#if aside}<p class="aside type-h4">{aside}</p>{/if}
 		</Cell>
 	{:else}
 		<Cell span={8} tablet={{ span: 12 }}>
@@ -33,7 +31,7 @@
 		</Cell>
 		{#if aside}
 			<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
-				<p class="aside type-body-large">{aside}</p>
+				<p class="aside type-body-default">{aside}</p>
 			</Cell>
 		{/if}
 	{/if}
@@ -57,10 +55,8 @@
 		color: var(--secondary, var(--grey-700));
 	}
 
-	/* Centred: one block, the aside reading on from the title. */
 	.center {
 		text-align: center;
-		/* Centred lines of even length, not a long one over a stray word or two. */
 		text-wrap: balance;
 	}
 	.center .aside {

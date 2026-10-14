@@ -1,22 +1,15 @@
 /*
  * Typography system — the only place type is defined.
  *
- * Every font-size, line-height, letter-spacing, font-family, font-weight and
- * text-transform in the project lives in this file. Components pick a style by
- * class (`.type-body-default`, `.type-caption`, …) and never set type properties of
- * their own; `npm run check` fails if they do (scripts/check-system.mjs).
+ * Components pick a style by class (`.type-body-default`, …) and never set
+ * font or text-transform properties of their own; `npm run check` fails if
+ * they do (scripts/check-system.mjs). Sizes are multiples of --size-font, so
+ * they scale with Osmo; px values in comments are at 1440. Display and
+ * Caption are trimmed to cap height and baseline (`text-box`, like Figma's
+ * vertical trim), so spacing around them measures from the letters.
  *
- * Sizes are multiples of --size-font, so they scale with the Osmo system:
- * the px values in comments are at the 1440 desktop design width. The large
- * styles step down at the tablet and mobile breakpoints below.
- *
- * Display and Caption are trimmed to cap height and baseline (`text-box`),
- * like Figma's vertical trim, so spacing around them measures from the
- * letters rather than the line box. Line height still sets the space between
- * their lines.
- *
- * The /design-system page reads this file directly. A style's doc comment
- * becomes its description there, so keep the format:
+ * The /design-system page reads this file. A style's doc comment is its
+ * description there, so keep the format:
  *
  *     /** Name — when to use it. *\/
  *     .type-name { … }
@@ -53,29 +46,34 @@
 	--type-h1-leading: 1.0556;
 	--type-h1-tracking: -0.03em;
 
-	/* 34/38px */
-	--type-h2-size: calc(var(--size-font) * 2.125);
-	--type-h2-leading: 1.1176;
+	/* 48/52px */
+	--type-h2-size: calc(var(--size-font) * 3);
+	--type-h2-leading: 1.0833;
 	--type-h2-tracking: -0.02em;
 
-	/* 28/32px */
-	--type-h2-small-size: calc(var(--size-font) * 1.75);
-	--type-h2-small-leading: 1.1429;
-	--type-h2-small-tracking: -0.02em;
-
-	/* 24/28px */
-	--type-h3-size: calc(var(--size-font) * 1.5);
-	--type-h3-leading: 1.1667;
+	/* 32/36px */
+	--type-h3-size: calc(var(--size-font) * 2);
+	--type-h3-leading: 1.125;
 	--type-h3-tracking: -0.02em;
 
-	/* 20/24px */
-	--type-h4-size: calc(var(--size-font) * 1.25);
-	--type-h4-leading: 1.2;
-	--type-h4-tracking: -0.01em;
+	/* 28/32px */
+	--type-h4-size: calc(var(--size-font) * 1.75);
+	--type-h4-leading: 1.1429;
+	--type-h4-tracking: -0.02em;
 
-	/* 18/22px */
+	/* 24/28px */
+	--type-h5-size: calc(var(--size-font) * 1.5);
+	--type-h5-leading: 1.1667;
+	--type-h5-tracking: -0.02em;
+
+	/* 20/24px */
+	--type-sub-headline-size: calc(var(--size-font) * 1.25);
+	--type-sub-headline-leading: 1.2;
+	--type-sub-headline-tracking: -0.01em;
+
+	/* 18/25px */
 	--type-body-large-size: calc(var(--size-font) * 1.125);
-	--type-body-large-leading: 1.2222;
+	--type-body-large-leading: 1.3889;
 	--type-body-large-tracking: -0.01em;
 
 	/* 16/20px */
@@ -112,12 +110,13 @@
 	}
 }
 
-/* Mobile: Display at 64px, H1 at 40px, H2 at 28px. */
+/* Mobile: Display at 64px, H1 at 40px, H2 at 34px, H3 at 28px. */
 @media screen and (max-width: 767px) {
 	:root {
 		--type-display-size: calc(var(--size-font) * 4);
 		--type-h1-size: calc(var(--size-font) * 2.5);
-		--type-h2-size: calc(var(--size-font) * 1.75);
+		--type-h2-size: calc(var(--size-font) * 2.125);
+		--type-h3-size: calc(var(--size-font) * 1.75);
 	}
 }
 
@@ -178,7 +177,7 @@ pre {
 	letter-spacing: var(--type-h1-tracking);
 }
 
-/** H2 — statements, subsection titles and the menu links. */
+/** H2 — large statements, a step under H1. */
 .type-h2 {
 	font-family: var(--font-sans);
 	font-size: var(--type-h2-size);
@@ -186,15 +185,7 @@ pre {
 	letter-spacing: var(--type-h2-tracking);
 }
 
-/** H2-Small — a step under H2, for headings that need more presence than H3. */
-.type-h2-small {
-	font-family: var(--font-sans);
-	font-size: var(--type-h2-small-size);
-	line-height: var(--type-h2-small-leading);
-	letter-spacing: var(--type-h2-small-tracking);
-}
-
-/** H3 — section-opening statements, card titles and small headings. */
+/** H3 — statements, subsection titles and the menu links. */
 .type-h3 {
 	font-family: var(--font-sans);
 	font-size: var(--type-h3-size);
@@ -202,12 +193,28 @@ pre {
 	letter-spacing: var(--type-h3-tracking);
 }
 
-/** H4 — short titles in lists and cards: updates, press, names. */
+/** H4 — a step under H3, for headings that need more presence than H5. */
 .type-h4 {
 	font-family: var(--font-sans);
 	font-size: var(--type-h4-size);
 	line-height: var(--type-h4-leading);
 	letter-spacing: var(--type-h4-tracking);
+}
+
+/** H5 — section-opening statements, card titles and small headings. */
+.type-h5 {
+	font-family: var(--font-sans);
+	font-size: var(--type-h5-size);
+	line-height: var(--type-h5-leading);
+	letter-spacing: var(--type-h5-tracking);
+}
+
+/** Sub-Headline — short titles in lists and cards: updates, press, names. */
+.type-sub-headline {
+	font-family: var(--font-sans);
+	font-size: var(--type-sub-headline-size);
+	line-height: var(--type-sub-headline-leading);
+	letter-spacing: var(--type-sub-headline-tracking);
 }
 
 /** Body-Large — ledes and long-form running text. */

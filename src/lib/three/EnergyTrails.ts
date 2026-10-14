@@ -1,29 +1,29 @@
 /**
- * Energy running along a model's pipes, as the R1 section's diagram draws
- * it (FlowMapEnergy, with its parameters, energy.ts): pulses leave the
- * start of each route together, a white-hot comet head on a crisp core
- * line, its tail running back through orange to pink, turbulence carried
- * along with the flow, the bore filled behind it, light on the pipe's
- * walls and sparks drifting through.
+ * Energy running along a model's pipes, as the R1 section's diagram draws it
+ * (FlowMapEnergy, parameters in energy.ts): pulses leave each route's start
+ * together, a white-hot comet head on a crisp core, its tail running back
+ * through orange to pink, with turbulence, bore fill, wall light and sparks.
  *
- * Each route is a sleeve just outside its pipe. A point on it knows how
- * far along the route it is and how far across the pipe it sits, as seen
- * from the camera; with the pipe's radius as the diagram's (13.5 units),
- * the diagram's own shading carries over unchanged, unit for unit.
+ * Each route (a polyline through the pipe's centre in the CAD's frame, Y-up
+ * metres, rounded at the elbows) becomes a sleeve just outside its pipe. A
+ * point on it knows how far along the route and, seen from the camera, how
+ * far across the pipe it sits; scaled so the pipe's radius is the diagram's
+ * 13.5 units, the diagram's shading carries over unchanged.
  *
- * A pass over the finished frame (ModelViewer's `addOverlay`), after tone
- * mapping, so the colours come out as the diagram's: the sleeves drawn on
- * their own, hidden where the model's depth (the occlusion pass's) stands
- * in front of them, then laid over the frame with a bloom of their light,
- * blurred down and back up a chain of halving sizes, for a halo that
- * spreads past the pipe and over what's round it.
- *
- * Routes are polylines through a pipe's centre (the CAD's authored frame,
- * Y-up metres), rounded at each corner as the pipe's elbows are.
+ * A pass after tone mapping (ModelViewer's `addOverlay`), so colours match the
+ * diagram: hidden behind the model's depth, laid over the frame, and bloomed
+ * down and back up a chain of halving sizes.
  */
 import * as THREE from 'three';
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js';
-import { COOL, DEFAULT_TRAIL_LOOK, DEFAULT_TRAIL_PARAMS, RAMPS, type EnergyParams, type TrailLook } from '$lib/energy/energy';
+import {
+	COOL,
+	DEFAULT_TRAIL_LOOK,
+	DEFAULT_TRAIL_PARAMS,
+	RAMPS,
+	type EnergyParams,
+	type TrailLook
+} from '$lib/energy/energy';
 
 export interface TrailRoute {
 	/** The pipe's centre line, from where the energy starts. */
@@ -269,7 +269,6 @@ const SLEEVE_FS = /* glsl */ `
 		gl_FragColor = gain(heat(vArc, sd, px) * uLevel) * seen(vPos);
 	}`;
 
-
 const QUAD_VS = /* glsl */ `
 	varying vec2 vUv;
 	void main() {
@@ -335,7 +334,12 @@ function oklab(hex: string): [number, number, number] {
 }
 
 const target = () =>
-	new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+	new THREE.WebGLRenderTarget(1, 1, {
+		type: THREE.HalfFloatType,
+		depthBuffer: false,
+		minFilter: THREE.LinearFilter,
+		magFilter: THREE.LinearFilter
+	});
 
 /** What the trails need of the viewer they're drawn over (ModelViewer). */
 export interface TrailsHost {
@@ -370,7 +374,12 @@ export class EnergyTrails extends Pass {
 		blending: THREE.AdditiveBlending
 	});
 	private composite = new THREE.ShaderMaterial({
-		uniforms: { tBase: { value: null }, tTrails: { value: null }, tBloom: { value: null }, uBloom: { value: DEFAULT_TRAIL_LOOK.bloom } },
+		uniforms: {
+			tBase: { value: null },
+			tTrails: { value: null },
+			tBloom: { value: null },
+			uBloom: { value: DEFAULT_TRAIL_LOOK.bloom }
+		},
 		vertexShader: QUAD_VS,
 		fragmentShader: COMPOSITE_FS,
 		depthTest: false,
@@ -463,7 +472,6 @@ export class EnergyTrails extends Pass {
 		this.enabled = level > 0.001;
 	}
 
-
 	/** The diagram's parameters (EnergyControls), live. */
 	setParams(p: EnergyParams) {
 		const u = this.material.uniforms;
@@ -501,9 +509,8 @@ export class EnergyTrails extends Pass {
 		u.uPeriod.value = look.spacing;
 		u.uTail.value = Math.min(this.tail, look.spacing * 0.95);
 		this.composite.uniforms.uBloom.value = look.bloom;
-		// Tail, tail at its fullest, body, head. Display colours, as the
-		// diagram's: the trails are drawn after tone mapping.
-		// In OKLab, for the shader to blend between.
+		// Tail, tail at its fullest, body, head: display colours (the trails
+		// draw after tone mapping), in OKLab for the shader to blend between.
 		const [tail, full, body, head] = u.uRamp.value as THREE.Vector4[];
 		tail.set(...oklab(look.tail), 0);
 		full.set(...oklab(look.tail), look.tailOpacity);

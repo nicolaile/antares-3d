@@ -18,12 +18,20 @@ const RULES = [
 		fix: 'use a .type-* class',
 		source: 'src/lib/styles/typography.css',
 		extensions: /\.(svelte|css|html|ts|js)$/,
-		// Reads the system for the /design-system page; names properties, never sets them.
-		exempt: ['src/lib/typography.ts'],
-		// `font: inherit` only resets a control to the system; any other `font:`
-		// shorthand sets a size.
+		exempt: [
+			// Reads the system for the /design-system page; names properties, never sets them.
+			'src/lib/tokens/typography.ts',
+			// Sizes each digit's cell to the roll, in the text's own em.
+			'src/lib/motion/odometer.ts',
+			// Developer readout, not part of the design.
+			'src/lib/dev/PerfHud.svelte',
+			// A pre-launch marker on unfinished parts; goes with the last of them.
+			'src/lib/components/WipBadge.svelte'
+		],
+		// `inherit` only resets an element to the system around it; any other
+		// `font:` shorthand sets a size.
 		banned:
-			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform|text-box(?:-trim|-edge)?)\s*:|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
+			/(?<![\w-])(font-size|line-height|letter-spacing|font-family|font-weight|text-transform|text-box(?:-trim|-edge)?)\s*:(?!\s*inherit\b)|(?<![\w-])font\s*:(?!\s*inherit\b)|style:(font-size|line-height|letter-spacing|font-family|font-weight)/
 	},
 	{
 		name: 'Colour',
@@ -35,7 +43,7 @@ const RULES = [
 		exempt: [
 			// Developer layout overlay, deliberately Figma's red so it can't be
 			// mistaken for part of the design.
-			'src/lib/components/Grid.svelte'
+			'src/lib/dev/Grid.svelte'
 		],
 		banned:
 			/(?<![\w{&])#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(|(?<![\w-])(color|background|background-color|border|border-color|outline|outline-color|fill|stroke|accent-color|caret-color|box-shadow)\s*[:=]\s*["']?[^;"'>]*(?<![\w-])(white|black|red|green|blue|gr[ae]y|silver)(?![\w-])/
@@ -46,10 +54,10 @@ const RULES = [
 		source: 'src/lib/styles/spacing.css',
 		extensions: /\.(svelte|css|html)$/,
 		exempt: [
-			// Developer tool panels, hidden behind Shift+H: dense, not part of
-			// the design.
-			'src/lib/components/Controls.svelte',
-			'src/lib/components/EnergyControls.svelte'
+			// Developer tool panels and readout: dense, not part of the design.
+			'src/lib/explorer/Controls.svelte',
+			'src/lib/explorer/EnergyControls.svelte',
+			'src/lib/dev/PerfHud.svelte'
 		],
 		// A margin, padding or gap set in raw lengths or base units. Tokens,
 		// 0, auto, percentages and a component's own derived variables are fine.
@@ -57,7 +65,6 @@ const RULES = [
 			/(?<![\w-])(margin|padding|gap|row-gap|column-gap)(-[a-z-]+)?\s*:[^;]*(\d(px|r?em|v[wh]|[sdl]v[wh])\b|--size-font)|style:(margin|padding|gap|row-gap|column-gap)[\w-]*=[^>]*(\d(px|r?em)\b|--size-font)/
 	}
 ];
-
 
 function walk(dir) {
 	return readdirSync(dir).flatMap((name) => {
@@ -79,6 +86,8 @@ for (const rule of RULES) {
 		if (skip.has(file.rel) || !rule.extensions.test(file.rel)) continue;
 		file.lines ??= readFileSync(join(ROOT, file.rel), 'utf8').split('\n');
 		file.lines.forEach((line, i) => {
+			// A deliberate exception names itself on its line, with the reason.
+			if (line.includes('check-system: allow')) return;
 			const code = line.replace(/\/\*.*?\*\/|<!--.*?-->|\/\/.*$/g, '');
 			if (rule.banned.test(code)) errors.push(`${file.rel}:${i + 1}  ${line.trim()}`);
 		});

@@ -4,24 +4,25 @@
 	import '$lib/styles/spacing.css';
 	import '$lib/styles/typography.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { onNavigate, afterNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getLenis } from '$lib/scroll';
-	import Menu from '$lib/modules/Menu.svelte';
-	import BrandMark from '$lib/modules/BrandMark.svelte';
-	import HeaderBar from '$lib/modules/HeaderBar.svelte';
-	import { trackHeader, updateHeader } from '$lib/header.svelte';
+	import { getLenis } from '$lib/motion/scroll';
+	import Menu from '$lib/chrome/Menu.svelte';
+	import BrandMark from '$lib/chrome/BrandMark.svelte';
+	import HeaderBar from '$lib/chrome/HeaderBar.svelte';
+	import { trackHeader, updateHeader } from '$lib/chrome/header.svelte';
 	import { menu } from '$lib/content/site';
+	import DevTools from '$lib/dev/DevTools.svelte';
 	let { children } = $props();
 
 	/**
 	 * A new page starts at the top before it mounts, not after: SvelteKit
 	 * only resets the scroll once the page is in, and until then the old
-	 * page's position is clamped into the new, still-short one. Missions'
-	 * pinned slideshow took that for a visitor arriving at its pin and held
-	 * the page there. Back and forward, and links to a #section, keep
-	 * SvelteKit's own restore.
+	 * page's position is clamped into the new, still-short one, which a
+	 * pinned section (Missions' slideshow) reads as a visitor arriving at its
+	 * pin. Back and forward, and links to a #section, keep SvelteKit's restore.
 	 */
 	onNavigate(({ type, to }) => {
 		if (type === 'popstate' || to?.url.hash) return;
@@ -32,33 +33,15 @@
 	/** The header follows the scroll on every page, and starts out showing on each new one. */
 	onMount(trackHeader);
 	afterNavigate(() => updateHeader(true));
-
-	/** Remembered across visits, so the tools stay how you left them. */
-	const KEY = 'antares:tools';
-
-	/**
-	 * Shift+H shows or hides every tool button (pause, render and energy
-	 * controls) at once. Hidden by default. The state lives on <html> as
-	 * `data-tools`, which app.css reads; app.html restores it before paint.
-	 */
-	function onkeydown(e: KeyboardEvent) {
-		if (!e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== 'h') return;
-		const el = e.target as HTMLElement | null;
-		if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
-		const on = document.documentElement.toggleAttribute('data-tools');
-		try {
-			localStorage.setItem(KEY, on ? '1' : '0');
-		} catch {
-			// Storage blocked: the toggle still works for this visit.
-		}
-	}
 </script>
 
-<svelte:window {onkeydown} />
-
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={favicon} type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 </svelte:head>
+
+<!-- First in the tab order: past the header and menu, to the page's <main id="content">. -->
+<a class="skip-link type-button" href="#content">Skip to content</a>
 
 <HeaderBar />
 <Menu {...menu} current={page.url.pathname} />
@@ -67,3 +50,33 @@
 {#if page.url.pathname !== '/'}<BrandMark />{/if}
 
 {@render children?.()}
+
+{#if dev}<DevTools />{/if}
+
+<style>
+	/* Out of sight until the keyboard reaches it, then over the header, top left. */
+	.skip-link {
+		position: fixed;
+		top: var(--space-16);
+		left: var(--space-16);
+		z-index: 60;
+		padding: var(--space-8) var(--space-12);
+		border-radius: var(--space-4);
+		background: var(--white);
+		color: var(--black);
+		text-decoration: none;
+	}
+	.skip-link:not(:focus-visible) {
+		width: 1px;
+		height: 1px;
+		margin: -1px; /* check-system: allow — the visually-hidden pattern */
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	/* <main> takes focus from the skip link only to move the reading point; no ring round the page. */
+	:global(main[tabindex='-1']:focus) {
+		outline: none;
+	}
+</style>

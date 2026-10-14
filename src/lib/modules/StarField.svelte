@@ -1,34 +1,23 @@
 <!--
 	@component
 	A field of stars around Antares, filling its parent. Antares is a link
-	home: hover it and the field turns into its system, every star swinging
-	round it on its own orbit (the near ones faster, Kepler-style) and
-	leaving a trail that fades out behind it, like a long exposure. Let go
-	and they wind back into place, each drawing its trail in behind it. Click and the stars spiral in, Antares swells to fill the
-	screen in white, and the home page opens behind it.
+	home: hovering it sets every star orbiting it (Kepler-style) with fading
+	trails; leaving winds them back. Clicking spirals the stars in and swells
+	Antares to fill the screen before navigating.
 
-	At rest the whole field drifts a little against the pointer, but never
-	as one: every star has its own depth (how far it shifts) and its own
-	lag (how slowly it follows), so the sky separates into layers as you
-	move and settles star by star. Up close, the pointer also bends the
-	field round it, like gravitational lensing: stars near it lean away and
-	brighten a touch. Each star rides its own soft spring, so they ease
-	out of the way, pick up a little wake when the pointer moves fast, and
-	settle back.
+	At rest the field drifts against the pointer in parallax layers, and
+	stars near the pointer lean away on springs, like gravitational lensing.
+	Antares's name shows only on hover; its glow warms as the pointer nears.
 
-	The stars and Antares's glow are drawn in WebGL2 (StarSky): points of
-	light with soft cores, faint colour, twinkle and, on the brightest,
-	hairline spikes; Antares with layered bloom and diffraction spikes.
-	Antares has to be found: its name only shows on hover, and its glow
-	warms up as the pointer gets close. Without WebGL2, round dots, a CSS
-	gradient and trails on a 2D canvas stand in. The field is drawn after mount, clear of
-	anything in the parent marked `data-stars-avoid`. With reduced motion
-	nothing moves and the link just navigates.
+	Drawn in WebGL2 (StarSky), with DOM dots, a CSS gradient and 2D-canvas
+	trails as the fallback. Stars are placed after mount, clear of anything
+	in the parent marked `data-stars-avoid`. With reduced motion nothing
+	moves and the link just navigates.
 -->
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { StarSky } from '$lib/three/StarSky';
 
 	let {
@@ -39,14 +28,12 @@
 		home,
 		onwarp
 	}: {
-		/** The star's name, beside it. */
 		name: string;
 		/** Key and value on the line under the name: "DIST", "~550 LY". */
 		label: string;
 		distance: string;
-		/** Where clicking the star goes. */
 		href: string;
-		/** What clicking it does, for screen readers: "Go to homepage". */
+		/** The link's action, for screen readers: "Go to homepage". */
 		home: string;
 		/** Called as the click animation starts, so the page can clear away. */
 		onwarp?: () => void;
@@ -96,7 +83,7 @@
 		ls: number;
 	};
 
-	/** The push's spring: soft, and damped enough that it barely overshoots. */
+	/** The push's spring: soft, damped enough that it barely overshoots. */
 	const STIFFNESS = 60;
 	const DAMPING = 13;
 
@@ -135,10 +122,9 @@
 	/** Hover (0–1), orbit clock (s), collapse (0–1), exposure (how much of each trail shows, 0–1). */
 	const s = { h: 0, t: 0, c: 0, e: 0 };
 	/**
-	 * Where hover is heading, 0 or 1. Hover, exposure and the glow's hover
-	 * follow it on critically damped springs rather than tweens: a spring
-	 * keeps its velocity when the target flips, so going in and out quickly
-	 * turns the stars round smoothly instead of restarting an ease.
+	 * Where hover is heading, 0 or 1. Followed on springs rather than tweens:
+	 * a spring keeps its velocity when the target flips, so going in and out
+	 * quickly turns the stars round smoothly instead of restarting an ease.
 	 */
 	let aim = 0;
 	const vel = { h: 0, e: 0, glow: 0 };
@@ -158,10 +144,9 @@
 	let reduce = false;
 
 	/**
-	 * Scatters stars by area, about one per 40,000px², kept clear of the
-	 * copy and of Antares and its label. A few are bright, most are middling,
-	 * some faint; fainter stars sit further back (less parallax). Radii are
-	 * in px at the 1440 design width.
+	 * About one star per 40,000px², clear of the copy and of Antares and its
+	 * label; fainter stars sit further back (less parallax). Radii are in px
+	 * at the 1440 design width.
 	 */
 	function scatter() {
 		const f = field.getBoundingClientRect();
@@ -204,7 +189,7 @@
 		return out;
 	}
 
-	/** Works out every star's place relative to Antares, at the current size. */
+	/** Every star's place relative to Antares, at the current size. */
 	function measure() {
 		const f = field.getBoundingClientRect();
 		const a = core.getBoundingClientRect();
@@ -273,9 +258,9 @@
 	}
 
 	/**
-	 * One frame: each star's place on its orbit, then the pointer's push on
-	 * top, through its spring. The push fades out while Antares is hovered
-	 * (the orbits take over) and during the collapse.
+	 * One frame: each star's place on its orbit, plus the pointer's push
+	 * through its spring. The push fades out while Antares is hovered and
+	 * during the collapse.
 	 */
 	function render(dt: number) {
 		// Clamped, so a stalled tab doesn't fling the springs.
@@ -308,9 +293,8 @@
 			const ox = AX + rr * Math.cos(ang);
 			const oy = AY + rr * Math.sin(ang);
 
-			// Where the pointer wants the star: pushed straight away from it,
-			// smoothly less with distance and nothing past `reach`, plus some
-			// of the pointer's own motion. Fainter stars move less.
+			// Pushed away from the pointer, easing to nothing at `reach`, plus
+			// some of the pointer's motion. Fainter stars move less.
 			let tx = 0;
 			let ty = 0;
 			let near = 0;
@@ -360,10 +344,8 @@
 				b.ls = scale;
 			}
 
-			// The trail runs back from where the star is drawn, so the two never
-			// part, towards where it started, fading out behind it; past most of
-			// a lap, only the last of it shows. As the exposure ends it draws in
-			// behind the star on its way home.
+			// The trail runs back from the drawn star towards its start, capped
+			// short of a full lap; as the exposure ends it draws in behind it.
 			let head = Math.atan2(y - AY, x - AX) - b.a;
 			head -= TAU * Math.round((head - phi) / TAU);
 			const span = Math.min(Math.max(head, 0), TAU * 0.85) * s.e;
@@ -386,9 +368,9 @@
 	}
 
 	/**
-	 * Draws the sky. Antares grows by exposure, as a real star does: closing
-	 * in, hovering and clicking turn up its brightness, and more of its
-	 * falloff clears the threshold. Only the click's flare also spreads it.
+	 * Antares grows by exposure, as a real star does: closing in, hovering
+	 * and clicking raise its brightness so more of its falloff clears the
+	 * threshold. Only the click's flare also spreads it.
 	 */
 	function light() {
 		const power = lux.intro * (0.75 + 0.35 * warmth) * (1 + 1.1 * lux.hover) * (1 + 10 * lux.flare);
@@ -422,17 +404,13 @@
 		}
 	}
 
-	/**
-	 * The trails without WebGL: the same arcs on a 2D canvas, in short
-	 * segments so each can fade, brightest at the star, and clear of the
-	 * copy and label.
-	 */
+	/** The fallback's trails: the same arcs on a 2D canvas, in short segments so each can fade. */
 	function drawFlatTrails() {
 		const g = flat?.getContext('2d');
 		if (!g) return;
 		g.clearRect(0, 0, W, H);
 		if (!trails) return;
-		g.strokeStyle = getComputedStyle(field).getPropertyValue('--grey-0');
+		g.strokeStyle = getComputedStyle(field).getPropertyValue('--white');
 		g.lineCap = 'butt';
 		for (let n = 0; n < trails; n++) {
 			const [r, , head, span, radius, brightness, , alpha] = arcs.subarray(n * 8, n * 8 + 8);
@@ -446,10 +424,7 @@
 				const y = AY + r * Math.sin(mid);
 				let clear = 1;
 				for (const box of avoidRects) {
-					const d = Math.hypot(
-						Math.max(box.left - x, x - box.right, 0),
-						Math.max(box.top - y, y - box.bottom, 0)
-					);
+					const d = Math.hypot(Math.max(box.left - x, x - box.right, 0), Math.max(box.top - y, y - box.bottom, 0));
 					clear = Math.min(clear, clamp(0, 1, d / 40));
 				}
 				g.globalAlpha = Math.min(1, 0.6 * brightness * alpha * ((k + 0.5) / steps) ** 1.6 * clear);
@@ -477,8 +452,7 @@
 		leaving?.kill();
 		leaving = null;
 		gsap.to(arrow, { x: 0, autoAlpha: 1, duration: 0.6, ease: 'expo.out', overwrite: 'auto' });
-		// The label rises in from below only if it had gone; otherwise it
-		// carries on from wherever it is.
+		// Rise in from below only if it had gone; otherwise carry on from where it is.
 		const labels = [...tag.children] as HTMLElement[];
 		if (!reduce && Number(gsap.getProperty(labels[0], 'opacity')) < 0.05) gsap.set(labels, { y: 10 });
 		gsap.to(labels, { autoAlpha: 1, y: 0, duration: 0.9, ease: 'expo.out', stagger: 0.07, overwrite: 'auto' });
@@ -514,11 +488,7 @@
 		gsap.to(core, { scale: 1, duration: 0.6, ease: 'power2.inOut', overwrite: 'auto' });
 	}
 
-	/**
-	 * The way home: the stars spiral into Antares, then it grows past the
-	 * edges of the screen in white and the home page takes over. Modified
-	 * clicks (new tab, new window) are left to the browser.
-	 */
+	/** The click-through animation. Modified clicks (new tab, new window) are left to the browser. */
 	function warp(e: MouseEvent) {
 		if (reduce || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 		e.preventDefault();
@@ -545,7 +515,7 @@
 		reduce = prefersReducedMotion();
 		sky = new StarSky(canvas);
 		gl = sky.ok;
-		sky.tint(getComputedStyle(field).getPropertyValue('--accent-500'));
+		sky.tint(getComputedStyle(field).getPropertyValue('--orange'));
 		stars = scatter();
 		vis = stars.map(() => ({ a: 1 }));
 		let observer: ResizeObserver | undefined;
@@ -569,9 +539,9 @@
 				});
 				if (!gl) gsap.from(core, { scale: 0, duration: 0.9, ease: 'back.out(2)', delay: 0.4 });
 				gsap.fromTo(lux, { intro: 0 }, { intro: 1, duration: 2.4, ease: 'expo.out', delay: 0.4 });
-				// The CSS stand-in breathes; the shader flickers on its own.
-				if (!gl) gsap.to(glow, { scale: 1.12, opacity: 0.7, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-				// The shader twinkles its own; the fallback's dots get a tween.
+				// The fallback's glow and dots get tweens; the shader animates its own.
+				if (!gl)
+					gsap.to(glow, { scale: 1.12, opacity: 0.7, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 				if (!gl) {
 					for (const dot of dots) {
 						if (Math.random() > 0.35) continue;
@@ -668,8 +638,7 @@
 </div>
 
 <style>
-	/* Antares's place on the field: right of centre, a little low. On mobile
-	   it moves in, so its label still fits. */
+	/* Antares's place on the field; moved in on mobile so its label fits. */
 	.field {
 		--ax: 65%;
 		--ay: 52%;
@@ -696,7 +665,7 @@
 		height: calc(var(--size-font) * var(--d));
 		translate: -50% -50%;
 		border-radius: 50%;
-		background: var(--grey-0);
+		background: var(--white);
 	}
 
 	/* The stars and Antares's glow. Screen-blended: its black is see-through. */
@@ -724,14 +693,13 @@
 		position: absolute;
 		top: var(--ay);
 		left: var(--ax);
-		color: var(--grey-0);
+		color: var(--white);
 		text-decoration: none;
 		outline: none;
 	}
 	.antares > span {
 		position: absolute;
 	}
-	/* Everything is placed from Antares's centre. */
 	.halo,
 	.hit,
 	.core {
@@ -749,7 +717,7 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 50%;
-		background: radial-gradient(closest-side, var(--accent-500), transparent);
+		background: radial-gradient(closest-side, var(--orange), transparent);
 	}
 
 	/* A generous target round a small star. */
@@ -762,13 +730,13 @@
 		outline-offset: 2px;
 	}
 
-	/* A soft white disc. With WebGL the shader draws the star, and this only
-	   shows on click, growing to fill the screen. */
+	/* With WebGL the shader draws the star, and this disc only shows on
+	   click, growing to fill the screen. */
 	.core {
 		width: calc(var(--size-font) * 0.5);
 		height: calc(var(--size-font) * 0.5);
 		border-radius: 50%;
-		background: radial-gradient(closest-side, var(--grey-0) 50%, transparent);
+		background: radial-gradient(closest-side, var(--white) 50%, transparent);
 	}
 	.gl .core {
 		opacity: 0;

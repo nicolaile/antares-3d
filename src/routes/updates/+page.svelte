@@ -1,12 +1,11 @@
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { tick } from 'svelte';
-	import Grid from '$lib/components/Grid.svelte';
-	import Row from '$lib/layout/Row.svelte';
-	import Cell from '$lib/layout/Cell.svelte';
-	import UpdateCard from '$lib/components/UpdateCard.svelte';
-	import DownloadCard from '$lib/components/DownloadCard.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import PageIntro from '$lib/modules/PageIntro.svelte';
+	import UpdateCard from '$lib/components/cards/UpdateCard.svelte';
+	import DownloadCard from '$lib/components/cards/DownloadCard.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 	import { updates } from '$lib/content/updates';
 	import { footer } from '$lib/content/site';
 
@@ -26,22 +25,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Updates — Antares</title>
-	<meta name="description" content={intro} />
-</svelte:head>
+<Seo title="Updates" description={intro} />
 
-<Grid visible={false} />
-
-<main class="updates" data-tone="dark">
-	<Row>
-		<Cell span={4} tablet={{ span: 6 }}>
-			<h1 class="intro type-h3">
-				{title}
-				<span class="secondary">{intro}</span>
-			</h1>
-		</Cell>
-	</Row>
+<main id="content" tabindex="-1" class="updates" data-tone="dark">
+	<PageIntro {title} {intro} tone="dark" />
 
 	<section aria-label="All updates" bind:this={list}>
 		<ul class="list">
@@ -68,22 +55,14 @@
 <style>
 	/* The whole page is dark, html included, so overscroll doesn't flash white. */
 	:global(html:has(main.updates)) {
-		background: var(--grey-850);
+		background: var(--grey-950);
 	}
 
 	.updates {
 		display: grid;
 		padding: var(--space-160) var(--grid-margin) var(--space-160);
-		background: var(--grey-850);
-		color: var(--grey-0);
-	}
-
-	.intro {
-		margin: 0;
-	}
-	.secondary {
-		display: block;
-		color: var(--grey-400);
+		background: var(--grey-950);
+		color: var(--white);
 	}
 
 	section {
@@ -117,7 +96,7 @@
 		justify-content: space-between;
 		margin-top: var(--space-64);
 		padding: var(--space-24);
-		border: 1px solid var(--grey-750);
+		border: 1px solid var(--grey-800);
 		border-radius: var(--stage-radius);
 		background: none;
 		color: inherit;

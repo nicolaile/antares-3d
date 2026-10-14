@@ -14,7 +14,7 @@
  * Centre lines and hidden lines are detail with their own dash patterns.
  */
 import type { Pipe } from './pipes';
-import { MACHINES, SILHOUETTES } from './r1-machines';
+import { MACHINES, SILHOUETTES } from './r1Machines';
 
 /**
  * The visible window onto those coordinates. Same size as the render; the
@@ -25,18 +25,65 @@ export const FRAME = { x: 52, y: -24, width: 1930, height: 1284 };
 
 export const PIPES = {
 	/** Heat pipe out of the dome, over the top and into the turbine inlet. */
-	hot: { points: [[439.5, 347], [439.5, 227.5], [945, 227.5], [945, 354]], radius: 40 },
+	hot: {
+		points: [
+			[439.5, 347],
+			[439.5, 227.5],
+			[945, 227.5],
+			[945, 354]
+		],
+		radius: 40
+	},
 	/** Turbine exhaust round to the recuperator's hot side. */
-	exhaust: { points: [[885, 509], [818.5, 509], [818.5, 866.25], [932, 866.25]], radius: 40 },
+	exhaust: {
+		points: [
+			[885, 509],
+			[818.5, 509],
+			[818.5, 866.25],
+			[932, 866.25]
+		],
+		radius: 40
+	},
 	/** Recuperator to the cooler. */
-	cooler: { points: [[1140, 866.25], [1407, 866.25]], radius: 40 },
+	cooler: {
+		points: [
+			[1140, 866.25],
+			[1407, 866.25]
+		],
+		radius: 40
+	},
 	/** Cooler round the right-hand loop into the compressor. */
-	loop: { points: [[1703, 866.25], [1765.5, 866.25], [1765.5, 669.5], [1234, 669.5], [1234, 607]], radius: 40 },
+	loop: {
+		points: [
+			[1703, 866.25],
+			[1765.5, 866.25],
+			[1765.5, 669.5],
+			[1234, 669.5],
+			[1234, 607]
+		],
+		radius: 40
+	},
 	/** Compressor down the S-bend into the recuperator's cold side. */
-	s: { points: [[1095.5, 661], [1095.5, 719.5], [1197.5, 719.5], [1197.5, 806.5], [1132, 806.5]], radius: [40, 42, 42] },
+	s: {
+		points: [
+			[1095.5, 661],
+			[1095.5, 719.5],
+			[1197.5, 719.5],
+			[1197.5, 806.5],
+			[1132, 806.5]
+		],
+		radius: [40, 42, 42]
+	},
 	/** Recuperator under everything and back into the reactor. */
 	return: {
-		points: [[1132, 921.75], [1197.75, 921.75], [1197.75, 1008.75], [710.5, 1008.75], [710.5, 504.5], [616, 504.5]],
+		points: [
+			[1132, 921.75],
+			[1197.75, 921.75],
+			[1197.75, 1008.75],
+			[710.5, 1008.75],
+			[710.5, 504.5],
+			[616, 504.5]
+		],
 		radius: [42, 42, 40, 40]
 	}
 } satisfies Record<string, Pipe>;
@@ -102,13 +149,62 @@ const RECUPERATOR: Area = [932, 768, 1140, 960];
 const COOLER: Area = [1406, 708, 1704, 911];
 
 export const MARKERS: Marker[] = [
-	{ label: 'Primary heat exchanger', text: 'Transfers core heat to the working fluid', x: 438.6, y: 377.5, on: [0, 890 - 377.5], focus: { areas: [REACTOR_TOP], pipes: ['return', 'hot'] } },
-	{ label: 'Nuclear core', text: 'TRISO fuel in a prismatic graphite core: the source of the heat', x: 439, y: 802, on: [0, 88], focus: { areas: [REACTOR_CORE], pipes: [] } },
-	{ label: 'Turbine', text: 'Hot nitrogen expands through it, turning the shaft', x: 918.2, y: 507.8, after: 0, focus: { areas: [TURBINE], pipes: ['hot', 'exhaust'] } },
-	{ label: 'Compressor', text: 'Raises the cooled nitrogen to pressure for the next pass', x: 1160.6, y: 507.8, after: 3, focus: { areas: [COMPRESSOR], pipes: ['loop', 's'] } },
-	{ label: 'Alternator', text: 'Turns the shaft’s rotation into electricity', x: 1521, y: 507.8, after: 0, focus: { areas: [ALTERNATOR], pipes: [] } },
-	{ label: 'Recuperator', text: 'Reclaims exhaust heat to warm the gas on its way back', x: 1037, y: 866, after: 1, focus: { areas: [RECUPERATOR], pipes: ['exhaust', 'cooler', 's', 'return'] } },
-	{ label: 'Waste heat rejection', text: 'Sheds the heat the cycle can’t use before the gas is compressed', x: 1585, y: 858, after: 2, focus: { areas: [COOLER], pipes: ['cooler', 'loop'] } }
+	{
+		label: 'Primary heat exchanger',
+		text: 'Transfers core heat to the working fluid',
+		x: 438.6,
+		y: 377.5,
+		on: [0, 890 - 377.5],
+		focus: { areas: [REACTOR_TOP], pipes: ['return', 'hot'] }
+	},
+	{
+		label: 'Nuclear core',
+		text: 'TRISO fuel in a prismatic graphite core: the source of the heat',
+		x: 439,
+		y: 802,
+		on: [0, 88],
+		focus: { areas: [REACTOR_CORE], pipes: [] }
+	},
+	{
+		label: 'Turbine',
+		text: 'Hot nitrogen expands through it, turning the shaft',
+		x: 918.2,
+		y: 507.8,
+		after: 0,
+		focus: { areas: [TURBINE], pipes: ['hot', 'exhaust'] }
+	},
+	{
+		label: 'Compressor',
+		text: 'Raises the cooled nitrogen to pressure for the next pass',
+		x: 1160.6,
+		y: 507.8,
+		after: 3,
+		focus: { areas: [COMPRESSOR], pipes: ['loop', 's'] }
+	},
+	{
+		label: 'Alternator',
+		text: 'Turns the shaft’s rotation into electricity',
+		x: 1521,
+		y: 507.8,
+		after: 0,
+		focus: { areas: [ALTERNATOR], pipes: [] }
+	},
+	{
+		label: 'Recuperator',
+		text: 'Reclaims exhaust heat to warm the gas on its way back',
+		x: 1037,
+		y: 866,
+		after: 1,
+		focus: { areas: [RECUPERATOR], pipes: ['exhaust', 'cooler', 's', 'return'] }
+	},
+	{
+		label: 'Waste heat rejection',
+		text: 'Sheds the heat the cycle can’t use before the gas is compressed',
+		x: 1585,
+		y: 858,
+		after: 2,
+		focus: { areas: [COOLER], pipes: ['cooler', 'loop'] }
+	}
 ];
 
 const rods = (xs: number[], from: number, to: number) => xs.map((x) => `M${x} ${from}V${to}`);
@@ -171,7 +267,11 @@ export const DETAIL = [
 	// Fuel box spacer grids.
 	...rows([772, 833], 289, 588),
 	// Recuperator plates between the fins.
-	...rods([973, 986.5, 997.5, 1008.5, 1019.5, 1030.5, 1041.75, 1053.25, 1064.5, 1075.5, 1086.25, 1099.75, 1120], 820, 908),
+	...rods(
+		[973, 986.5, 997.5, 1008.5, 1019.5, 1030.5, 1041.75, 1053.25, 1064.5, 1075.5, 1086.25, 1099.75, 1120],
+		820,
+		908
+	),
 	// Radiator fins along the waste-heat cooler.
 	...rods(range(1480, 1690, 14), 826, 890),
 	// Pipe clamps on the long straight runs.

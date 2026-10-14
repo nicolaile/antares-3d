@@ -1,14 +1,13 @@
 <!--
 	@component
-	A legal page (Terms, Privacy): when it was last updated and the title on
-	columns 4–9, with the text below in running paragraphs on the same
-	columns, then the footer. Content comes from `$lib/content/legal`.
+	A legal page (Terms, Privacy), footer included. Content comes from
+	`$lib/content/legal`.
 -->
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
 	import { footer } from '$lib/content/site';
 
 	let { title, description, updated, body }: import('$lib/content/legal').LegalPage = $props();
@@ -16,21 +15,16 @@
 	const iso = $derived(updated.split('.').reverse().join('-'));
 </script>
 
-<svelte:head>
-	<title>{title} — Antares</title>
-	<meta name="description" content={description} />
-</svelte:head>
+<Seo {title} {description} />
 
-<Grid visible={false} />
-
-<main class="legal">
+<main id="content" tabindex="-1" class="legal">
 	<Row>
 		<Cell start={4} span={6} tablet={{ start: 2, span: 10 }}>
 			<header>
 				<p class="updated type-caption">
 					Updated <time datetime={iso}>{updated}</time>
 				</p>
-				<h1 class="title type-h2">{title}</h1>
+				<h1 class="title type-h3">{title}</h1>
 			</header>
 
 			<div class="body">
@@ -52,7 +46,7 @@
 
 	.updated {
 		margin: 0;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.title {
 		margin: var(--space-24) 0 0;
@@ -63,7 +57,7 @@
 	}
 	.body p {
 		margin: 0;
-		color: var(--grey-800);
+		color: var(--grey-900);
 	}
 	.body p + p {
 		margin-top: var(--space-24);

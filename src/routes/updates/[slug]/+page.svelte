@@ -2,20 +2,24 @@
 	An article: date and headline on columns 4–8, the hero image across
 	3–10, then the body on 4–9 again. The body is a lead, paragraphs,
 	headings, quotes, lists, key-figure cards, captioned figures and films,
-	spaced by what follows what.
+	spaced by what follows what. Under it, the three newest other stories
+	(RecentArticles).
 -->
 <script lang="ts">
-	import Grid from '$lib/components/Grid.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import Row from '$lib/layout/Row.svelte';
 	import Cell from '$lib/layout/Cell.svelte';
 	import Picture from '$lib/components/Picture.svelte';
-	import Footer from '$lib/modules/Footer.svelte';
-	import { formatDate } from '$lib/content/articles';
+	import LoopVideo from '$lib/components/LoopVideo.svelte';
+	import Footer from '$lib/chrome/Footer.svelte';
+	import RecentArticles from '$lib/modules/RecentArticles.svelte';
+	import { formatDate, recentArticles } from '$lib/content/articles';
 	import { footer } from '$lib/content/site';
 
 	let { data } = $props();
 	const article = $derived(data.article);
 	const date = $derived(formatDate(article.date));
+	const recent = $derived(recentArticles(article.slug));
 
 	/** Upright pictures run narrower, so they don't fill the screen. */
 	const portrait = (ratio: string) => {
@@ -24,18 +28,13 @@
 	};
 </script>
 
-<svelte:head>
-	<title>{article.title} — Antares</title>
-	<meta name="description" content={article.title} />
-</svelte:head>
+<Seo title={article.title} description={article.excerpt} image={article.image.src.img.src} type="article" />
 
-<Grid visible={false} />
-
-<main class="article">
+<main class="article" id="content" tabindex="-1">
 	<Row as="header">
 		<Cell start={4} span={5} tablet={{ start: 2, span: 10 }}>
 			<time class="date type-caption" datetime={date.iso}>{date.text}</time>
-			<h1 class="title type-h2">{article.title}</h1>
+			<h1 class="title type-h3">{article.title}</h1>
 		</Cell>
 	</Row>
 
@@ -43,12 +42,7 @@
 		<Row>
 			<Cell start={3} span={8} tablet={{ start: 1, span: 12 }}>
 				<div class="hero-image">
-					<Picture
-						{...article.image}
-						ratio="16 / 9"
-						sizes="(max-width: 991px) 100vw, 65vw"
-						loading="eager"
-					/>
+					<Picture {...article.image} ratio="16 / 9" sizes="(max-width: 991px) 100vw, 65vw" loading="eager" />
 				</div>
 			</Cell>
 		</Row>
@@ -60,13 +54,13 @@
 				<div class="body">
 					{#each article.body as block, i (i)}
 						{#if block.type === 'lead'}
-							<p class="lead type-h4">{block.text}</p>
+							<p class="lead type-sub-headline">{block.text}</p>
 						{:else if block.type === 'paragraph'}
 							<p class="type-body-large">{@html block.html}</p>
 						{:else if block.type === 'heading'}
-							<h2 class="type-h4">{block.text}</h2>
+							<h2 class="type-sub-headline">{block.text}</h2>
 						{:else if block.type === 'quote'}
-							<blockquote class="type-h3">
+							<blockquote class="type-h5">
 								{#each block.html as line, j (j)}
 									<p>{@html line}</p>
 								{/each}
@@ -85,11 +79,7 @@
 						{:else if block.type === 'figure'}
 							<figure class:portrait={portrait(block.ratio)}>
 								<div class="media">
-									<Picture
-										{...block.image}
-										ratio={block.ratio}
-										sizes="(max-width: 991px) 100vw, 48vw"
-									/>
+									<Picture {...block.image} ratio={block.ratio} sizes="(max-width: 991px) 100vw, 48vw" />
 								</div>
 								{#if block.caption}
 									<figcaption class="type-annotation">
@@ -105,12 +95,12 @@
 										<iframe
 											class="film"
 											src="https://www.youtube-nocookie.com/embed/{block.youtube}?rel=0&modestbranding=1&playsinline=1"
-											title={article.title}
+											title="Video: {article.title}"
 											loading="lazy"
 											allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
 										></iframe>
 									{:else}
-										<video src={block.src} autoplay muted loop playsinline></video>
+										<LoopVideo src={block.src} />
 									{/if}
 								</div>
 							</figure>
@@ -122,6 +112,8 @@
 	</div>
 </main>
 
+<RecentArticles items={recent} />
+
 <Footer {...footer} />
 
 <style>
@@ -132,7 +124,7 @@
 
 	.date {
 		display: block;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.title {
 		margin: var(--space-24) 0 0;
@@ -185,12 +177,12 @@
 	/* Running copy a step softer than the lead, headings and quotes. */
 	.body p,
 	.list {
-		color: var(--grey-800);
+		color: var(--grey-900);
 	}
 	.body .lead,
 	.body h2,
 	.body blockquote p {
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.body :global(a) {
 		color: inherit;
@@ -237,7 +229,7 @@
 	}
 	.body .stat-value {
 		margin: 0;
-		color: var(--grey-950);
+		color: var(--black);
 	}
 	.body .stat-text {
 		max-width: 20em;
@@ -245,18 +237,17 @@
 		color: var(--grey-700);
 	}
 
+	/* Positioned for a film's pause button (LoopVideo). */
 	.media {
+		position: relative;
 		overflow: hidden;
 		border-radius: var(--card-radius);
 	}
-	.film,
-	video {
+	.film {
 		display: block;
 		width: 100%;
-		border: 0;
-	}
-	.film {
 		aspect-ratio: 16 / 9;
+		border: 0;
 	}
 	/* Four of the body's six columns, so it wraps shorter than the copy;
 	   upright pictures run the same width. */
@@ -269,7 +260,7 @@
 		color: var(--grey-700);
 	}
 	.label {
-		color: var(--grey-950);
+		color: var(--black);
 	}
 
 	@media screen and (max-width: 767px) {

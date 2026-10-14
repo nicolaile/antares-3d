@@ -1,29 +1,16 @@
 <!--
 	@component
-	A short label that trails the pointer, for things you click: "Next"
-	over a slideshow's right half. Its top-left corner follows the pointer on
-	quickTo, the text sitting below and right of it, clear of the arrow.
-	While `active`, its letters rise into place through a mask (SplitText);
-	when it goes, they carry on up and out. It lingers a moment before going,
-	so sweeping from one target to the next keeps it up. Mouse and trackpad
-	only: on touch there's no pointer to follow. With reduced motion it just
-	appears.
+	A short label that trails the pointer over something clickable ("Next"
+	over a slideshow's right half). While `active` its letters rise in through
+	a mask; it lingers briefly on leaving, so sweeping between targets keeps
+	it up. Fine pointers only; with reduced motion it just appears.
 
-	Optionally a `detail` after the text (a slideshow's "02-08", say) and an
-	`icon` (raw SVG markup, drawn in the label's colour) before or after
-	both; they rise in and out with the letters. When `detail` changes
-	while the label is up, just the characters that changed roll in.
-
-	Given `clip`, a selector, it only shows where it overlaps one of those
-	elements (rounded corners included): cut off at a card's edge, and
-	sliding out of one card and into the next as it trails across.
-
-	Sits outside anything transformed, or `position: fixed` stops meaning
-	the screen.
+	Render it outside anything transformed, or `position: fixed` stops
+	meaning the screen.
 -->
 <script lang="ts">
 	import { SplitText } from 'gsap/SplitText';
-	import { gsap, prefersReducedMotion } from '$lib/scroll';
+	import { gsap, prefersReducedMotion } from '$lib/motion/scroll';
 
 	let {
 		text,
@@ -35,12 +22,13 @@
 		iconAt = 'end'
 	}: {
 		text: string;
-		/** Set after the text, a step apart. */
+		/** After the text, e.g. a slideshow's "02-08"; only changed characters roll in. */
 		detail?: string;
-		/** Raw SVG markup; its stroke and fill colours give way to the label's. */
+		/** Raw SVG markup, recoloured to the label's colour. */
 		icon?: string;
 		iconAt?: 'start' | 'end';
 		active?: boolean;
+		/** Selector: show only where the label overlaps a match (rounded corners included). */
 		clip?: string;
 		/**
 		 * Seconds it waits after leaving a target, in case the pointer lands
@@ -58,10 +46,7 @@
 	let textSplit: SplitText | null = null;
 	let detailSplit: SplitText | null = null;
 
-	/** The icon's colours swapped for the label's. */
-	const svg = $derived(
-		icon?.replace(/(stroke|fill)="(?!none)[^"]*"/g, '$1="currentColor"')
-	);
+	const svg = $derived(icon?.replace(/(stroke|fill)="(?!none)[^"]*"/g, '$1="currentColor"'));
 
 	/** Everything that rises and falls, in reading order. */
 	function parts(): Element[] {
@@ -78,15 +63,12 @@
 	let yTo: gsap.QuickToFunc | null = null;
 	let fine = $state(false);
 	let pointer = { x: 0, y: 0 };
-	/** The elements it's cut to, gathered as it appears. */
+	/** `clip` matches, gathered as it appears. */
 	let boxes: HTMLElement[] = [];
-	/** Showing, or on its way out: worth clipping each frame. */
+	/** Showing or on its way out, so worth clipping each frame. */
 	let live = false;
 
-	/**
-	 * Cuts the label to every box it overlaps: one rounded rectangle per box,
-	 * in the label's own coordinates, together in a single clip path.
-	 */
+	/** One rounded rectangle per overlapped box, in label coordinates, as a single clip path. */
 	function cut() {
 		if (!live || !clip) return;
 		const x = gsap.getProperty(label, 'x') as number;
@@ -122,8 +104,7 @@
 		};
 	});
 
-	// The letters are set and split here rather than in the markup, since
-	// SplitText rewrites them.
+	// Set here rather than in the markup, since SplitText rewrites them.
 	$effect(() => {
 		const t = text;
 		textSplit?.revert();
@@ -132,8 +113,7 @@
 		textChars = textSplit.chars;
 	});
 
-	// A new detail while the label is up rolls in on its own, only the
-	// characters that changed: "01-08" to "02-08" moves just the 2.
+	// While up, only the characters that changed roll in: "01-08" to "02-08" moves the 2.
 	$effect(() => {
 		const d = detail ?? '';
 		const before = detailChars.map((c) => c.textContent);
@@ -142,15 +122,9 @@
 		detailSplit = d ? SplitText.create(detailEl, { type: 'chars', mask: 'chars' }) : null;
 		detailChars = detailSplit?.chars ?? [];
 		const changed =
-			before.length === detailChars.length
-				? detailChars.filter((c, i) => c.textContent !== before[i])
-				: detailChars;
+			before.length === detailChars.length ? detailChars.filter((c, i) => c.textContent !== before[i]) : detailChars;
 		if (!visible || !changed.length || prefersReducedMotion()) return;
-		gsap.fromTo(
-			changed,
-			{ yPercent: 100 },
-			{ yPercent: 0, duration: 0.6, ease: 'power3.out', stagger: 0.015 }
-		);
+		gsap.fromTo(changed, { yPercent: 100 }, { yPercent: 0, duration: 0.6, ease: 'power3.out', stagger: 0.015 });
 	});
 
 	let shown = false;
@@ -164,13 +138,13 @@
 
 	function reveal() {
 		linger?.kill();
-		// Still up from the last target: it simply carries on following.
+		// Still up from the last target: keep following.
 		if (visible) return;
 		visible = true;
 		// Start at the pointer, not gliding over from where it last was.
 		xTo?.(pointer.x, pointer.x);
 		yTo?.(pointer.y, pointer.y);
-		// Stop an exit in flight, so it can't hide the label once it's back.
+		// An exit in flight would hide the label once it's back.
 		exit?.kill();
 		if (clip) boxes = [...document.querySelectorAll<HTMLElement>(clip)];
 		live = true;
@@ -226,7 +200,6 @@
 </div>
 
 <style>
-	/* Text, detail and icon in a row, a step apart. */
 	.cursor-label {
 		display: flex;
 		align-items: center;
@@ -235,10 +208,10 @@
 		top: 0;
 		left: 0;
 		z-index: 1;
-		/* Off the pointer: 12px down and 20px right at 1440. */
+		/* Clear of the pointer's arrow. */
 		padding: calc(var(--space-8) + var(--space-4)) 0 0 var(--space-20);
-		/* White: it sits on dark bands, like the slideshow's. */
-		color: var(--grey-0);
+		/* It sits on dark bands, like the slideshow's. */
+		color: var(--white);
 		white-space: nowrap;
 		pointer-events: none;
 		visibility: hidden;
@@ -246,7 +219,7 @@
 	.detail:empty {
 		display: none;
 	}
-	/* 16px at 1440, masked like the letters so it rises through its own box. */
+	/* Masked like the letters so the icon rises through its own box. */
 	.icon-mask {
 		display: block;
 		overflow: hidden;

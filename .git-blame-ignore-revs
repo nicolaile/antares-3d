@@ -1,0 +1,2 @@
+# Bulk formatting; `git blame` skips these (git config blame.ignoreRevsFile .git-blame-ignore-revs).
+8e02fc463f246849033737534a693aaf4973d014

@@ -61,10 +61,12 @@ export const LOOK: Partial<RenderParams> = {
 	studioGrainSize: 1,
 	studioGrainSpeed: 0,
 
-	// Post
+	// Post. Machined edges catching the light and creases holding shadow, as
+	// the Blender renders' bevels and cavity have them (screen space, on the
+	// finished frame).
 	ao: 0.65,
-	edges: 0,
-	cavity: 0,
+	edges: 0.6,
+	cavity: 0.5,
 	grade: 0.2,
 	sharpen: 0.65,
 
@@ -80,10 +82,19 @@ export const LOOK: Partial<RenderParams> = {
 	bakedAO: 1,
 	bakedDirect: 0.15,
 	bakedView: 0,
-	// Each part its own baked finish, mapped onto this look at 60%, with a little roughness detail.
-	finish: 0.6,
-	finishFloor: 0.6,
+	// The light baked too, as raspberry.luruke.com bakes its berry's: the
+	// key's shadows, the rim's and the ambient's occlusion off the files
+	// (scripts/lab/bake-surface.mjs), no shadow map or screen-space
+	// occlusion drawn a frame. 0 for the live light (filtered shadows).
+	bakedLight: 1,
+	shadowFilter: 1,
+	// Each part its own baked finish (the renders'), at 80% down to 45% of the colour, with a little
+	// roughness detail; the polished metal parts reflect the studio (look M, 2026-10-14).
+	finish: 0.8,
+	finishFloor: 0.45,
 	polymer: 1,
+	finishSheen: 0,
+	finishReflect: 1,
 	detail: 0.35,
 	detailTile: 1.2,
 	wrap: 0,

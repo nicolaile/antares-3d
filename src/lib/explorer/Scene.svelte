@@ -33,6 +33,8 @@
 		explode = undefined,
 		carve = undefined,
 		colours = undefined,
+		pixelRatio = 1.5,
+		deferred = undefined,
 		look = LOOK,
 		sections = undefined,
 		shot,
@@ -56,6 +58,10 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** The frame's pixel ratio at most (ModelViewer's `maxPixelRatio`). */
+		pixelRatio?: number;
+		/** Groups fetched once the model is shown (ModelViewer's `deferred`). */
+		deferred?: string[];
 		/** Render values applied once loaded; defaults to the shared LOOK. */
 		look?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -173,6 +179,7 @@
 			try {
 				v = new ModelViewer(host, {
 					url: src,
+					deferred,
 					groups,
 					explode,
 					carve,
@@ -180,10 +187,11 @@
 					sections,
 					// 512×256: renders within 0.2/255 of the 1k original (mean), a quarter of the bytes.
 					hdr: '/hdr/studio_small_09_512.hdr',
-					// Capped below retina 2×: the frame is pixel-bound, and 1.5 draws 44% fewer
-					// (3.6 → 2.2 ms on an M4 Max) for a barely softer image; 4× multisampling
-					// keeps the edges. Phones also take occlusion at half size.
-					maxPixelRatio: 1.5,
+					// Capped below retina 2× by default: the frame is pixel-bound, and 1.5
+					// draws 44% fewer (3.6 → 2.2 ms on an M4 Max) for a barely softer image;
+					// 4× multisampling keeps the edges. A model whose light is baked can
+					// afford its screen's own (`pixelRatio`). Phones also take occlusion at half size.
+					maxPixelRatio: pixelRatio,
 					// Dev, ?visibility: the part indices kept for the visibility sampler (perf.ts).
 					keepParts: import.meta.env.DEV && new URLSearchParams(location.search).has('visibility'),
 					aoScale: light ? 0.5 : 1,
@@ -300,6 +308,10 @@
 					// any motion would double the image.
 					reveal = gsap.timeline({ onComplete: () => (posterShown = false) });
 					reveal.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: reduce ? 0.3 : 0.6, ease: 'power1.out' }, 0);
+					// Then the groups held back (`deferred`), before the next
+					// model's turn: the features run in that order. Without them
+					// the model still stands, so a failure here only logs.
+					await v.loadDeferred().catch((e) => console.warn('[scene] deferred groups', e));
 				})
 				.catch(() => {
 					// The model or lighting didn't arrive: the poster is the model.

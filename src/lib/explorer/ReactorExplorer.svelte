@@ -60,6 +60,10 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** The frame's pixel ratio at most (ModelViewer's `maxPixelRatio`); 1.5 if not given. */
+		pixelRatio?: number;
+		/** Groups fetched once it's shown (ModelViewer's `deferred`). */
+		deferred?: string[];
 		/** Render values for this model, in place of the shared LOOK (look.ts). */
 		look?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -703,6 +707,8 @@
 					src={models[model]!.files}
 					carve={models[model]!.carve}
 					colours={models[model]!.colours}
+					pixelRatio={models[model]!.pixelRatio}
+					deferred={models[model]!.deferred}
 					renderLook={models[model]!.look}
 					sections={models[model]!.sections}
 					trails={models[model]!.trails}

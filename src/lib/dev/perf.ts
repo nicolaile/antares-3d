@@ -74,12 +74,18 @@ async function settle(v: ModelViewer, { min = 2500, quiet = 1000, max = 12000 } 
 	return performance.now() - start;
 }
 
-/** The viewer for feature `i`, waiting for it to load (the later model loads on the way to it). */
+/**
+ * The viewer for feature `i`, waiting for it to load (the later model loads
+ * on the way to it), groups held back (`deferred`) and all.
+ */
 async function viewerOf(target: PerfTarget, i: number, timeout = 30000) {
 	const start = performance.now();
 	for (;;) {
 		const v = target.viewerFor(i);
-		if (v) return v;
+		if (v) {
+			await v.loadDeferred();
+			return v;
+		}
 		if (performance.now() - start > timeout) return undefined;
 		await wait(200);
 	}

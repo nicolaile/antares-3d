@@ -82,6 +82,8 @@
 		explode = {},
 		carve = undefined,
 		colours = undefined,
+		pixelRatio = undefined,
+		deferred = undefined,
 		renderLook = undefined,
 		sections = undefined,
 		trails = undefined,
@@ -110,6 +112,10 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** The frame's pixel ratio at most (Scene's `pixelRatio`). */
+		pixelRatio?: number;
+		/** Groups fetched once it's shown (Scene's `deferred`). */
+		deferred?: string[];
 		/** Render values for this model, in place of the shared LOOK (Scene's `look`). */
 		renderLook?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
@@ -482,6 +488,8 @@
 		{explode}
 		{carve}
 		{colours}
+		{pixelRatio}
+		{deferred}
 		look={renderLook}
 		{sections}
 		shot={framed}

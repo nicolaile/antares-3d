@@ -103,7 +103,8 @@ export class SweepPass extends ShaderPass {
 				uGrainSpeed: { value: 0 },
 				uTime: { value: 0 },
 				uSharpen: { value: 0 },
-				uTexel: { value: new THREE.Vector2(1, 1) }
+				uTexel: { value: new THREE.Vector2(1, 1) },
+				uBackdrop: { value: 1 }
 			},
 			vertexShader: /* glsl */ `
 				varying vec2 vUv;
@@ -129,6 +130,7 @@ export class SweepPass extends ShaderPass {
 				uniform float uTime;
 				uniform float uSharpen;
 				uniform vec2 uTexel;
+				uniform float uBackdrop;
 				varying vec2 vUv;
 
 				${SWEEP_GLSL}
@@ -171,6 +173,12 @@ export class SweepPass extends ShaderPass {
 
 				void main() {
 					vec4 src = frame( vUv );
+					// No backdrop (\`backdrop\` off): the frame alone, scaled up
+					// and sharpened, over whatever the page has behind the canvas.
+					if ( uBackdrop < 0.5 ) {
+						gl_FragColor = src;
+						return;
+					}
 
 					vec3 bg = sweepToSrgb( sweepLinear( vUv ) );
 					// Dither: breaks the 8-bit steps in the dark end.
@@ -227,6 +235,18 @@ export class SweepPass extends ShaderPass {
 	}
 	get sharpen() {
 		return this.uniforms.uSharpen.value as number;
+	}
+
+	/**
+	 * Whether the sweep is drawn behind the model, and its falloff and grain
+	 * on it; off, the pass only scales the frame up to the screen and
+	 * sharpens it (`frame`).
+	 */
+	set backdrop(on: boolean) {
+		this.uniforms.uBackdrop.value = on ? 1 : 0;
+	}
+	get backdrop() {
+		return this.uniforms.uBackdrop.value > 0.5;
 	}
 
 	/** The canvas's size, device pixels: one of its pixels is how far the sharpening looks. */

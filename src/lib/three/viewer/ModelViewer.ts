@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { gsap } from 'gsap';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
@@ -126,6 +127,100 @@ function glowFromWithin(
 }
 
 /**
+ * The vertex side of the baked light (`bakedSurface`, `lit`; the bake is
+ * scripts/lab/bake-surface.mjs): the key's and the rim's visibility and the
+ * whole model's ambient occlusion, into `vVis`.
+ *  - The key off its rings, 24 directions round the model (four bits
+ *    each, two to a byte), between the two either side of where it stands
+ *    (`uRingAt`: the first's index, how far to the next); against the whole
+ *    model (`_ringa*`) and the group alone (`_ringg*`). Well off a ring's
+ *    height (`uRingAt.z`, `.w`), the whole model's harmonics instead.
+ *  - The rim and the ambient off the sky's harmonics (bands 0–2, `_sky*`).
+ * Light directions in the model's frame (`uLightDir`: key, rim).
+ */
+const BAKED_LIGHT_VERTEX = /* glsl */ `
+	#ifdef RING_WHOLE
+	attribute vec4 _ringa0;
+	attribute vec4 _ringa1;
+	attribute vec4 _ringa2;
+	attribute vec4 _sky0;
+	attribute vec4 _sky1;
+	attribute vec4 _sky2;
+	#endif
+	#ifdef RING_GROUP
+	attribute vec4 _ringg0;
+	attribute vec4 _ringg1;
+	attribute vec4 _ringg2;
+	#endif
+	uniform float uOpen;
+	uniform float uOpenLight;
+	uniform float uVisOn;
+	uniform float uVisWhole;
+	uniform vec3 uLightDir[ 2 ];
+	uniform vec4 uRingAt;
+	uniform mat3 uWorldToModel;
+	varying vec3 vVis;
+	// Direction k of a ring (0–23): its byte, then the low or high four bits.
+	float ringValue( vec4 r0, vec4 r1, vec4 r2, int k ) {
+		int q = k / 8;
+		vec4 r = q == 0 ? r0 : q == 1 ? r1 : r2;
+		float b = floor( r[ ( k % 8 ) / 2 ] * 255.0 + 0.5 );
+		float high = floor( b / 16.0 );
+		return ( ( k % 2 ) == 0 ? b - high * 16.0 : high ) / 15.0;
+	}
+	float ringAt( vec4 r0, vec4 r1, vec4 r2 ) {
+		int k = int( uRingAt.x );
+		return mix( ringValue( r0, r1, r2, k ), ringValue( r0, r1, r2, ( k + 1 ) % 24 ), uRingAt.y );
+	}
+	#ifdef RING_WHOLE
+	// The sky's harmonics at unit d, each band scaled by w.
+	float skyAt( vec3 d, vec3 w ) {
+		vec4 c0 = vec4( _sky0.x * 3.5449077, ( _sky0.yzw * 2.0 - 1.0 ) * 2.0 );
+		vec4 c1 = ( _sky1 * 2.0 - 1.0 ) * 2.0;
+		float c2 = ( _sky2.x * 2.0 - 1.0 ) * 2.0;
+		float x = d.x, y = d.y, z = d.z;
+		vec4 b0 = vec4( 0.282095 * w.x, 0.488603 * y * w.y, 0.488603 * z * w.y, 0.488603 * x * w.y );
+		vec4 b1 = vec4( 1.092548 * x * y, 1.092548 * y * z, 0.315392 * ( 3.0 * z * z - 1.0 ), 1.092548 * x * z ) * w.z;
+		return dot( c0, b0 ) + dot( c1, b1 ) + c2 * 0.546274 * ( x * x - y * y ) * w.z;
+	}
+	#endif
+	vec3 bakedVisibility( vec3 normalInModel ) {
+		// The sky's bands softened a little for the lights (no ringing), and
+		// the clamped cosine's own (π, 2π/3, π/4, over π) for the ambient.
+		// A group with one ring only takes it in every state: the whole
+		// model's for groups only ever seen assembled, the group's own for
+		// those only ever seen apart.
+		#ifdef RING_WHOLE
+			vec3 soft = vec3( 1.0, 0.85, 0.55 );
+			float keyWhole = mix( ringAt( _ringa0, _ringa1, _ringa2 ), clamp( skyAt( uLightDir[ 0 ], soft ), 0.0, 1.0 ), uRingAt.z );
+			float rim = clamp( skyAt( uLightDir[ 1 ], soft ), 0.0, 1.0 );
+			float ambient = clamp( skyAt( normalInModel, vec3( 1.0, 0.666667, 0.25 ) ), 0.0, 1.0 );
+		#endif
+		#ifdef RING_GROUP
+			// With both rings, the group's is what it adds over the whole model's.
+			#ifdef RING_DELTA
+				float groupRing = min( 1.0, ringAt( _ringa0, _ringa1, _ringa2 ) + ringAt( _ringg0, _ringg1, _ringg2 ) );
+			#else
+				float groupRing = ringAt( _ringg0, _ringg1, _ringg2 );
+			#endif
+			// A group's pieces moved apart shade each other less (uOpenLight
+			// of the way to none, when fully apart): a little, since they
+			// move only a short way and the key comes in low.
+			float keyGroup = mix( groupRing, 1.0, uOpen * uOpenLight );
+		#else
+			float keyGroup = keyWhole;
+		#endif
+		#ifndef RING_WHOLE
+			float keyWhole = keyGroup;
+			float rim = 1.0;
+			float ambient = 1.0;
+		#endif
+		vec3 vis = vec3( mix( keyGroup, keyWhole, uVisWhole ), mix( 1.0, rim, uVisWhole ), mix( 1.0, ambient, uVisWhole ) );
+		return mix( vec3( 1.0 ), vis, uVisOn );
+	}
+`;
+
+/**
  * The per-vertex bake (`_surf`, from scripts/lab/bake-surface.mjs): x, y the
  * occlusion by the part alone and by the whole group, blended by `uOpen` so
  * separated pieces stop shading each other; z, w the part's CAD finish (shade,
@@ -134,6 +229,19 @@ function glowFromWithin(
  * triplanar roughness detail and grain relief (`tDetail`, in part-local metres
  * so it sticks to moving pieces), a wrapped key (`uWrap`) for a soft-box
  * falloff, and occlusion of the environment's specular and of `uBakedDirect` of the key.
+ *
+ * And where the files carry it (`lit`), the light's baked visibility, as
+ * raspberry.luruke.com lights its berry (precomputed transfer): per vertex,
+ * spherical harmonics of what's open to the sky in each direction, against
+ * the whole model (`_visa*`, bands 0–3) and against the vertex's group alone
+ * (`_visg*`, bands 0–2). Each frame the key's and the rim's directions
+ * (`uVisDir`, world) are turned into the part's own frame and read off it,
+ * blended from the group's to the whole model's by `uVisWhole` (the model
+ * assembled), each band softened by `uVisWindow` so nothing rings: the
+ * shadows, without a shadow map. The ambient light takes the whole model's
+ * occlusion from it too (its cosine-weighted part, over the group's own,
+ * which `_surf` already has), in place of the screen-space occlusion.
+ * `uVisOn` 0 leaves the lights as they are.
  */
 function bakedSurface(
 	shader: THREE.WebGLProgramParametersWithUniforms,
@@ -145,6 +253,8 @@ function bakedSurface(
 		uFinish: { value: number };
 		uFinishFloor: { value: number };
 		uPolymer: { value: number };
+		uFinishSheen: { value: number };
+		uFinishReflect: { value: number };
 		uDetail: { value: number };
 		uDetailTile: { value: number };
 		tDetail: { value: THREE.Texture };
@@ -152,9 +262,30 @@ function bakedSurface(
 		uEnvDiffuse: { value: number };
 		uWrap: { value: number };
 		uSurfaceGrain: { value: number };
-	}
+		uVisOn: { value: number };
+		uVisWhole: { value: number };
+		uOpenLight: { value: number };
+		uLightDir: { value: THREE.Vector3[] };
+		uRingAt: { value: THREE.Vector4 };
+		uWorldToModel: { value: THREE.Matrix3 };
+	},
+	lit: false | { whole: boolean; group: boolean } = false
 ) {
 	Object.assign(shader.uniforms, uniforms);
+	if (lit) {
+		const rings =
+			(lit.whole ? '#define RING_WHOLE\n' : '') +
+			(lit.group ? '#define RING_GROUP\n' : '') +
+			(lit.whole && lit.group ? '#define RING_DELTA\n' : '');
+		shader.vertexShader = '#define BAKED_LIGHT\n' + rings + shader.vertexShader;
+		shader.fragmentShader = '#define BAKED_LIGHT\n' + shader.fragmentShader;
+		shader.vertexShader = shader.vertexShader
+			.replace('#include <common>', `#include <common>\n${BAKED_LIGHT_VERTEX}`)
+			.replace(
+				'#include <begin_vertex>',
+				'#include <begin_vertex>\nvVis = bakedVisibility( normalize( uWorldToModel * ( mat3( modelMatrix ) * objectNormal ) ) );'
+			);
+	}
 	shader.vertexShader = shader.vertexShader
 		.replace(
 			'#include <common>',
@@ -170,14 +301,29 @@ function bakedSurface(
 		// The chunk is expanded inline because includes resolve only after this hook.
 		.replace(
 			'#include <lights_fragment_maps>',
-			THREE.ShaderChunk.lights_fragment_maps.replace(
-				'iblIrradiance += getIBLIrradiance( geometryNormal );',
-				'iblIrradiance += getIBLIrradiance( geometryNormal ) * uEnvDiffuse;'
-			)
+			THREE.ShaderChunk.lights_fragment_maps
+				.replace(
+					'iblIrradiance += getIBLIrradiance( geometryNormal );',
+					'iblIrradiance += getIBLIrradiance( geometryNormal ) * uEnvDiffuse;'
+				)
+				// The polished finishes' own reflections (uFinishReflect), whatever
+				// the material's: the soft boxes in machined steel, as in the renders.
+				.replace(
+					'vec3 iblRadiance = getIBLRadiance( geometryViewDir, geometryNormal, material.roughness );',
+					/* glsl */ `vec3 iblRadiance = getIBLRadiance( geometryViewDir, geometryNormal, material.roughness );
+					#ifdef ENVMAP_TYPE_CUBE_UV
+					if ( finishShine > 0.0 ) {
+						vec3 shineDir = reflect( - geometryViewDir, geometryNormal );
+						shineDir = normalize( mix( shineDir, geometryNormal, pow4( material.roughness ) ) );
+						shineDir = transformDirectionByInverseViewMatrix( shineDir, viewMatrix );
+						iblRadiance += textureCubeUV( envMap, envMapRotation * shineDir, material.roughness ).rgb * finishShine;
+					}
+					#endif`
+				)
 		)
 		.replace(
 			'#include <common>',
-			'#include <common>\nuniform float uEnvDiffuse;\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nuniform float uWrap;\nuniform float uSurfaceGrain;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;\nfloat keyWrap = 0.0;\nfloat relief = 0.0;'
+			'#include <common>\nuniform float uEnvDiffuse;\nuniform float uOpen;\nuniform float uBakedAO;\nuniform float uBakedDirect;\nuniform float uBakedView;\nuniform float uFinish;\nuniform float uFinishFloor;\nuniform float uPolymer;\nuniform float uFinishSheen;\nuniform float uFinishReflect;\nfloat finishShine = 0.0;\nuniform float uDetail;\nuniform float uDetailTile;\nuniform sampler2D tDetail;\nuniform float uWrap;\nuniform float uSurfaceGrain;\nvarying vec4 vSurf;\nvarying vec3 vDetailAt;\nvarying vec3 vDetailNormal;\nfloat keyWrap = 0.0;\nfloat relief = 0.0;\nvec3 bakedVis = vec3( 1.0 );\n#ifdef BAKED_LIGHT\nvarying vec3 vVis;\n#endif'
 		)
 		// The key wraps (the first directional light: three puts the
 		// shadow-casting ones first, and only the key casts).
@@ -185,7 +331,7 @@ function bakedSurface(
 			'#include <lights_fragment_begin>',
 			THREE.ShaderChunk.lights_fragment_begin.replace(
 				'getDirectionalLightInfo( directionalLight, directLight );',
-				'getDirectionalLightInfo( directionalLight, directLight );\n\t\tkeyWrap = UNROLLED_LOOP_INDEX == 0 ? uWrap : 0.0;'
+				'getDirectionalLightInfo( directionalLight, directLight );\n\t\tkeyWrap = UNROLLED_LOOP_INDEX == 0 ? uWrap : 0.0;\n\t\t#if UNROLLED_LOOP_INDEX < 2\n\t\tdirectLight.color *= bakedVis[ UNROLLED_LOOP_INDEX ];\n\t\t#endif'
 			)
 		)
 		.replace(
@@ -219,6 +365,9 @@ function bakedSurface(
 		.replace(
 			'#include <metalnessmap_fragment>',
 			/* glsl */ `#include <metalnessmap_fragment>
+			#ifdef BAKED_LIGHT
+				bakedVis = vVis;
+			#endif
 			{
 				// w: roughness in its top seven bits, non-metal in the low one.
 				float code = floor( vSurf.w * 255.0 + 0.5 );
@@ -233,6 +382,15 @@ function bakedSurface(
 				diffuseColor.rgb = mix( diffuseColor.rgb, mix( metal, plain, dielectric ), strength );
 				roughnessFactor = mix( roughnessFactor, rough, strength );
 				metalnessFactor = mix( metalnessFactor, 0.0, strength * dielectric );
+				// Each finish its own sheen (uFinishSheen), as render.py's: machined
+				// metal glossier and more metallic, anodised between, cast and
+				// blasted metal duller, moulded parts left matte.
+				float machined = smoothstep( 0.3, 0.26, rough ) * ( 1.0 - dielectric );
+				float dull = smoothstep( 0.4, 0.44, rough ) * ( 1.0 - dielectric );
+				float sheenMetal = mix( mix( 0.35, 0.6, machined ), 0.2, dull ) * ( 1.0 - dielectric );
+				metalnessFactor = mix( metalnessFactor, sheenMetal, uFinishSheen * strength * ( 1.0 - dielectric ) );
+				roughnessFactor /= mix( 1.0, 1.25, uFinishSheen * ( 1.0 - dull ) * ( 1.0 - dielectric ) );
+				finishShine = uFinishReflect * strength * mix( mix( 0.5, 1.0, machined ), 0.15, dull ) * ( 1.0 - dielectric );
 				// Surface detail, from the three axes, weighted to the one the surface faces.
 				vec3 facing = pow( abs( normalize( vDetailNormal ) ), vec3( 4.0 ) );
 				facing /= facing.x + facing.y + facing.z;
@@ -261,13 +419,13 @@ function bakedSurface(
 		// Tuning: the bake alone, as grey (`bakedView`).
 		.replace(
 			'#include <dithering_fragment>',
-			'#include <dithering_fragment>\nif ( uBakedView > 0.5 ) gl_FragColor = vec4( vec3( mix( vSurf.y, vSurf.x, uOpen ) ), 1.0 );'
+			'#include <dithering_fragment>\nif ( uBakedView > 0.5 ) gl_FragColor = vec4( vec3( uBakedView < 1.5 ? mix( vSurf.y, vSurf.x, uOpen ) : uBakedView < 2.5 ? bakedVis.x : uBakedView < 3.5 ? bakedVis.y : bakedVis.z ), 1.0 );'
 		)
 		.replace(
 			'#include <aomap_fragment>',
 			/* glsl */ `#include <aomap_fragment>
 			{
-				float baked = mix( 1.0, mix( vSurf.y, vSurf.x, uOpen ), uBakedAO );
+				float baked = mix( 1.0, mix( vSurf.y, vSurf.x, uOpen ), uBakedAO ) * bakedVis.z;
 				reflectedLight.indirectDiffuse *= baked;
 				float bakedNV = saturate( dot( geometryNormal, geometryViewDir ) );
 				reflectedLight.indirectSpecular *= computeSpecularOcclusion( bakedNV, baked, material.roughness );
@@ -353,6 +511,11 @@ export interface ModelViewerOptions {
 	 * together and placed as authored.
 	 */
 	url: string | string[];
+	/**
+	 * Groups (files named as in `url`) fetched only once the model is shown
+	 * (`loadDeferred`): parts the first view hardly sees, so it comes up sooner.
+	 */
+	deferred?: string[];
 	/** Equirectangular .hdr for image-based lighting. Omit to fall back to the procedural studio. */
 	hdr?: string;
 	material?: MaterialPreset;
@@ -531,14 +694,22 @@ export interface RenderParams {
 	bakedAO: number;
 	/** How much of it darkens the key's light too, 0–1. */
 	bakedDirect: number;
-	/** 0/1: shows the bake alone, as grey, for tuning it. */
+	/** Shows a bake alone, as grey, for tuning it: 1 the occlusion, 2 the key's baked light, 3 the rim's, 4 the ambient's; 0 none. */
 	bakedView: number;
+	/** 0 VSM shadows (blurred), 1 filtered comparisons (`setShadowFilter`). */
+	shadowFilter: number;
+	/** 0/1: the lights' shadows and the ambient's occlusion from the baked visibility (`setBakedLight`), not drawn a frame. */
+	bakedLight: number;
 	/** 0–1: one shared finish (0) to each part its own, as in the studio renders (`bakedSurface`). */
 	finish: number;
 	/** The darkest of those finishes, as a share of the look's colour. */
 	finishFloor: number;
 	/** Non-metals' albedo (graphite, moulded parts), as a share of what's measured. */
 	polymer: number;
+	/** 0–1: each finish its own sheen, as the renders' (machined glossy, cast dull, moulded matte); 0 one for all. */
+	finishSheen: number;
+	/** The polished metal finishes' reflections of the studio, machined most and moulded parts none; 0 none. */
+	finishReflect: number;
 	/** How far the key's light wraps past the terminator, as a soft box's (0 none). */
 	wrap: number;
 	/** The surface's fine grain, mm deep (`bakedSurface`). */
@@ -676,6 +847,8 @@ export class ModelViewer {
 			phase?: number;
 			/** How far open it is, for its baked occlusion (`syncOpen`). */
 			open: { value: number };
+			/** Faded in on arriving late (`loadDeferred`), over its level: 0–1. */
+			arrive?: number;
 		}
 	>();
 
@@ -733,7 +906,11 @@ export class ModelViewer {
 	 */
 	setGroup(name: string, state: { level?: number; cut?: number; out?: number; up?: number }) {
 		const g = this.groups.get(name);
-		if (!g) return;
+		if (!g) {
+			// Not loaded yet (`deferred`): kept for when it is.
+			this.pendingGroups.set(name, { ...this.pendingGroups.get(name), ...state });
+			return;
+		}
 		if (state.level !== undefined) g.level = state.level;
 		if (state.cut !== undefined) g.cut = state.cut;
 		if (state.out !== undefined) g.out = state.out;
@@ -800,13 +977,15 @@ export class ModelViewer {
 	 * byte), and the slots their starting colours. Only the groups with a
 	 * coloured part carry the attribute; the rest draw as they were.
 	 */
-	private paintSlots(model: THREE.Object3D) {
+	private paintSlots(model: THREE.Object3D, fresh = true) {
 		const specs = Object.entries(this.opts.colours ?? {}).slice(0, PALETTE_SIZE - 1);
-		specs.forEach(([name, spec], i) => {
-			this.slots.set(name, i + 1);
-			this.slotStates.set(name, { name, label: spec.label ?? name, colour: '#ffffff', amount: 0 });
-			if (spec.colour) this.setColour(name, spec.colour, spec.amount ?? 0);
-		});
+		// (Once: the groups loaded later keep the slots as they're set by then.)
+		if (fresh)
+			specs.forEach(([name, spec], i) => {
+				this.slots.set(name, i + 1);
+				this.slotStates.set(name, { name, label: spec.label ?? name, colour: '#ffffff', amount: 0 });
+				if (spec.colour) this.setColour(name, spec.colour, spec.amount ?? 0);
+			});
 		for (const [name, spec] of specs) {
 			const node = model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(spec.group));
 			if (!node) continue;
@@ -965,6 +1144,16 @@ export class ModelViewer {
 				if ((o as THREE.Mesh).isMesh) scale = o.matrixWorld.getMaxScaleOnAxis();
 			});
 			const surface = { uOpen: { value: 0 }, uLocalScale: { value: scale }, ...this.baked };
+			// The light's baked visibility, where the files carry it.
+			let lit: false | { whole: boolean; group: boolean } = false;
+			node.traverse((o) => {
+				const g = (o as THREE.Mesh).isMesh ? (o as THREE.Mesh).geometry : null;
+				if (!g) return;
+				const whole = !!g.getAttribute('_ringa0');
+				const group = !!g.getAttribute('_ringg0');
+				if (whole || group) lit = { whole, group };
+			});
+			if (lit) this.lit = true;
 			// Colour slots, where any part of it takes one.
 			let painted = false;
 			node.traverse((o) => {
@@ -973,11 +1162,15 @@ export class ModelViewer {
 			material.onBeforeCompile = (shader, renderer) => {
 				base.call(material, shader, renderer);
 				glowFromWithin(shader, glow);
-				if (baked) bakedSurface(shader, surface);
+				if (baked) bakedSurface(shader, surface, lit);
 				if (painted) paletteColour(shader, this.palette);
 			};
 			material.customProgramCacheKey = () =>
-				baseKey.call(material) + '|glow' + (baked ? '|baked' : '') + (painted ? '|palette' : '');
+				baseKey.call(material) +
+				'|glow' +
+				(baked ? '|baked' : '') +
+				(lit ? `|lit${lit.whole ? 'w' : ''}${lit.group ? 'g' : ''}` : '') +
+				(painted ? '|palette' : '');
 			const planes = [new THREE.Plane(), new THREE.Plane()];
 			material.clippingPlanes = planes;
 			material.clipIntersection = true;
@@ -1230,10 +1423,11 @@ export class ModelViewer {
 	 * parts inside) and is gone by 0. While see-through it casts no shadow,
 	 * which can't fade with it.
 	 */
-	private syncGroup(g: { node: THREE.Object3D; material: THREE.MeshPhysicalMaterial; level: number }) {
+	private syncGroup(g: { node: THREE.Object3D; material: THREE.MeshPhysicalMaterial; level: number; arrive?: number }) {
 		const base = this.material;
 		const m = g.material;
-		const k = g.level;
+		// (Its arriving fades the look only: the baked light reads the level.)
+		const k = g.level * (g.arrive ?? 1);
 		// Below a level of 0.1 its light dims too: the canvas composites over the
 		// backdrop as drawn, so a highlight on a part all but gone would still
 		// glint at full strength.
@@ -1531,11 +1725,12 @@ export class ModelViewer {
 		// resolution is imperceptible on a blurred sample and much cheaper.
 		this.renderer.transmissionResolutionScale = 0.75;
 		// VSM is the one shadow type with a real blur radius; PCF's `radius`
-		// is a no-op on the soft variant. Slight light-bleed is the trade.
+		// is a no-op on the soft variant. Slight light-bleed is the trade
+		// (`shadowFilter` 1 for filtered comparisons instead).
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.VSMShadowMap;
 		// Manual: three re-renders the shadow map on EVERY scene render, so a
-		// pass that draws the scene again would redraw it (and its VSM blur)
+		// pass that draws the scene again would redraw it
 		// for one image. `render()` flags it once; the scene pass consumes it.
 		this.renderer.shadowMap.autoUpdate = false;
 		// The composer runs several passes per frame; with autoReset the stats
@@ -1767,6 +1962,7 @@ export class ModelViewer {
 		// One shared material for every part: one shader program, and one
 		// object to tune. The glTF's own material is dropped.
 		this.material = createMaterial(this.opts.material ?? 'satin', this.opts.color ?? 0xf24a2e);
+		softShadows(this.material);
 		if ((this.opts.surfaceVariation ?? 1) > 0) {
 			const v = this.opts.surfaceVariation ?? 1;
 			applySurfaceVariation(this.material, { roughness: 0.08 * v, albedo: 0.02 * v });
@@ -1777,16 +1973,7 @@ export class ModelViewer {
 			this.shadeAngles.elevation = sh.elevation ?? this.shadeAngles.elevation;
 			this.shade = applyStudioShade(this.material, this.sweep!.sweepUniforms, { ...sh, on: false });
 		}
-		model.traverse((o) => {
-			const mesh = o as THREE.Mesh;
-			if (!mesh.isMesh) return;
-			const old = mesh.material as THREE.Material;
-			mesh.material = this.material;
-			old.dispose();
-			mesh.frustumCulled = true;
-			mesh.castShadow = true;
-			mesh.receiveShadow = true;
-		});
+		this.adopt(model);
 		// Colour slots before carving, which shares each mesh's attributes.
 		this.paintSlots(model);
 		// One step at a time, handing the main thread back between them, so
@@ -1823,6 +2010,7 @@ export class ModelViewer {
 		this.offset.copy(model.position);
 
 		this.root.add(model);
+		this.model = model;
 
 		this.radius = Math.max(size.x, size.y, size.z) * (this.opts.fitOffset ?? 1.95);
 
@@ -1873,7 +2061,7 @@ export class ModelViewer {
 
 		const groundY = -size.y / 2 - 0.02;
 		if (this.opts.groundShadow !== false) {
-			// Receives the key's VSM shadow. The contact shadow says "touching
+			// Receives the key's shadow. The contact shadow says "touching
 			// the floor"; this says "standing in a lit room".
 			this.ground = new THREE.Mesh(
 				new THREE.PlaneGeometry(extent * 6, extent * 6),
@@ -1939,6 +2127,146 @@ export class ModelViewer {
 		return model;
 	}
 
+	private urls() {
+		return typeof this.opts.url === 'string' ? [this.opts.url] : this.opts.url;
+	}
+	private isDeferred(url: string) {
+		return !!this.opts.deferred?.includes(url.replace(/^.*\//, '').replace(/\.glb$/, ''));
+	}
+
+	/** The model as loaded (`load`), which the later groups join. */
+	private model: THREE.Group | null = null;
+	/** `loadDeferred`, once started. */
+	private deferredLoad: Promise<void> | null = null;
+	/** How a group not yet loaded was last set (`setGroup`), for when it arrives. */
+	private pendingGroups = new Map<string, { level?: number; cut?: number; out?: number; up?: number }>();
+
+	/**
+	 * The groups held back (`deferred`), fetched, set up as `load` sets up the
+	 * rest, and faded in: each compiled and drawn once out of sight first, so
+	 * arriving costs the frames on screen nothing. Each takes how it was last
+	 * set before it was there. Resolves when they're in (at once without any,
+	 * or before `load` has resolved).
+	 */
+	loadDeferred() {
+		// (Only once there's a model to join: before, nothing to wait on yet.)
+		if (!this.model) return Promise.resolve();
+		return (this.deferredLoad ??= this.fetchDeferred());
+	}
+	private async fetchDeferred() {
+		const urls = this.urls().filter((url) => this.isDeferred(url));
+		const model = this.model;
+		if (!urls.length || !model || this.disposed) return;
+		const loader = new GLTFLoader();
+		loader.setMeshoptDecoder(MeshoptDecoder);
+		const scenes = (await Promise.all(urls.map((url) => loader.loadAsync(url)))).map((gltf) => gltf.scene);
+		if (this.disposed) return;
+		const before = new Set(this.groups.keys());
+		for (const scene of scenes) {
+			for (const error of foldLods(scene)) if (!this.lodErrors.includes(error)) this.lodErrors.push(error);
+			this.adopt(scene);
+			this.paintSlots(scene, false);
+			// Unseen until set up and faded in.
+			scene.visible = false;
+			model.add(scene);
+		}
+		this.lodErrors.sort((a, b) => a - b);
+		for (const [name, spec] of Object.entries(this.opts.carve ?? {}))
+			if (this.opts.deferred?.includes(spec.from)) await this.carveGroup(model, name, spec);
+		await this.splitGroups(model);
+		if (this.disposed) return;
+		const added = [...this.groups].filter(([name]) => !before.has(name));
+		for (const [, g] of added)
+			g.node.traverse((o) => {
+				const geometry = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+				if (!(o as THREE.Mesh).isMesh || !geometry) return;
+				if (!this.opts.keepParts) geometry.deleteAttribute('_part');
+				geometry.deleteAttribute('color');
+				if (!geometry.boundingBox) shareBounds(geometry, geometry);
+			});
+		// Its levels of detail swapped in with the rest's at the next frame.
+		this.lod = -1;
+		// Out of sight: see-through and solid compiled, then each drawn alone
+		// into a pixel, which uploads its buffers. Each step shows them and
+		// hides them again in one go, so no frame on screen catches them.
+		for (const [name, g] of added) {
+			const pending = this.pendingGroups.get(name);
+			this.pendingGroups.delete(name);
+			g.arrive = 0;
+			// (Without any, as the stage last set it while it was being split.)
+			if (pending) this.setGroup(name, pending);
+			else this.syncGroup(g);
+		}
+		for (const scene of scenes) scene.visible = true;
+		const target = new THREE.WebGLRenderTarget(1, 1);
+		const all = [...this.groups.values()];
+		const offstage = (show: (g: (typeof all)[number]) => void, run: () => void) => {
+			const shown = all.map((g) => g.node.visible);
+			all.forEach((g) => (g.node.visible = false));
+			for (const [, g] of added) show(g);
+			run();
+			for (const [, g] of added) this.syncGroup(g);
+			all.forEach((g, i) => (g.node.visible = shown[i]));
+		};
+		for (const level of [0.5, 1]) {
+			offstage(
+				(g) => this.syncGroup({ ...g, level: Math.max(g.level, 0.01) * level, arrive: 1 }),
+				() => this.renderer.compile(this.scene, this.camera)
+			);
+			// Linked off the main thread where the GPU can.
+			for (let i = 0; i < 10; i++) await nextFrame();
+			if (this.disposed) break;
+		}
+		for (const [, g] of added) {
+			if (this.disposed || this.contextLost) break;
+			await nextFrame();
+			offstage(
+				(other) => {
+					if (other !== g) return;
+					this.syncGroup({ ...g, arrive: 1 });
+					g.node.visible = true;
+				},
+				() => {
+					// (The shadow map left as it is: it holds the whole model.)
+					const shadows = this.renderer.shadowMap.autoUpdate;
+					this.renderer.shadowMap.autoUpdate = false;
+					this.renderer.setRenderTarget(target);
+					this.renderer.render(this.scene, this.camera);
+					this.renderer.setRenderTarget(null);
+					this.renderer.shadowMap.autoUpdate = shadows;
+				}
+			);
+		}
+		target.dispose();
+		if (this.disposed) return;
+		for (const [, g] of added) {
+			this.syncGroup(g);
+			gsap.to(g, {
+				arrive: 1,
+				duration: 0.8,
+				ease: 'power2.out',
+				onUpdate: () => {
+					this.syncGroup(g);
+					this.invalidate();
+				}
+			});
+		}
+	}
+
+	/** The shared material and shadows on each mesh in place of the file's own. */
+	private adopt(model: THREE.Object3D) {
+		model.traverse((o) => {
+			const mesh = o as THREE.Mesh;
+			if (!mesh.isMesh) return;
+			const old = mesh.material as THREE.Material;
+			mesh.material = this.material;
+			old.dispose();
+			mesh.frustumCulled = true;
+			mesh.castShadow = true;
+			mesh.receiveShadow = true;
+		});
+	}
+
 	private async loadModel() {
 		const loader = new GLTFLoader();
 		// Required: the asset uses EXT_meshopt_compression + KHR_mesh_quantization.
@@ -1947,7 +2275,7 @@ export class ModelViewer {
 		// Decoded off the main thread (several megabytes of it), in two
 		// workers shared by every viewer on the page.
 		MeshoptDecoder.useWorkers(2);
-		const urls = typeof this.opts.url === 'string' ? [this.opts.url] : this.opts.url;
+		const urls = this.urls().filter((url) => !this.isDeferred(url));
 		// Each file's bytes, summed into one figure for the progress bar.
 		const files: [number, number][] = urls.map(() => [0, 0]);
 		const loaded = await Promise.all(
@@ -2150,7 +2478,7 @@ export class ModelViewer {
 			cavity: this.gtao?.valley ?? 0,
 			bloom: this.bloom?.strength ?? 0,
 			bloomThreshold: this.bloom?.threshold ?? 1,
-			ao: this.gtao?.blendIntensity ?? 0,
+			ao: this.gtao ? this.aoAmount : 0,
 			grain: (this.grain?.uniforms.uAmount.value as number) ?? 0,
 			shadow: this.contact?.opacity ?? 0,
 			gradient: this.gradient?.enabled ? 1 : 0,
@@ -2181,9 +2509,13 @@ export class ModelViewer {
 			bakedAO: this.baked.uBakedAO.value,
 			bakedDirect: this.baked.uBakedDirect.value,
 			bakedView: this.baked.uBakedView.value,
+			bakedLight: this.baked.uVisOn.value,
+			shadowFilter: this.renderer.shadowMap.type === THREE.PCFShadowMap ? 1 : 0,
 			finish: this.baked.uFinish.value,
 			finishFloor: this.baked.uFinishFloor.value,
 			polymer: this.baked.uPolymer.value,
+			finishSheen: this.baked.uFinishSheen.value,
+			finishReflect: this.baked.uFinishReflect.value,
 			detail: this.baked.uDetail.value,
 			detailTile: this.baked.uDetailTile.value,
 			wrap: this.baked.uWrap.value,
@@ -2242,7 +2574,8 @@ export class ModelViewer {
 		];
 		if (this.bloom) keys.push('bloom', 'bloomThreshold');
 		if (this.gtao) keys.push('ao');
-		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().endsWith('|baked')))
+		if (this.lit) keys.push('bakedLight');
+		if ([...this.groups.values()].some((g) => g.material.customProgramCacheKey().includes('|baked')))
 			keys.push(
 				'bakedAO',
 				'bakedDirect',
@@ -2250,6 +2583,8 @@ export class ModelViewer {
 				'finish',
 				'finishFloor',
 				'polymer',
+				'finishSheen',
+				'finishReflect',
 				'detail',
 				'detailTile',
 				'wrap',
@@ -2339,7 +2674,10 @@ export class ModelViewer {
 				this.renderer.toneMappingExposure = n;
 				break;
 			case 'sharpen':
-				if (this.sweep) this.sweep.sharpen = n;
+				if (this.sweep) {
+					this.sweep.sharpen = n;
+					this.syncSweep();
+				}
 				break;
 			case 'edges':
 				if (this.gtao) this.gtao.ridge = n;
@@ -2365,6 +2703,7 @@ export class ModelViewer {
 				if (this.bloom) this.bloom.threshold = n;
 				break;
 			case 'ao':
+				this.aoAmount = n;
 				if (this.gtao) this.gtao.blendIntensity = n;
 				break;
 			case 'bakedAO':
@@ -2376,6 +2715,12 @@ export class ModelViewer {
 			case 'bakedView':
 				this.baked.uBakedView.value = n;
 				break;
+			case 'bakedLight':
+				this.setBakedLight(n > 0.5);
+				break;
+			case 'shadowFilter':
+				this.setShadowFilter(n > 0.5);
+				break;
 			case 'finish':
 				this.baked.uFinish.value = n;
 				break;
@@ -2384,6 +2729,12 @@ export class ModelViewer {
 				break;
 			case 'polymer':
 				this.baked.uPolymer.value = n;
+				break;
+			case 'finishSheen':
+				this.baked.uFinishSheen.value = n;
+				break;
+			case 'finishReflect':
+				this.baked.uFinishReflect.value = n;
 				break;
 			case 'detail':
 				this.baked.uDetail.value = n;
@@ -2607,6 +2958,18 @@ export class ModelViewer {
 	}
 
 	/**
+	 * The sweep pass runs with the studio (its backdrop and shade) and, with
+	 * the studio off, for the scale-up and sharpening alone: the frame is
+	 * drawn smaller than the canvas, and a plain stretch would leave it soft.
+	 */
+	private syncSweep() {
+		if (!this.sweep) return;
+		this.sweep.backdrop = this.studioOn;
+		this.sweep.enabled = this.studioOn || this.sweep.sharpen > 0;
+		this.invalidate();
+	}
+
+	/**
 	 * The master toggle. On: enable the sweep pass and the shade term, and
 	 * swap the rig to STUDIO_PRESET, remembering what it displaced. Off: put
 	 * those values back. Idempotent, so a repeated "on" cannot overwrite the
@@ -2615,7 +2978,7 @@ export class ModelViewer {
 	private setStudio(on: boolean) {
 		if (on === this.studioOn) return;
 		this.studioOn = on;
-		if (this.sweep) this.sweep.enabled = on;
+		this.syncSweep();
 		if (this.shade) this.shade.uShadeOn.value = on ? 1 : 0;
 		if (on) {
 			const current = this.readParams();
@@ -2705,6 +3068,104 @@ export class ModelViewer {
 		this.resize();
 	}
 
+	/** Whether any group carries the light's baked visibility (`bakedSurface`'s `lit`). */
+	private lit = false;
+	/** The screen-space occlusion's strength as set (`ao`), which the baked light scales down while the model is assembled. */
+	private aoAmount = 0.9;
+	/** The key's height in the model's frame each of its rings was baked at (scripts/lab/bake-surface.mjs RING_EL), radians. */
+	private ringEl = { whole: THREE.MathUtils.degToRad(41), group: THREE.MathUtils.degToRad(34) };
+
+	/**
+	 * The lights by their baked visibility rather than the shadow map, and
+	 * the ambient by the baked whole-model occlusion rather than the
+	 * screen-space pass (`bakedLight`): neither drawn a frame.
+	 */
+	private setBakedLight(on: boolean) {
+		this.baked.uVisOn.value = on ? 1 : 0;
+		const key = this.lights.key;
+		if (key.castShadow === on) {
+			key.castShadow = !on;
+			// The materials' shadow code compiles in or out with it.
+			for (const g of this.groups.values()) g.material.needsUpdate = true;
+			this.material.needsUpdate = true;
+		}
+		if (this.gtao) {
+			// The pass stays for the frame's finish (tone mapping, the grade);
+			// its occlusion only while the model is apart (`syncBakedLight`).
+			this.gtao.occlude = !on;
+			this.gtao.blendIntensity = this.aoAmount;
+			this.gtao.enabled = on || this.aoScale > 0;
+			this.syncPasses();
+		}
+		this.invalidate();
+	}
+
+	/**
+	 * The key's shadow as filtered depth comparisons (PCF, `softShadows`)
+	 * rather than VSM: three's VSM calls a point fully lit wherever it's
+	 * nearer the light than the blurred mean depth, and where an edge in the
+	 * map meets empty space (a lid's rim, handles, cable trays, seen from the
+	 * light) the blur pulls the mean out to the far plane, so the shadows
+	 * under them come and go as the model turns. Each its own bias: VSM's
+	 * blur hides acne that comparisons show.
+	 */
+	private setShadowFilter(pcf: boolean) {
+		const type = pcf ? THREE.PCFShadowMap : THREE.VSMShadowMap;
+		if (this.renderer.shadowMap.type === type) return;
+		this.renderer.shadowMap.type = type;
+		const { shadow } = this.lights.key;
+		shadow.radius = pcf ? 4 : 4.5;
+		shadow.bias = pcf ? -0.0005 : -0.0002;
+		shadow.normalBias = pcf ? 0.02 : 0.04;
+		shadow.map?.dispose();
+		shadow.map = null;
+		for (const g of this.groups.values()) g.material.needsUpdate = true;
+		this.material.needsUpdate = true;
+		this.invalidate();
+	}
+
+	/**
+	 * The baked light's per-frame inputs: the key's and the rim's directions
+	 * in the model's frame (the bake's: the root turned back), where the key
+	 * falls on its ring (`uRingAt`: the direction before it, how far on, and
+	 * how far off the ring's height it is, as a share given to the sky's
+	 * harmonics instead), and how assembled the model is (`uVisWhole`):
+	 * each group shown in full and in place, or the group's own light for all.
+	 */
+	private syncBakedLight() {
+		if (!this.lit || !this.baked.uVisOn.value) return;
+		const { key, rim } = this.lights;
+		const u = this.baked;
+		this.root.updateWorldMatrix(true, false);
+		const toModel = this.tmpQuat.setFromRotationMatrix(this.root.matrixWorld).invert();
+		u.uWorldToModel.value.setFromMatrix4(this.tmpMat4.makeRotationFromQuaternion(toModel));
+		const [k, r] = u.uLightDir.value;
+		k.subVectors(key.position, key.target.position).normalize().applyQuaternion(toModel);
+		r.subVectors(rim.position, rim.target.position).normalize().applyQuaternion(toModel);
+		const az = (Math.atan2(k.z, k.x) + Math.PI * 2) % (Math.PI * 2);
+		const t = (az / (Math.PI * 2)) * 24;
+		const el = Math.asin(THREE.MathUtils.clamp(k.y, -1, 1));
+		const off = (ring: number) =>
+			THREE.MathUtils.smoothstep(Math.abs(el - ring), THREE.MathUtils.degToRad(10), THREE.MathUtils.degToRad(25));
+		u.uRingAt.value.set(Math.floor(t) % 24, t - Math.floor(t), off(this.ringEl.whole), off(this.ringEl.group));
+		let whole = 1;
+		for (const g of this.groups.values()) {
+			const placed = 1 - Math.min(1, Math.max(Math.abs(g.out), Math.abs(g.up), g.cut) / OPEN_AT);
+			whole = Math.min(whole, g.level, placed, 1 - g.open.value);
+		}
+		this.baked.uVisWhole.value = whole;
+		// Taken apart, the pieces' contact with each other is wherever they've
+		// moved to, which no bake can know: the screen-space occlusion comes
+		// back for that, faded in as the model comes apart.
+		if (this.gtao) {
+			const apart = whole < 0.999;
+			if (this.gtao.occlude !== apart) this.gtao.occlude = apart;
+			this.gtao.blendIntensity = this.aoAmount * (1 - whole);
+		}
+	}
+	private tmpQuat = new THREE.Quaternion();
+	private tmpMat4 = new THREE.Matrix4();
+
 	/** The bake's uniforms, shared by every group (`bakedSurface`). */
 	private baked = {
 		uBakedAO: { value: 1 },
@@ -2713,11 +3174,19 @@ export class ModelViewer {
 		uFinish: { value: 1 },
 		uFinishFloor: { value: 0.45 },
 		uPolymer: { value: 1 },
+		uFinishSheen: { value: 0 },
+		uFinishReflect: { value: 0 },
 		uDetail: { value: 1 },
 		uDetailTile: { value: 0.35 },
 		uEnvDiffuse: { value: 1 },
 		uWrap: { value: 0 },
 		uSurfaceGrain: { value: 0 },
+		uVisOn: { value: 0 },
+		uVisWhole: { value: 1 },
+		uOpenLight: { value: 0.2 },
+		uLightDir: { value: [new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 1, 0)] },
+		uRingAt: { value: new THREE.Vector4() },
+		uWorldToModel: { value: new THREE.Matrix3() },
 		// Mid-grey (no change) until the texture arrives (`loadDetail`).
 		tDetail: { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1) as THREE.Texture }
 	};
@@ -3115,6 +3584,7 @@ export class ModelViewer {
 		}
 		if (this.studioOn && this.studioKeyFollow) this.aimKey();
 		this.fitShadow();
+		this.syncBakedLight();
 	}
 
 	render() {
@@ -3292,7 +3762,7 @@ export class ModelViewer {
 		const { ratio, ao } = this.ladder[i];
 		this.aoScale = ao;
 		this.renderRatio = ratio;
-		if (this.gtao) this.gtao.enabled = ao > 0;
+		if (this.gtao) this.gtao.enabled = ao > 0 || !!this.baked.uVisOn.value;
 		this.syncPasses();
 		this.resize();
 	}
@@ -3676,7 +4146,7 @@ class SceneGTAOPass extends GTAOPass {
 
 			void main() {
 				vec4 scene = texture2D( tDiffuse, vUv );
-				gl_FragColor = vec4( scene.rgb * mix( vec3( 1.0 ), occlusion(), uIntensity ), scene.a );
+				gl_FragColor = vec4( scene.rgb * ( uIntensity > 0.0 ? mix( vec3( 1.0 ), occlusion(), uIntensity ) : vec3( 1.0 ) ), scene.a );
 				// Machined edges catch the light and crevices hold shadow, as the
 				// renders' edge polish and bevels have them: a sharp turn only
 				// (a cylinder's facets turn too gently to count), a pixel wide.
@@ -3718,19 +4188,24 @@ class SceneGTAOPass extends GTAOPass {
 		delta: number,
 		maskActive: boolean
 	) {
-		// The normals, at the depth's own resolution.
+		// The normals, at the depth's own resolution: for the occlusion, and
+		// for the edges and creases.
 		const depth = this.depthTexture as THREE.DepthTexture;
-		const { width, height } = depth.image as { width: number; height: number };
-		if (this.normals.width !== width || this.normals.height !== height) this.normals.setSize(width, height);
-		this.rebuildNormals.uniforms.tDepth.value = depth;
-		this.rebuildNormals.uniforms.cameraProjectionMatrixInverse.value.copy(this.camera.projectionMatrixInverse);
-		renderer.setRenderTarget(this.normals);
-		this.normalQuad.render(renderer);
+		if (this.occlude || this.ridge > 0 || this.valley > 0) {
+			const { width, height } = depth.image as { width: number; height: number };
+			if (this.normals.width !== width || this.normals.height !== height) this.normals.setSize(width, height);
+			this.rebuildNormals.uniforms.tDepth.value = depth;
+			this.rebuildNormals.uniforms.cameraProjectionMatrixInverse.value.copy(this.camera.projectionMatrixInverse);
+			renderer.setRenderTarget(this.normals);
+			this.normalQuad.render(renderer);
+		}
 		// The stock pass works out and denoises the occlusion only…
-		const output = this.output;
-		this.output = GTAOPass.OUTPUT.Off;
-		super.render(renderer, writeBuffer, readBuffer, delta, maskActive);
-		this.output = output;
+		if (this.occlude) {
+			const output = this.output;
+			this.output = GTAOPass.OUTPUT.Off;
+			super.render(renderer, writeBuffer, readBuffer, delta, maskActive);
+			this.output = output;
+		}
 		// …and this draws the frame with it.
 		const u = this.composite.uniforms;
 		u.tDiffuse.value = this.source ?? readBuffer.texture;
@@ -3741,7 +4216,7 @@ class SceneGTAOPass extends GTAOPass {
 		u.uValley.value = this.valley;
 		u.tAO.value = this.pdRenderTarget.texture;
 		u.tDepth.value = this.depthTexture;
-		u.uIntensity.value = this.blendIntensity;
+		u.uIntensity.value = this.occlude ? this.blendIntensity : 0;
 		u.cameraNear.value = (this.camera as THREE.PerspectiveCamera).near;
 		u.cameraFar.value = (this.camera as THREE.PerspectiveCamera).far;
 		renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
@@ -3774,6 +4249,39 @@ class SceneGTAOPass extends GTAOPass {
 		(u.uHighTone.value as THREE.Color).set(g.highlights);
 	}
 
+	/**
+	 * Whether it works out the occlusion at all: off, it only finishes the
+	 * frame (tone mapping, the grade, the edges), for when the occlusion is
+	 * baked (ModelViewer's `bakedLight`), and its buffers shrink to a pixel
+	 * until it's back on (some 64 MB at a retina screen's own resolution).
+	 */
+	get occlude() {
+		return this.occluding;
+	}
+	set occlude(on: boolean) {
+		if (on === this.occluding) return;
+		this.occluding = on;
+		this.applySize();
+		if (!on) this.normals.setSize(1, 1);
+	}
+	private occluding = true;
+	/** The size the composer asks for (`setSize`), kept while the buffers are shrunk. */
+	private asked?: { width: number; height: number };
+	setSize(width: number, height: number) {
+		// (The parent's constructor sizes it before this class's fields exist.)
+		if (!this.asked) {
+			super.setSize(width, height);
+			this.asked = { width, height };
+			return;
+		}
+		this.asked.width = width;
+		this.asked.height = height;
+		this.applySize();
+	}
+	private applySize() {
+		const { width, height } = this.asked ?? { width: 1, height: 1 };
+		super.setSize(this.occluding ? width : 1, this.occluding ? height : 1);
+	}
 	/** Edges brightened and crevices darkened (`bend`), 0 for neither. */
 	ridge = 0;
 	valley = 0;
@@ -4205,6 +4713,43 @@ function yieldToMain() {
 function hex(color: number | string | undefined): string {
 	if (typeof color === 'number') return '#' + color.toString(16).padStart(6, '0');
 	return color ?? '#000000';
+}
+
+/**
+ * The key's soft shadow, filtered smoothly: three's PCF takes five taps
+ * round a disc turned by per-pixel noise, which leaves the penumbra
+ * grainy; this takes sixteen (each a hardware 2×2 comparison) on a fixed
+ * Poisson disc `shadow.radius` texels across, so it's smooth and holds
+ * still as the model turns.
+ */
+const SOFT_SHADOW_PARS = THREE.ShaderChunk.shadowmap_pars_fragment.replace(
+	/\/\/ Hardware PCF with LinearFilter[\s\S]*?\) \* 0\.2;/,
+	/* glsl */ `vec2 texelSize = vec2( 1.0 ) / shadowMapSize;
+				float radius = shadowRadius * texelSize.x;
+				const vec2 disk[ 16 ] = vec2[ 16 ](
+					vec2( -0.94201624, -0.39906216 ), vec2( 0.94558609, -0.76890725 ),
+					vec2( -0.09418410, -0.92938870 ), vec2( 0.34495938, 0.29387760 ),
+					vec2( -0.91588581, 0.45771432 ), vec2( -0.81544232, -0.87912464 ),
+					vec2( -0.38277543, 0.27676845 ), vec2( 0.97484398, 0.75648379 ),
+					vec2( 0.44323325, -0.97511554 ), vec2( 0.53742981, -0.47373420 ),
+					vec2( -0.26496911, -0.41893023 ), vec2( 0.79197514, 0.19090188 ),
+					vec2( -0.24188840, 0.99706507 ), vec2( -0.81409955, 0.91437590 ),
+					vec2( 0.19984126, 0.78641367 ), vec2( 0.14383161, -0.14100790 )
+				);
+				shadow = 0.0;
+				for ( int i = 0; i < 16; i ++ ) shadow += texture( shadowMap, vec3( shadowCoord.xy + disk[ i ] * radius, shadowCoord.z ) );
+				shadow /= 16.0;`
+);
+
+function softShadows(material: THREE.Material) {
+	if (SOFT_SHADOW_PARS === THREE.ShaderChunk.shadowmap_pars_fragment) return;
+	const base = material.onBeforeCompile;
+	const baseKey = material.customProgramCacheKey;
+	material.onBeforeCompile = (shader, renderer) => {
+		base.call(material, shader, renderer);
+		shader.fragmentShader = shader.fragmentShader.replace('#include <shadowmap_pars_fragment>', SOFT_SHADOW_PARS);
+	};
+	material.customProgramCacheKey = () => baseKey.call(material) + '|soft-shadow';
 }
 
 function createMaterial(preset: MaterialPreset, color: THREE.ColorRepresentation) {

@@ -72,6 +72,14 @@ const cad = (model: string, groups: string[]) => groups.map((g) => `/models/land
 const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'mark-0': {
 		files: cad('mark-0', ['f1_cradle', 'f2_drives', 'f2_reactivity', 'f3_core', 'f4_heatpipes', 'context']),
+		// Its light baked (look.ts `bakedLight`), so its frame is cheap enough
+		// to draw at a retina screen's own resolution: 2.0 ms on 01 at 2 against
+		// the live light's 2.4 at 1.5 (M4 Max, 1440 wide).
+		pixelRatio: 2,
+		// The core and the control drums (10.6 of its 22.5 MB, gzipped) come
+		// once it's shown: from 01's view they're specks through the top
+		// (under 0.3% of the frame), and they fade in as they arrive.
+		deferred: ['f2_reactivity', 'f3_core'],
 		// Colour slots, a group each (ModelViewer's `colours`, live via `setColour`
 		// and the controls panel); off unless `amount` is set: the core is tinted
 		// grey, the rest keep the material's colour.

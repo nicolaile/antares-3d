@@ -21,6 +21,8 @@
 				{ key: 'finish', label: 'Finishes', min: 0, max: 1, step: 0.05 },
 				{ key: 'finishFloor', label: 'Darkest', min: 0, max: 1, step: 0.01 },
 				{ key: 'polymer', label: 'Non-metal', min: 0, max: 3, step: 0.05 },
+				{ key: 'finishSheen', label: 'Finish sheen', min: 0, max: 1, step: 0.05 },
+				{ key: 'finishReflect', label: 'Finish reflections', min: 0, max: 2, step: 0.05 },
 				{ key: 'detail', label: 'Detail', min: 0, max: 2, step: 0.05 },
 				{ key: 'detailTile', label: 'Detail tile', min: 0.05, max: 1.5, step: 0.05 },
 				{ key: 'surfaceGrain', label: 'Grain (mm)', min: 0, max: 0.2, step: 0.005 },

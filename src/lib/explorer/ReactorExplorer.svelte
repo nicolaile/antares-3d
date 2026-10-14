@@ -602,6 +602,9 @@
 		// Next frame: a model that has just loaded is framed once more as it
 		// comes on stage, which would cut the sweep short.
 		requestAnimationFrame(() => {
+			// The stage turning the model to the feature's point runs the other
+			// way round: land it now, so only the entrance's turn is seen.
+			for (const t of gsap.getTweensOf(v.scrollRotation)) t.progress(1);
 			turnIn = gsap.to(v.userRotation, { y: 0, ...ENTRANCE });
 			if (!shot || !from) return;
 			const r = v.radius;

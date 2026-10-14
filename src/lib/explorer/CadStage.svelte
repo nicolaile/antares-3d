@@ -68,7 +68,7 @@
 	import { untrack } from 'svelte';
 	import type { Vector3 } from 'three';
 	import Scene from '$lib/explorer/Scene.svelte';
-	import type { ColourSlots, ModelViewer } from '$lib/three/viewer/ModelViewer';
+	import type { ColourSlots, ModelViewer, RenderParams } from '$lib/three/viewer/ModelViewer';
 	import type { EnergyTrails, TrailSet } from '$lib/three/EnergyTrails';
 	import type { Shot } from '$lib/three/viewer/shot';
 	import { gsap } from '$lib/motion/scroll';
@@ -82,6 +82,7 @@
 		explode = {},
 		carve = undefined,
 		colours = undefined,
+		renderLook = undefined,
 		sections = undefined,
 		trails = undefined,
 		paused = false,
@@ -109,6 +110,8 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** Render values for this model, in place of the shared LOOK (Scene's `look`). */
+		renderLook?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Pipes the energy runs along, and how it looks there, where a look turns it on (`Look`'s `trails`). */
@@ -479,6 +482,7 @@
 		{explode}
 		{carve}
 		{colours}
+		look={renderLook}
 		{sections}
 		shot={framed}
 		paused={paused || hidden}

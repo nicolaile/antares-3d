@@ -15,7 +15,7 @@
 	import type { Shot } from '$lib/three/viewer/shot';
 	import type { CadLabel } from '$lib/three/cad/cadPoints';
 	import type { TrailSet } from '$lib/three/EnergyTrails';
-	import type { ColourSlots } from '$lib/three/viewer/ModelViewer';
+	import type { ColourSlots, RenderParams } from '$lib/three/viewer/ModelViewer';
 	import type { Look } from '$lib/explorer/CadStage.svelte';
 
 	/**
@@ -60,6 +60,8 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** Render values for this model, in place of the shared LOOK (look.ts). */
+		look?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Pipes energy can run along, where a feature's look turns it on (CadStage's `trails`). */
@@ -701,6 +703,7 @@
 					src={models[model]!.files}
 					carve={models[model]!.carve}
 					colours={models[model]!.colours}
+					renderLook={models[model]!.look}
 					sections={models[model]!.sections}
 					trails={models[model]!.trails}
 					aim={aims[model]}

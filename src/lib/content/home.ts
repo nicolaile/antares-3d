@@ -19,6 +19,7 @@ import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;7
 
 import type { Feature, CadModel, CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
 import type { Shot } from '$lib/three/viewer/shot';
+import { PCS_LOOK } from '$lib/three/viewer/look';
 
 export const hero = {
 	// The line break is the design's; the hero keeps it.
@@ -46,12 +47,12 @@ export const mission = {
  */
 /** Mark-0 close, looking well down on its top, sitting low in the panel. */
 const vessel: Shot = {
-	pos: [0, 0.68, 0.91],
-	target: [0, 0.11, 0],
+	pos: [0, 0.71, 0.91],
+	target: [0, 0.14, 0],
 	spin: 0,
 	fov: 29,
 	// The entrance starts looking down on the vessel's top (6° off vertical, so the camera keeps its roll).
-	enterFrom: { pos: [0, 1.18, 0.11] }
+	enterFrom: { pos: [0, 1.21, 0.11] }
 };
 /**
  * The power conversion system whole, pulled back and raised, three-quarters
@@ -86,14 +87,16 @@ const models: Partial<Record<CadModel, CadModelSetup>> = {
 	'power-conversion-system': {
 		// `standalone`: the exchanger's stand, which the stacked system leaves out.
 		files: cad('power-conversion-system', ['f4_heatpipes', 'f5_phx', 'standalone', 'f6_brayton', 'context']),
-		// Colour slots, a group each: everything a dark grey, the heat pipes
-		// half orange. The carved turbo-alternator takes the skid's (`brayton`).
+		// Its own look, as on the live site (look.ts PCS_LOOK).
+		look: PCS_LOOK,
+		// Colour slots, a group each, all off. The carved turbo-alternator
+		// takes the skid's (`brayton`).
 		colours: {
-			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#4a4a4a', amount: 0.8 },
-			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#4a4a4a', amount: 0.8 },
-			brayton: { group: 'f6_brayton', label: 'Brayton skid', colour: '#4a4a4a', amount: 0.8 },
-			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f', amount: 0.54 },
-			context: { group: 'context', label: 'Context', colour: '#4a4a4a', amount: 0.8 }
+			phx: { group: 'f5_phx', label: 'Heat exchanger', colour: '#4a4a4a' },
+			stand: { group: 'standalone', label: 'Exchanger stand', colour: '#4a4a4a' },
+			brayton: { group: 'f6_brayton', label: 'Brayton skid', colour: '#4a4a4a' },
+			heatpipes: { group: 'f4_heatpipes', label: 'Heat pipes', colour: '#ff751f' },
+			context: { group: 'context', label: 'Context', colour: '#4a4a4a' }
 		},
 		// The vessel at the back of the skid, carved out to cut open: a shaft on its
 		// axis (along x at y 1.09 m, z −4.20 m; Ø1.44 m), ~1 m discs, two inlets on
@@ -190,7 +193,7 @@ const features: Feature[] = [
 		// Close, from about 25° above: the top layer's hex face and
 		// fuel holes, the gaps between the layers in bands; tilted 30° to the
 		// right as it comes apart.
-		shot: { pos: [0, 0.54, 1.16], target: [0, -0.03, 0], spin: 0, fov: 29, lean: (-30 * Math.PI) / 180 },
+		shot: { pos: [0, 0.61, 1.3], target: [0, -0.03, 0], spin: 0, fov: 29, lean: (-30 * Math.PI) / 180 },
 		// The core alone, as in the video, taken apart: everything else
 		// fades away, then its ten layers of blocks lift apart.
 		look: {

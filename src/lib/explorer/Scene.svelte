@@ -33,6 +33,7 @@
 		explode = undefined,
 		carve = undefined,
 		colours = undefined,
+		look = LOOK,
 		sections = undefined,
 		shot,
 		paused = false,
@@ -55,6 +56,8 @@
 		>;
 		/** Parts given a colour of their own (ModelViewer's `colours`). */
 		colours?: ColourSlots;
+		/** Render values applied once loaded; defaults to the shared LOOK. */
+		look?: Partial<RenderParams>;
 		/** Groups cut in half-section (ModelViewer's `sections`). */
 		sections?: Record<string, { at: [number, number, number]; along: [number, number, number]; radius: number }>;
 		/** Where the camera is. Changing it glides the camera to the new shot. */
@@ -274,7 +277,7 @@
 				.then(async () => {
 					// The final look, after the studio preset has had its say. Before
 					// `onready`, so the controls panel reads these as its baseline.
-					for (const [k, value] of Object.entries(LOOK)) {
+					for (const [k, value] of Object.entries(look)) {
 						v.setParam(k as keyof RenderParams, value as number | string);
 					}
 					frame(v, shot, true);

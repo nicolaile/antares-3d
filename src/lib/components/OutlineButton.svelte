@@ -50,7 +50,7 @@
 		box-sizing: border-box;
 		padding: 0;
 		border: 1px solid var(--grey-200);
-		border-radius: 4px;
+		border-radius: 8px;
 		background: none;
 		color: var(--black);
 		cursor: pointer;

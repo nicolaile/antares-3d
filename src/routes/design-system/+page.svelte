@@ -264,8 +264,8 @@
 					<code class="type-body-large class">&lt;ToggleRing open? active? /&gt;</code>
 					<p class="type-body-large usage">
 						The plus/minus ring for anything that opens and closes, like the accordion rows. Open, the + turns to a −;
-						the ring stays light, and <code>active</code> darkens it on hover. A decoration: it sits inside the button that does
-						the opening. Shown closed (press it) and open.
+						the ring stays light, and <code>active</code> darkens it on hover. A decoration: it sits inside the button that
+						does the opening. Shown closed (press it) and open.
 					</p>
 				</div>
 			</li>

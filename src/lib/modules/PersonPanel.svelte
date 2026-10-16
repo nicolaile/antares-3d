@@ -212,13 +212,7 @@
 
 			<div class="portrait">
 				<!-- Eager, so it reuses the card's loaded image where it can. -->
-				<Picture
-					{...person.image}
-					ratio="996 / 648"
-					surface
-					loading="eager"
-					sizes="(max-width: 767px) 100vw, 33vw"
-				/>
+				<Picture {...person.image} ratio="996 / 648" surface loading="eager" sizes="(max-width: 767px) 100vw, 33vw" />
 			</div>
 
 			<p class="bio type-body-default">{person.bio}</p>

@@ -36,7 +36,7 @@
 	};
 
 	/** Overlay opacity when open. */
-	const DIM = 0.7;
+	const DIM = 0.85;
 
 	/** The `panel` ease is defined in scroll.ts. */
 	const OPEN = { duration: 0.65, ease: 'panel' };
@@ -270,8 +270,8 @@
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		visibility: hidden;
-		background: var(--white);
-		color: var(--black);
+		background: var(--black);
+		color: var(--white);
 		/* Its own layer, so the slide never waits on it being drawn. */
 		will-change: transform;
 	}
@@ -304,7 +304,7 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		color: var(--black);
+		color: var(--white);
 		cursor: pointer;
 	}
 	/* Sized to the 14px label. */
@@ -314,7 +314,7 @@
 		height: var(--space-12);
 	}
 	.close:focus-visible {
-		outline: 1px solid var(--black);
+		outline: 1px solid var(--white);
 		outline-offset: 2px;
 	}
 
@@ -332,7 +332,7 @@
 	}
 	.role {
 		display: block;
-		color: var(--grey-700);
+		color: var(--grey-400);
 	}
 	.portrait {
 		margin-top: var(--space-16);
@@ -340,8 +340,8 @@
 		border-radius: var(--card-radius);
 	}
 	.bio {
-		margin-top: var(--space-64);
-		color: var(--grey-700);
+		margin-top: var(--space-16);
+		color: var(--grey-400);
 	}
 
 	/* Tablet: columns 7–12, as a third would be too narrow. */

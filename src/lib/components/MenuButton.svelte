@@ -41,9 +41,12 @@
 			color: token(dark && !isOpen ? '--white' : '--black')
 		};
 		// A tone change switches at once, with the header bar; opening and
-		// closing still fade, in step with the panel.
-		if (first || prefersReducedMotion() || isOpen === wasOpen) gsap.set(button, { ...to, overwrite: 'auto' });
-		else gsap.to(button, { ...to, ...TOGGLE, overwrite: 'auto' });
+		// closing still fade, in step with the panel. `overwrite: true`, not
+		// 'auto': closing the menu onto a new page starts the fade and the new
+		// page's tone in the same frame, and 'auto' only stops a tween that has
+		// started, so the fade would finish in the old page's tone.
+		if (first || prefersReducedMotion() || isOpen === wasOpen) gsap.set(button, { ...to, overwrite: true });
+		else gsap.to(button, { ...to, ...TOGGLE, overwrite: true });
 		first = false;
 		wasOpen = isOpen;
 	});

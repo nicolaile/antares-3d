@@ -81,7 +81,7 @@
 	}
 	.hero {
 		position: relative;
-		margin-top: calc(var(--space-120) + var(--space-20));
+		margin-top: var(--space-120);
 	}
 	.hero-body {
 		position: absolute;

@@ -59,7 +59,11 @@
 		<article class="card dark" class:filled={dark.image}>
 			{#if dark.image}
 				<div class="fill">
-					<Picture {...dark.image} ratio={ratio(dark.image)} sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, 33vw" />
+					<Picture
+						{...dark.image}
+						ratio={ratio(dark.image)}
+						sizes="(max-width: 767px) 100vw, (max-width: 991px) 50vw, 33vw"
+					/>
 				</div>
 			{/if}
 			{#if dark.label}<h3 class="label type-caption">{dark.label}</h3>{/if}
@@ -67,7 +71,7 @@
 
 		<article class="card note">
 			<h3 class="label type-caption">{note.label}</h3>
-			<p class="statement type-sub-headline">
+			<p class="statement type-h5">
 				{#each note.statement as line, i (i)}{#if i > 0}<br />{/if}{line}{/each}
 			</p>
 			<ol class="points type-body-default">

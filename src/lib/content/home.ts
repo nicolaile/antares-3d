@@ -12,10 +12,11 @@ import specialPurposeReactors from '$lib/assets/images/landing/special-purpose-r
 import heatPipes from '$lib/assets/images/landing/heat-pipes.jpg?w=2028;1014;676;338&enhanced';
 import controlSystems from '$lib/assets/images/landing/control-systems.jpg?w=2028;1014;676;338&enhanced';
 import graphiteMachining from '$lib/assets/images/landing/graphite-machining.jpg?w=1856;928;464&enhanced';
+import technician from '$lib/assets/images/company/iterative-02.jpg?w=948;474;237&enhanced';
 import heroImage from '$lib/assets/images/company/hero-image.jpg?w=3000;2400;1800;1200;800&enhanced';
 // TODO(launch): replace the stand-in hero film with the final cut.
 import heroVideo from '$lib/assets/images/landing/hero-placeholder.mp4';
-import progressImage from '$lib/assets/images/landing/progress.png?w=2800;1400;700&enhanced';
+import progressImage from '$lib/assets/images/landing/progress-mark-01.png?w=2000;1000;500&enhanced';
 
 import type { Feature, CadModel, CadModelSetup } from '$lib/explorer/ReactorExplorer.svelte';
 import type { Shot } from '$lib/three/viewer/shot';
@@ -314,15 +315,14 @@ export const operating = {
 
 // TODO(launch): write the Progress card's paragraph (placeholder text).
 export const progress = {
-	title: 'FROM MARK-01',
+	title: 'MARK-01',
 	name: 'R1',
 	image: {
 		src: progressImage,
-		alt: 'The R1 microreactor in exploded view, its modules side by side on a grey studio gradient'
+		alt: 'The R1 microreactor in exploded view, its modules side by side on flat grey'
 	},
 	text: 'Dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
-	// TODO(launch): link to /progress (href is '#').
-	link: { label: 'Progress', href: '#' }
+	link: { label: 'Explore', href: '/progress' }
 };
 
 /** One row of the Capabilities accordion. */
@@ -360,14 +360,18 @@ export const graphite = {
 	title: 'Graphite Machining',
 	intro:
 		'Antares combines first-principles engineering with a high-velocity operating model to build scalable industrial infrastructure.',
-	dark: {},
+	dark: {
+		image: {
+			src: technician,
+			alt: 'A technician leaning in under a piece of reactor hardware'
+		}
+	},
 	note: {
 		label: 'Mission driven',
 		statement: ['Mission-critical energy,', 'engineered for Earth and beyond.'],
 		points: ['Bullet #1', 'Bullet #2', 'Bullet #3']
 	},
 	photo: {
-		label: 'Graphite Machining',
 		background: {
 			src: graphiteMachining,
 			alt: 'Hazy aerial view of a reactor test site and its car park on open plains'

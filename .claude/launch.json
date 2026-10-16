@@ -3,36 +3,20 @@
 	"configurations": [
 		{
 			"name": "antares",
-			"runtimeExecutable": "npm",
-			"runtimeArgs": [
-				"run",
-				"dev"
-			],
+			"runtimeExecutable": "/bin/zsh",
+			"runtimeArgs": ["-lc", "exec npm run dev"],
 			"autoPort": true
 		},
 		{
 			"name": "antares-prod",
-			"runtimeExecutable": "npm",
-			"runtimeArgs": [
-				"run",
-				"preview",
-				"--",
-				"--port",
-				"4173"
-			],
+			"runtimeExecutable": "/bin/zsh",
+			"runtimeArgs": ["-lc", "exec npm run preview -- --port 4173"],
 			"port": 4173
 		},
 		{
 			"name": "antares-lan",
-			"runtimeExecutable": "npm",
-			"runtimeArgs": [
-				"run",
-				"dev",
-				"--",
-				"--host",
-				"--port",
-				"5180"
-			],
+			"runtimeExecutable": "/bin/zsh",
+			"runtimeArgs": ["-lc", "exec npm run dev -- --host --port 5180"],
 			"port": 5180
 		}
 	]

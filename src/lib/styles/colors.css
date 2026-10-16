@@ -36,9 +36,13 @@
 	--grey-800: #3f4041;
 	/** Raised surfaces on dark: the cards and stage inside a dark band, the menu button, article body copy. */
 	--grey-900: #272829;
+	/** Buttons on dark pages: the dark footer's Join mission. */
+	--grey-910: #222324;
 	/** A step up from grey-950, for hover and progress on it: the explorer's tabs. */
 	--grey-925: #1e1f20;
-	/** Dark backgrounds: the R1 band, the explorer's containers, the Updates page and its footer. */
+	/** Cards and fields on dark pages: the press kit (Updates, Contact, Press) and Press' form. */
+	--grey-940: #191a1b;
+	/** Dark backgrounds: the R1 band, the explorer's containers. */
 	--grey-950: #161718;
 	/** Primary text and active fills. */
 	--black: #0f1011;

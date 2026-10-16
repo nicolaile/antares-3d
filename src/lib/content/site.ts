@@ -30,8 +30,8 @@ export const footer = {
 		{ label: 'Progress', href: '/progress' },
 		{ label: 'Updates', href: '/updates' },
 		{ label: 'Careers', href: '/careers' },
-		// TODO(launch): link Contact (href is '#'); Missions' "Start a mission" follows it.
-		{ label: 'Contact', href: '#' }
+		{ label: 'Press', href: '/press' },
+		{ label: 'Contact', href: '/contact' }
 	] satisfies Link[],
 	social: [
 		// TODO(launch): link the LinkedIn, Instagram and X profiles (hrefs are '#').
@@ -74,8 +74,7 @@ export const menu = {
 	/** Smaller links under the main ones. */
 	secondary: [
 		{ label: 'Careers', href: '/careers' },
-		// TODO(launch): link Contact, as in the footer (href is '#').
-		{ label: 'Contact', href: '#' }
+		{ label: 'Contact', href: '/contact' }
 	] satisfies Link[],
 	/** The three latest stories, cycled at the foot of the open menu. */
 	updates: stories.items.slice(0, 3).map((story): Update => ({

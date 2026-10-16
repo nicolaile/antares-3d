@@ -28,16 +28,17 @@
 		nav: Link[];
 		social: Link[];
 		legal: { owner: string; links: Link[] };
-		/** `dark` for pages dark throughout, `grey` for Progress' mid grey. */
-		tone?: 'white' | 'dark' | 'grey';
+		/** `dark` for pages dark throughout, `black` for those on Black (Updates, Contact, Press), `grey` for Progress' mid grey. */
+		tone?: 'white' | 'dark' | 'black' | 'grey';
 		/** The hairline across its top; off where a full-bleed image meets it (Progress). */
 		rule?: boolean;
 	} = $props();
 
 	const year = new Date().getFullYear();
+	const dark = $derived(tone === 'dark' || tone === 'black');
 </script>
 
-<footer class="footer {tone}" class:ruled={rule} data-tone={tone === 'dark' ? 'dark' : undefined}>
+<footer class="footer {tone}" class:ruled={rule} data-tone={dark ? 'dark' : undefined}>
 	<div class="top">
 		<Row gap={40}>
 			<Cell span={6} tablet={{ span: 8 }}>
@@ -49,7 +50,7 @@
 				<Cell start={9} span={3} tablet={{ start: 7, span: 6 }}>
 					{#if aside}<p class="aside type-body-default">{aside}</p>{/if}
 					{#if link}<div class="cta">
-							<CtaButton {...link} arrow={false} tone={tone === 'dark' ? 'dark' : 'light'} />
+							<CtaButton {...link} arrow={false} tone={dark ? 'dark' : 'light'} />
 						</div>{/if}
 				</Cell>
 			{/if}
@@ -118,11 +119,16 @@
 		--ink: var(--black);
 		--rule: var(--grey-700);
 	}
-	.dark {
+	.dark,
+	.black {
 		background: var(--grey-950);
 		color: var(--grey-400);
 		--ink: var(--white);
 		--rule: var(--grey-900);
+		--cta-dark-fill: var(--grey-910);
+	}
+	.black {
+		background: var(--black);
 	}
 
 	.statement,

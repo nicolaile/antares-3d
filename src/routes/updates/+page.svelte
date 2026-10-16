@@ -50,23 +50,23 @@
 	<div class="press"><DownloadCard {...pressKit} tone="dark" /></div>
 </main>
 
-<Footer {...footer} tone="dark" />
+<Footer {...footer} tone="black" />
 
 <style>
 	/* The whole page is dark, html included, so overscroll doesn't flash white. */
 	:global(html:has(main.updates)) {
-		background: var(--grey-950);
+		background: var(--black);
 	}
 
 	.updates {
 		display: grid;
 		padding: var(--space-120) var(--grid-margin) var(--space-160);
-		background: var(--grey-950);
+		background: var(--black);
 		color: var(--white);
 	}
 
 	section {
-		margin-top: calc(var(--space-120) + var(--space-20));
+		margin-top: var(--space-120);
 	}
 	/* Three up, four columns each (456px at 1440), on the page's gutter.
 	   Two up on tablet, one on mobile. */

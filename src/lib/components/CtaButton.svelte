@@ -12,9 +12,13 @@
 		href,
 		arrow = true,
 		tone = 'light',
+		type = 'button',
 		onclick
 	}: {
-		tone?: 'light' | 'dark';
+		/** `white`: a white pill with black text, for forms on dark (Press' Submit). */
+		tone?: 'light' | 'dark' | 'white';
+		/** Without `href`: `submit` sends the form it's in. */
+		type?: 'button' | 'submit';
 		label: string;
 		/** False for the pill alone, a quieter action (the footer's "Join mission"). */
 		arrow?: boolean;
@@ -27,7 +31,7 @@
 
 	function nudge(on: boolean) {
 		const fill = getComputedStyle(pill)
-			.getPropertyValue(tone === 'dark' ? (on ? '--grey-800' : '--grey-900') : on ? '--grey-200' : '--grey-100')
+			.getPropertyValue(on ? '--cta-fill-hover' : '--cta-fill')
 			.trim();
 		if (prefersReducedMotion()) return gsap.set(pill, { backgroundColor: fill });
 		gsap.to(pill, { backgroundColor: fill, duration: 0.3, ease: 'menu', overwrite: true });
@@ -46,6 +50,7 @@
 	<a
 		class="cta type-caption"
 		class:dark={tone === 'dark'}
+		class:white={tone === 'white'}
 		{href}
 		{onclick}
 		onpointerenter={() => nudge(true)}
@@ -53,9 +58,10 @@
 	>
 {:else}
 	<button
-		type="button"
+		{type}
 		class="cta type-caption"
 		class:dark={tone === 'dark'}
+		class:white={tone === 'white'}
 		{onclick}
 		onpointerenter={() => nudge(true)}
 		onpointerleave={() => nudge(false)}>{@render content()}</button
@@ -68,6 +74,9 @@
 		--cta-radius: 8px;
 		--cta-inset: calc(var(--size-font) * 1.125);
 		--cta-icon-inset: calc(var(--size-font) * 0.5625);
+		/* The pill's fill at rest and on hover, swapped by tone. */
+		--cta-fill: var(--grey-100);
+		--cta-fill-hover: var(--grey-200);
 		display: inline-flex;
 		align-items: stretch;
 		gap: var(--space-8);
@@ -90,7 +99,7 @@
 		height: var(--cta-size);
 		padding: 0 var(--cta-inset);
 		border-radius: var(--cta-radius);
-		background: var(--grey-100);
+		background: var(--cta-fill);
 	}
 	.square {
 		display: grid;
@@ -103,14 +112,21 @@
 		background: var(--black);
 		color: var(--white);
 	}
+	/* A dark surround can set --cta-dark-fill (the dark footer does). */
 	.dark {
+		--cta-fill: var(--cta-dark-fill, var(--black));
+		--cta-fill-hover: var(--grey-900);
 		color: var(--white);
+	}
+	.white {
+		--cta-fill: var(--white);
+		--cta-fill-hover: var(--grey-100);
+	}
+	.white:focus-visible {
+		outline-color: var(--white);
 	}
 	.dark:focus-visible {
 		outline-color: var(--white);
-	}
-	.dark .label {
-		background: var(--grey-900);
 	}
 	.dark .square {
 		background: var(--white);

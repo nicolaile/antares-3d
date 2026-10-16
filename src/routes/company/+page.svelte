@@ -52,7 +52,7 @@
 	}
 
 	.leadership {
-		margin-top: calc(var(--space-120) + var(--space-20));
+		margin-top: var(--space-120);
 	}
 
 	.summary {

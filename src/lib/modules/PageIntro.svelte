@@ -20,7 +20,7 @@
 
 <style>
 	.intro {
-		padding-top: var(--space-16);
+		padding-top: var(--space-8);
 		border-top: 1px solid var(--grey-200);
 	}
 	.dark {
